@@ -1,0 +1,771 @@
+{
+  "carrier": "morgan_price",
+  "evidence_version": "2026-09-08-bootstrap",
+  "official_product_page": "https://morgan-price.eu/individual/",
+  "claims": [
+    {
+      "claim_id": "mp_product_eligibility",
+      "claim": "Evolution Health EU is designed for expatriates and local nationals and eligible dependants, except persons in the USA.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 4,
+      "source_location": "Eligibility - Who can apply",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_fmu_entry_age",
+      "claim": "Maximum age of entry on Full Medical Underwriting is 74.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 4,
+      "source_location": "Eligibility",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_moratorium_entry_age",
+      "claim": "Maximum age of entry on Moratorium underwriting is 55.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 4,
+      "source_location": "Eligibility / Moratorium Underwriting",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_moratorium_rule",
+      "claim": "Moratorium excludes pre-existing conditions existing in the five years before start; after two years continuous cover they may become eligible only if the specified symptom/treatment/advice/medication conditions are met.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 5,
+      "source_location": "Moratorium Underwriting",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_cpme",
+      "claim": "CPME transfer may be available from prior international medical insurance at the same or lower cover, with no break in cover; prior certificate and exclusions are required and, if accepted, prior terms are transferred.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 5,
+      "source_location": "Continued Personal Medical Exclusions (CPME)",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_preauth_penalty",
+      "claim": "Where pre-authorisation is required but not obtained, a 25% co-insurance/first 25% of costs can apply.",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 7,
+      "source_location": "How to Claim / General Exclusion 1",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_excess_basis",
+      "claim": "The excess/deductible is an annual amount per person per policy year.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Official product page",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_annual_limit",
+      "product_code": "standard",
+      "claim": "Annual limit: EUR/GBP/USD 500,000 (currency follows policy).",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 3,
+      "source_location": "Plan Type summary",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_organ_transplants",
+      "product_code": "standard",
+      "claim": "Organ transplants: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_dental",
+      "product_code": "standard",
+      "claim": "Dental: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_routine_maternity",
+      "product_code": "standard",
+      "claim": "Routine maternity: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_infertility",
+      "product_code": "standard",
+      "claim": "Infertility treatment: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_0",
+      "product_code": "standard",
+      "claim": "In-patient and day-patient treatment: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_1",
+      "product_code": "standard",
+      "claim": "Evacuation and repatriation: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_2",
+      "product_code": "standard",
+      "claim": "Treatment for cancer: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_3",
+      "product_code": "standard",
+      "claim": "Cash benefits: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_4",
+      "product_code": "standard",
+      "claim": "Home country cover excluding USA: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_5",
+      "product_code": "standard",
+      "claim": "Out-patient consultations and diagnostics: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_6",
+      "product_code": "standard",
+      "claim": "Treatment for chronic conditions: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_7",
+      "product_code": "standard",
+      "claim": "Emergency treatment outside area of cover: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_common_8",
+      "product_code": "standard",
+      "claim": "Routine health checks: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_annual_limit",
+      "product_code": "standard_plus",
+      "claim": "Annual limit: EUR/GBP/USD 750,000 (currency follows policy).",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 3,
+      "source_location": "Plan Type summary",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_organ_transplants",
+      "product_code": "standard_plus",
+      "claim": "Organ transplants: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_dental",
+      "product_code": "standard_plus",
+      "claim": "Dental: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_routine_maternity",
+      "product_code": "standard_plus",
+      "claim": "Routine maternity: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_infertility",
+      "product_code": "standard_plus",
+      "claim": "Infertility treatment: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_0",
+      "product_code": "standard_plus",
+      "claim": "In-patient and day-patient treatment: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_1",
+      "product_code": "standard_plus",
+      "claim": "Evacuation and repatriation: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_2",
+      "product_code": "standard_plus",
+      "claim": "Treatment for cancer: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_3",
+      "product_code": "standard_plus",
+      "claim": "Cash benefits: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_4",
+      "product_code": "standard_plus",
+      "claim": "Home country cover excluding USA: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_5",
+      "product_code": "standard_plus",
+      "claim": "Out-patient consultations and diagnostics: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_6",
+      "product_code": "standard_plus",
+      "claim": "Treatment for chronic conditions: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_7",
+      "product_code": "standard_plus",
+      "claim": "Emergency treatment outside area of cover: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_standard_plus_common_8",
+      "product_code": "standard_plus",
+      "claim": "Routine health checks: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_annual_limit",
+      "product_code": "comprehensive",
+      "claim": "Annual limit: EUR/GBP/USD 1,000,000 (currency follows policy).",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 3,
+      "source_location": "Plan Type summary",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_organ_transplants",
+      "product_code": "comprehensive",
+      "claim": "Organ transplants: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_dental",
+      "product_code": "comprehensive",
+      "claim": "Dental: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_routine_maternity",
+      "product_code": "comprehensive",
+      "claim": "Routine maternity: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_infertility",
+      "product_code": "comprehensive",
+      "claim": "Infertility treatment: not included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_0",
+      "product_code": "comprehensive",
+      "claim": "In-patient and day-patient treatment: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_1",
+      "product_code": "comprehensive",
+      "claim": "Evacuation and repatriation: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_2",
+      "product_code": "comprehensive",
+      "claim": "Treatment for cancer: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_3",
+      "product_code": "comprehensive",
+      "claim": "Cash benefits: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_4",
+      "product_code": "comprehensive",
+      "claim": "Home country cover excluding USA: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_5",
+      "product_code": "comprehensive",
+      "claim": "Out-patient consultations and diagnostics: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_6",
+      "product_code": "comprehensive",
+      "claim": "Treatment for chronic conditions: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_7",
+      "product_code": "comprehensive",
+      "claim": "Emergency treatment outside area of cover: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_comprehensive_common_8",
+      "product_code": "comprehensive",
+      "claim": "Routine health checks: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_annual_limit",
+      "product_code": "premium",
+      "claim": "Annual limit: EUR/GBP/USD 1,500,000 (currency follows policy).",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 3,
+      "source_location": "Plan Type summary",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_organ_transplants",
+      "product_code": "premium",
+      "claim": "Organ transplants: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_dental",
+      "product_code": "premium",
+      "claim": "Dental: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_routine_maternity",
+      "product_code": "premium",
+      "claim": "Routine maternity: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_infertility",
+      "product_code": "premium",
+      "claim": "Infertility treatment: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_0",
+      "product_code": "premium",
+      "claim": "In-patient and day-patient treatment: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_1",
+      "product_code": "premium",
+      "claim": "Evacuation and repatriation: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_2",
+      "product_code": "premium",
+      "claim": "Treatment for cancer: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_3",
+      "product_code": "premium",
+      "claim": "Cash benefits: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_4",
+      "product_code": "premium",
+      "claim": "Home country cover excluding USA: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_5",
+      "product_code": "premium",
+      "claim": "Out-patient consultations and diagnostics: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_6",
+      "product_code": "premium",
+      "claim": "Treatment for chronic conditions: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_7",
+      "product_code": "premium",
+      "claim": "Emergency treatment outside area of cover: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_premium_common_8",
+      "product_code": "premium",
+      "claim": "Routine health checks: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_annual_limit",
+      "product_code": "elite",
+      "claim": "Annual limit: EUR/GBP/USD 2,000,000 (currency follows policy).",
+      "status": "verified",
+      "source_id": "mp_eu_policy_wording_2026",
+      "source_page": 3,
+      "source_location": "Plan Type summary",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_organ_transplants",
+      "product_code": "elite",
+      "claim": "Organ transplants: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_dental",
+      "product_code": "elite",
+      "claim": "Dental: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_routine_maternity",
+      "product_code": "elite",
+      "claim": "Routine maternity: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_infertility",
+      "product_code": "elite",
+      "claim": "Infertility treatment: included at this plan level.",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_0",
+      "product_code": "elite",
+      "claim": "In-patient and day-patient treatment: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_1",
+      "product_code": "elite",
+      "claim": "Evacuation and repatriation: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_2",
+      "product_code": "elite",
+      "claim": "Treatment for cancer: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_3",
+      "product_code": "elite",
+      "claim": "Cash benefits: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_4",
+      "product_code": "elite",
+      "claim": "Home country cover excluding USA: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_5",
+      "product_code": "elite",
+      "claim": "Out-patient consultations and diagnostics: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_6",
+      "product_code": "elite",
+      "claim": "Treatment for chronic conditions: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_7",
+      "product_code": "elite",
+      "claim": "Emergency treatment outside area of cover: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    },
+    {
+      "claim_id": "mp_elite_common_8",
+      "product_code": "elite",
+      "claim": "Routine health checks: included at this plan level (specific sublimits/conditions require the Table of Benefits).",
+      "status": "verified",
+      "source_id": "mp_official_individual_page",
+      "source_page": null,
+      "source_location": "Current plan comparison matrix",
+      "allow_generation": true
+    }
+  ],
+  "generation_policy": "HAL may state only claims with status=verified and allow_generation=true. Exact benefit sublimits remain locked until the 2026 Table of Benefits binary is ingested and hashed."
+}

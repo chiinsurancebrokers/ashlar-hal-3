@@ -1,0 +1,92 @@
+{
+  "carrier": "morgan_price",
+  "carrier_name": "Morgan Price (Europe) ApS",
+  "product_family": "Evolution Health Plan EU",
+  "document_period": "Policies starting after 1 April 2026",
+  "official_downloads_page": "https://morgan-price.eu/downloads/",
+  "documents": [
+    {
+      "document_id": "mp_eu_tob_2026",
+      "title": "Evolution Health EU - Table of Benefits",
+      "document_type": "table_of_benefits",
+      "official_url": "https://morgan-price.eu/media/rf4kezlw/evolutionhealth_eu_tob_si_04-26_v1.pdf",
+      "version": "04/26",
+      "status": "official_9_page_source_ingested_and_hashed",
+      "sha256": null,
+      "document_code": "EU/EVO/SI/TOB/04/26",
+      "source_format": "nine user-provided page images",
+      "page_sha256": {
+        "1": "691793b5d5c69dc6f3e7973fcdc3f3d319236fe6e0ab951024286524bd32063d",
+        "2": "81e2bf464b1ebd8223c4c184c8d530e76794a60a303d71b22102450b34552ea5",
+        "3": "65a997da5e7be90a9e32fd29ddc562913a233328ba089b7d1f5a00825375cf5f",
+        "4": "4d3e031c0b2275663ef33f4fdee45f9654006489ce1d5d8d2ca6928f6a5136ee",
+        "5": "b2271c5861c3b103cee943185ed8a68f64c566bdfd70798622fdf5924c77d85a",
+        "6": "21cadaf5fc3ce4760465289fae038f9dcf67f867fcea6016d36f45ee818396c9",
+        "7": "19f2d29f0a749ec125bebaefc02e546aacce031318dd2a523c7836b9f6456a60",
+        "8": "83ef5ab4e87fe05f0da3d31568cedfb99ea0382c4b2ce5d8ebc3685eb131e220",
+        "9": "9844c11f26786a95561ed4ae6f4964379a8738928609345953d1aa2a09e8b0ec"
+      }
+    },
+    {
+      "document_id": "mp_eu_policy_wording_2026",
+      "title": "Evolution Health Policy Wording EU",
+      "document_type": "policy_wording",
+      "official_url": "https://morgan-price.eu/media/ibueusuo/evolution-health_eu_policywording_si_04-26_final.pdf",
+      "document_code": "EU/EVO/SI/PW/04/26",
+      "version": "04/26",
+      "status": "official_content_verified",
+      "sha256": null
+    },
+    {
+      "document_id": "mp_eu_ipid_standard_2026",
+      "title": "Standard IPID",
+      "document_type": "ipid",
+      "official_url": "https://morgan-price.eu/media/ht0eglid/evolutionhealth_eu_ipid_standard_si_04-26.pdf",
+      "version": "04/26",
+      "status": "official_url_registered_pending_binary_ingestion",
+      "sha256": null
+    },
+    {
+      "document_id": "mp_eu_ipid_standard_plus_2026",
+      "title": "Standard Plus IPID",
+      "document_type": "ipid",
+      "official_url": "https://morgan-price.eu/media/tslnngak/evolutionhealth_eu_ipid_standard-plus_si_04-26.pdf",
+      "version": "04/26",
+      "status": "official_url_registered_pending_binary_ingestion",
+      "sha256": null
+    },
+    {
+      "document_id": "mp_eu_ipid_comprehensive_2026",
+      "title": "Comprehensive IPID",
+      "document_type": "ipid",
+      "official_url": "https://morgan-price.eu/media/f5jnxezf/evolutionhealth_eu_ipid_comprehensive_si_04-26.pdf",
+      "version": "04/26",
+      "status": "official_url_registered_pending_binary_ingestion",
+      "sha256": null
+    },
+    {
+      "document_id": "mp_eu_ipid_premium_2026",
+      "title": "Premium IPID",
+      "document_type": "ipid",
+      "official_url": "https://morgan-price.eu/media/xl0bmfdo/evolutionhealth_eu_ipid_premium_si_04-26.pdf",
+      "version": "04/26",
+      "status": "official_url_registered_pending_binary_ingestion",
+      "sha256": null
+    },
+    {
+      "document_id": "mp_eu_ipid_elite_2026",
+      "title": "Elite IPID",
+      "document_type": "ipid",
+      "official_url": "https://morgan-price.eu/media/cpuay3uk/evolutionhealth_eu_ipid_elite_si_04-26.pdf",
+      "version": "04/26",
+      "status": "official_url_registered_pending_binary_ingestion",
+      "sha256": null
+    }
+  ],
+  "table_of_benefits_ingestion": {
+    "status": "verified",
+    "ingested_pages": 9,
+    "benefit_rows": 65,
+    "document_code": "EU/EVO/SI/TOB/04/26"
+  }
+}

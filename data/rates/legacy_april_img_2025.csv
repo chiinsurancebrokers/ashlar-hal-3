@@ -1,0 +1,602 @@
+carrier,carrier_name,rate_version,residence_country,area,age_min,age_max,product_code,product_name,annual_premium,currency,rate_note
+april,APRIL International,april_2025_current,Greece,area1,0,17,international,APRIL International,1010,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,intl_plus,APRIL International Plus,1396,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,intl_plus_nxs,APRIL International Plus NXS,1648,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,executive,APRIL Executive,2232,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,exec_nxs,APRIL Executive NXS,2635,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,exec_plus,APRIL Executive Plus,2934,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,0,17,exec_plus_nxs,APRIL Executive Plus NXS,3463,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,international,APRIL International,1498,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,intl_plus,APRIL International Plus,2128,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,intl_plus_nxs,APRIL International Plus NXS,2509,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,executive,APRIL Executive,3431,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,exec_nxs,APRIL Executive NXS,3979,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,exec_plus,APRIL Executive Plus,4419,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,18,25,exec_plus_nxs,APRIL Executive Plus NXS,5082,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,international,APRIL International,1630,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,intl_plus,APRIL International Plus,2555,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,intl_plus_nxs,APRIL International Plus NXS,3013,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,executive,APRIL Executive,4125,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,exec_nxs,APRIL Executive NXS,4785,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,exec_plus,APRIL Executive Plus,5287,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,26,29,exec_plus_nxs,APRIL Executive Plus NXS,6079,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,international,APRIL International,1940,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,intl_plus,APRIL International Plus,2764,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,intl_plus_nxs,APRIL International Plus NXS,3259,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,executive,APRIL Executive,4459,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,exec_nxs,APRIL Executive NXS,5175,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,exec_plus,APRIL Executive Plus,5710,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,30,34,exec_plus_nxs,APRIL Executive Plus NXS,6509,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,international,APRIL International,2243,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,intl_plus,APRIL International Plus,3210,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,intl_plus_nxs,APRIL International Plus NXS,3788,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,executive,APRIL Executive,5178,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,exec_nxs,APRIL Executive NXS,5953,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,exec_plus,APRIL Executive Plus,6607,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,35,39,exec_plus_nxs,APRIL Executive Plus NXS,7466,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,international,APRIL International,2501,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,intl_plus,APRIL International Plus,3565,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,intl_plus_nxs,APRIL International Plus NXS,4099,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,executive,APRIL Executive,5743,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,exec_nxs,APRIL Executive NXS,6490,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,exec_plus,APRIL Executive Plus,7320,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,40,44,exec_plus_nxs,APRIL Executive Plus NXS,8125,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,international,APRIL International,2869,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,intl_plus,APRIL International Plus,4091,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,intl_plus_nxs,APRIL International Plus NXS,4623,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,executive,APRIL Executive,6596,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,exec_nxs,APRIL Executive NXS,7453,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,exec_plus,APRIL Executive Plus,8389,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,45,49,exec_plus_nxs,APRIL Executive Plus NXS,9227,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,international,APRIL International,3700,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,intl_plus,APRIL International Plus,5242,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,intl_plus_nxs,APRIL International Plus NXS,5766,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,executive,APRIL Executive,8640,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,exec_nxs,APRIL Executive NXS,9503,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,exec_plus,APRIL Executive Plus,10716,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,50,54,exec_plus_nxs,APRIL Executive Plus NXS,11821,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,international,APRIL International,4913,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,intl_plus,APRIL International Plus,6923,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,intl_plus_nxs,APRIL International Plus NXS,7476,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,executive,APRIL Executive,10678,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,exec_nxs,APRIL Executive NXS,11535,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,exec_plus,APRIL Executive Plus,12891,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,55,59,exec_plus_nxs,APRIL Executive Plus NXS,13664,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,international,APRIL International,6670,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,intl_plus,APRIL International Plus,9354,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,intl_plus_nxs,APRIL International Plus NXS,9822,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,executive,APRIL Executive,13675,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,exec_nxs,APRIL Executive NXS,14495,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,exec_plus,APRIL Executive Plus,16479,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,60,64,exec_plus_nxs,APRIL Executive Plus NXS,17302,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,international,APRIL International,10011,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,intl_plus,APRIL International Plus,14058,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,intl_plus_nxs,APRIL International Plus NXS,14621,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,executive,APRIL Executive,20142,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,exec_nxs,APRIL Executive NXS,20950,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,exec_plus,APRIL Executive Plus,25269,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,65,69,exec_plus_nxs,APRIL Executive Plus NXS,26029,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,international,APRIL International,15288,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,intl_plus,APRIL International Plus,20231,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,intl_plus_nxs,APRIL International Plus NXS,21039,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,executive,APRIL Executive,28267,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,exec_nxs,APRIL Executive NXS,29116,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,exec_plus,APRIL Executive Plus,35372,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,70,74,exec_plus_nxs,APRIL Executive Plus NXS,36257,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,international,APRIL International,20604,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,intl_plus,APRIL International Plus,27264,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,intl_plus_nxs,APRIL International Plus NXS,28353,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,executive,APRIL Executive,33978,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,exec_nxs,APRIL Executive NXS,37162,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,exec_plus,APRIL Executive Plus,42089,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,75,79,exec_plus_nxs,APRIL Executive Plus NXS,42931,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,international,APRIL International,25780,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,intl_plus,APRIL International Plus,34117,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,intl_plus_nxs,APRIL International Plus NXS,35484,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,executive,APRIL Executive,41206,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,exec_nxs,APRIL Executive NXS,42442,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,exec_plus,APRIL Executive Plus,51042,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area1,80,120,exec_plus_nxs,APRIL Executive Plus NXS,52062,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,international,APRIL International,2730,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,intl_plus,APRIL International Plus,3765,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,intl_plus_nxs,APRIL International Plus NXS,4341,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,executive,APRIL Executive,6023,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,exec_nxs,APRIL Executive NXS,6939,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,exec_plus,APRIL Executive Plus,7930,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,0,17,exec_plus_nxs,APRIL Executive Plus NXS,9140,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,international,APRIL International,4039,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,intl_plus,APRIL International Plus,5743,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,intl_plus_nxs,APRIL International Plus NXS,6620,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,executive,APRIL Executive,9266,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,exec_nxs,APRIL Executive NXS,10543,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,exec_plus,APRIL Executive Plus,11924,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,18,25,exec_plus_nxs,APRIL Executive Plus NXS,13478,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,international,APRIL International,4796,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,intl_plus,APRIL International Plus,6899,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,intl_plus_nxs,APRIL International Plus NXS,7950,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,executive,APRIL Executive,11136,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,exec_nxs,APRIL Executive NXS,12671,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,exec_plus,APRIL Executive Plus,14279,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,26,29,exec_plus_nxs,APRIL Executive Plus NXS,16142,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,international,APRIL International,5242,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,intl_plus,APRIL International Plus,7461,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,intl_plus_nxs,APRIL International Plus NXS,8598,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,executive,APRIL Executive,12038,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,exec_nxs,APRIL Executive NXS,13698,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,exec_plus,APRIL Executive Plus,15417,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,30,34,exec_plus_nxs,APRIL Executive Plus NXS,17312,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,international,APRIL International,6050,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,intl_plus,APRIL International Plus,8666,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,intl_plus_nxs,APRIL International Plus NXS,9987,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,executive,APRIL Executive,13979,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,exec_nxs,APRIL Executive NXS,15803,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,exec_plus,APRIL Executive Plus,17848,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,35,39,exec_plus_nxs,APRIL Executive Plus NXS,19900,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,international,APRIL International,6750,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,intl_plus,APRIL International Plus,9621,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,intl_plus_nxs,APRIL International Plus NXS,10876,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,executive,APRIL Executive,15508,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,exec_nxs,APRIL Executive NXS,17293,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,exec_plus,APRIL Executive Plus,19763,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,40,44,exec_plus_nxs,APRIL Executive Plus NXS,21723,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,international,APRIL International,7753,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,intl_plus,APRIL International Plus,11046,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,intl_plus_nxs,APRIL International Plus NXS,12315,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,executive,APRIL Executive,17807,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,exec_nxs,APRIL Executive NXS,19855,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,exec_plus,APRIL Executive Plus,22651,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,45,49,exec_plus_nxs,APRIL Executive Plus NXS,24712,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,international,APRIL International,9987,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,intl_plus,APRIL International Plus,14156,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,intl_plus_nxs,APRIL International Plus NXS,15443,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,executive,APRIL Executive,23325,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,exec_nxs,APRIL Executive NXS,25448,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,exec_plus,APRIL Executive Plus,28929,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,50,54,exec_plus_nxs,APRIL Executive Plus NXS,30823,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,international,APRIL International,13269,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,intl_plus,APRIL International Plus,18682,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,intl_plus_nxs,APRIL International Plus NXS,20063,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,executive,APRIL Executive,28837,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,exec_nxs,APRIL Executive NXS,30973,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,exec_plus,APRIL Executive Plus,43533,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,55,59,exec_plus_nxs,APRIL Executive Plus NXS,45997,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,international,APRIL International,18009,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,intl_plus,APRIL International Plus,25258,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,intl_plus_nxs,APRIL International Plus NXS,26460,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,executive,APRIL Executive,36919,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,exec_nxs,APRIL Executive NXS,39010,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,exec_plus,APRIL Executive Plus,55494,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,60,64,exec_plus_nxs,APRIL Executive Plus NXS,58137,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,international,APRIL International,27027,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,intl_plus,APRIL International Plus,37951,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,intl_plus_nxs,APRIL International Plus NXS,39410,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,executive,APRIL Executive,54406,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,exec_nxs,APRIL Executive NXS,56498,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,exec_plus,APRIL Executive Plus,68218,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,65,69,exec_plus_nxs,APRIL Executive Plus NXS,70205,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,international,APRIL International,41276,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,intl_plus,APRIL International Plus,54618,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,intl_plus_nxs,APRIL International Plus NXS,56720,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,executive,APRIL Executive,76346,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,exec_nxs,APRIL Executive NXS,78569,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,exec_plus,APRIL Executive Plus,95495,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,70,74,exec_plus_nxs,APRIL Executive Plus NXS,97822,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,international,APRIL International,55627,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,intl_plus,APRIL International Plus,73609,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,intl_plus_nxs,APRIL International Plus NXS,76440,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,executive,APRIL Executive,91820,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,exec_nxs,APRIL Executive NXS,94497,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,exec_plus,APRIL Executive Plus,113640,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,75,79,exec_plus_nxs,APRIL Executive Plus NXS,116410,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,international,APRIL International,69464,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,intl_plus,APRIL International Plus,91918,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,intl_plus_nxs,APRIL International Plus NXS,95454,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,executive,APRIL Executive,111105,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,exec_nxs,APRIL Executive NXS,114342,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,exec_plus,APRIL Executive Plus,137501,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+april,APRIL International,april_2025_current,Greece,area2,80,120,exec_plus_nxs,APRIL Executive Plus NXS,140856,EUR,Temporary current dataset; replace when new APRIL rates arrive.
+img,IMG,img_europe_2025_current,Greece,area1,0,0,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,0,0,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,0,0,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,0,0,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,0,0,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,1,1,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,1,1,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,1,1,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,1,1,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,1,1,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,2,2,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,2,2,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,2,2,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,2,2,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,2,2,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,3,3,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,3,3,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,3,3,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,3,3,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,3,3,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,4,4,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,4,4,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,4,4,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,4,4,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,4,4,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,5,5,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,5,5,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,5,5,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,5,5,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,5,5,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,6,6,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,6,6,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,6,6,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,6,6,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,6,6,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,7,7,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,7,7,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,7,7,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,7,7,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,7,7,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,8,8,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,8,8,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,8,8,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,8,8,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,8,8,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,9,9,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,9,9,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,9,9,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,9,9,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,9,9,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,10,10,platinum,IMG Platinum,1902,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,10,10,gold,IMG Gold,1534,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,10,10,silver,IMG Silver,1213,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,10,10,bronze_plus,IMG Bronze Plus,865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,10,10,bronze,IMG Bronze,590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,11,11,platinum,IMG Platinum,1910,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,11,11,gold,IMG Gold,1545,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,11,11,silver,IMG Silver,1215,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,11,11,bronze_plus,IMG Bronze Plus,866,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,11,11,bronze,IMG Bronze,591,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,12,12,platinum,IMG Platinum,1922,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,12,12,gold,IMG Gold,1552,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,12,12,silver,IMG Silver,1223,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,12,12,bronze_plus,IMG Bronze Plus,872,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,12,12,bronze,IMG Bronze,594,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,13,13,platinum,IMG Platinum,1936,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,13,13,gold,IMG Gold,1565,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,13,13,silver,IMG Silver,1232,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,13,13,bronze_plus,IMG Bronze Plus,878,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,13,13,bronze,IMG Bronze,600,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,14,14,platinum,IMG Platinum,1955,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,14,14,gold,IMG Gold,1576,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,14,14,silver,IMG Silver,1243,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,14,14,bronze_plus,IMG Bronze Plus,885,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,14,14,bronze,IMG Bronze,604,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,15,15,platinum,IMG Platinum,1975,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,15,15,gold,IMG Gold,1588,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,15,15,silver,IMG Silver,1251,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,15,15,bronze_plus,IMG Bronze Plus,891,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,15,15,bronze,IMG Bronze,609,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,16,16,platinum,IMG Platinum,2006,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,16,16,gold,IMG Gold,1614,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,16,16,silver,IMG Silver,1272,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,16,16,bronze_plus,IMG Bronze Plus,906,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,16,16,bronze,IMG Bronze,619,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,17,17,platinum,IMG Platinum,2041,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,17,17,gold,IMG Gold,1642,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,17,17,silver,IMG Silver,1293,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,17,17,bronze_plus,IMG Bronze Plus,920,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,17,17,bronze,IMG Bronze,631,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,18,18,platinum,IMG Platinum,2096,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,18,18,gold,IMG Gold,1686,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,18,18,silver,IMG Silver,1324,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,18,18,bronze_plus,IMG Bronze Plus,942,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,18,18,bronze,IMG Bronze,645,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,19,19,platinum,IMG Platinum,2147,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,19,19,gold,IMG Gold,1729,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,19,19,silver,IMG Silver,1357,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,19,19,bronze_plus,IMG Bronze Plus,966,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,19,19,bronze,IMG Bronze,662,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,20,20,platinum,IMG Platinum,2206,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,20,20,gold,IMG Gold,1770,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,20,20,silver,IMG Silver,1393,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,20,20,bronze_plus,IMG Bronze Plus,990,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,20,20,bronze,IMG Bronze,679,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,21,21,platinum,IMG Platinum,2284,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,21,21,gold,IMG Gold,1834,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,21,21,silver,IMG Silver,1437,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,21,21,bronze_plus,IMG Bronze Plus,1021,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,21,21,bronze,IMG Bronze,702,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,22,22,platinum,IMG Platinum,2363,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,22,22,gold,IMG Gold,1893,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,22,22,silver,IMG Silver,1486,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,22,22,bronze_plus,IMG Bronze Plus,1057,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,22,22,bronze,IMG Bronze,727,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,23,23,platinum,IMG Platinum,2449,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,23,23,gold,IMG Gold,1962,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,23,23,silver,IMG Silver,1536,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,23,23,bronze_plus,IMG Bronze Plus,1090,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,23,23,bronze,IMG Bronze,750,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,24,24,platinum,IMG Platinum,2536,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,24,24,gold,IMG Gold,2029,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,24,24,silver,IMG Silver,1588,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,24,24,bronze_plus,IMG Bronze Plus,1128,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,24,24,bronze,IMG Bronze,778,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,25,25,platinum,IMG Platinum,2594,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,25,25,gold,IMG Gold,2073,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,25,25,silver,IMG Silver,1625,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,25,25,bronze_plus,IMG Bronze Plus,1153,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,25,25,bronze,IMG Bronze,794,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,26,26,platinum,IMG Platinum,2652,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,26,26,gold,IMG Gold,2118,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,26,26,silver,IMG Silver,1657,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,26,26,bronze_plus,IMG Bronze Plus,1176,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,26,26,bronze,IMG Bronze,812,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,27,27,platinum,IMG Platinum,2715,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,27,27,gold,IMG Gold,2166,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,27,27,silver,IMG Silver,1695,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,27,27,bronze_plus,IMG Bronze Plus,1202,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,27,27,bronze,IMG Bronze,831,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,28,28,platinum,IMG Platinum,2779,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,28,28,gold,IMG Gold,2214,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,28,28,silver,IMG Silver,1735,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,28,28,bronze_plus,IMG Bronze Plus,1230,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,28,28,bronze,IMG Bronze,850,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,29,29,platinum,IMG Platinum,2845,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,29,29,gold,IMG Gold,2268,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,29,29,silver,IMG Silver,1773,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,29,29,bronze_plus,IMG Bronze Plus,1257,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,29,29,bronze,IMG Bronze,870,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,30,30,platinum,IMG Platinum,2912,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,30,30,gold,IMG Gold,2320,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,30,30,silver,IMG Silver,1813,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,30,30,bronze_plus,IMG Bronze Plus,1286,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,30,30,bronze,IMG Bronze,890,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,31,31,platinum,IMG Platinum,2979,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,31,31,gold,IMG Gold,2373,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,31,31,silver,IMG Silver,1855,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,31,31,bronze_plus,IMG Bronze Plus,1313,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,31,31,bronze,IMG Bronze,911,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,32,32,platinum,IMG Platinum,3048,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,32,32,gold,IMG Gold,2429,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,32,32,silver,IMG Silver,1896,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,32,32,bronze_plus,IMG Bronze Plus,1342,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,32,32,bronze,IMG Bronze,931,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,33,33,platinum,IMG Platinum,3124,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,33,33,gold,IMG Gold,2483,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,33,33,silver,IMG Silver,1940,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,33,33,bronze_plus,IMG Bronze Plus,1373,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,33,33,bronze,IMG Bronze,954,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,34,34,platinum,IMG Platinum,3196,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,34,34,gold,IMG Gold,2542,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,34,34,silver,IMG Silver,1983,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,34,34,bronze_plus,IMG Bronze Plus,1403,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,34,34,bronze,IMG Bronze,975,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,35,35,platinum,IMG Platinum,3256,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,35,35,gold,IMG Gold,2588,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,35,35,silver,IMG Silver,2021,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,35,35,bronze_plus,IMG Bronze Plus,1430,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,35,35,bronze,IMG Bronze,993,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,36,36,platinum,IMG Platinum,3314,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,36,36,gold,IMG Gold,2630,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,36,36,silver,IMG Silver,2053,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,36,36,bronze_plus,IMG Bronze Plus,1454,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,36,36,bronze,IMG Bronze,1010,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,37,37,platinum,IMG Platinum,3404,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,37,37,gold,IMG Gold,2702,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,37,37,silver,IMG Silver,2109,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,37,37,bronze_plus,IMG Bronze Plus,1493,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,37,37,bronze,IMG Bronze,1038,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,38,38,platinum,IMG Platinum,3499,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,38,38,gold,IMG Gold,2775,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,38,38,silver,IMG Silver,2164,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,38,38,bronze_plus,IMG Bronze Plus,1530,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,38,38,bronze,IMG Bronze,1064,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,39,39,platinum,IMG Platinum,3644,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,39,39,gold,IMG Gold,2887,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,39,39,silver,IMG Silver,2250,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,39,39,bronze_plus,IMG Bronze Plus,1589,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,39,39,bronze,IMG Bronze,1108,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,40,40,platinum,IMG Platinum,3797,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,40,40,gold,IMG Gold,3004,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,40,40,silver,IMG Silver,2339,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,40,40,bronze_plus,IMG Bronze Plus,1654,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,40,40,bronze,IMG Bronze,1154,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,41,41,platinum,IMG Platinum,3937,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,41,41,gold,IMG Gold,3114,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,41,41,silver,IMG Silver,2424,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,41,41,bronze_plus,IMG Bronze Plus,1712,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,41,41,bronze,IMG Bronze,1197,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,42,42,platinum,IMG Platinum,4081,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,42,42,gold,IMG Gold,3231,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,42,42,silver,IMG Silver,2515,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,42,42,bronze_plus,IMG Bronze Plus,1777,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,42,42,bronze,IMG Bronze,1241,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,43,43,platinum,IMG Platinum,4274,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,43,43,gold,IMG Gold,3375,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,43,43,silver,IMG Silver,2626,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,43,43,bronze_plus,IMG Bronze Plus,1854,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,43,43,bronze,IMG Bronze,1296,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,44,44,platinum,IMG Platinum,4473,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,44,44,gold,IMG Gold,3529,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,44,44,silver,IMG Silver,2745,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,44,44,bronze_plus,IMG Bronze Plus,1937,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,44,44,bronze,IMG Bronze,1356,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,45,45,platinum,IMG Platinum,4686,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,45,45,gold,IMG Gold,3694,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,45,45,silver,IMG Silver,2872,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,45,45,bronze_plus,IMG Bronze Plus,2026,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,45,45,bronze,IMG Bronze,1420,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,46,46,platinum,IMG Platinum,4905,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,46,46,gold,IMG Gold,3866,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,46,46,silver,IMG Silver,3005,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,46,46,bronze_plus,IMG Bronze Plus,2119,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,46,46,bronze,IMG Bronze,1485,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,47,47,platinum,IMG Platinum,5184,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,47,47,gold,IMG Gold,4081,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,47,47,silver,IMG Silver,3174,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,47,47,bronze_plus,IMG Bronze Plus,2237,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,47,47,bronze,IMG Bronze,1570,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,48,48,platinum,IMG Platinum,5481,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,48,48,gold,IMG Gold,4311,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,48,48,silver,IMG Silver,3345,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,48,48,bronze_plus,IMG Bronze Plus,2358,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,48,48,bronze,IMG Bronze,1656,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,49,49,platinum,IMG Platinum,5814,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,49,49,gold,IMG Gold,4572,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,49,49,silver,IMG Silver,3544,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,49,49,bronze_plus,IMG Bronze Plus,2496,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,49,49,bronze,IMG Bronze,1755,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,50,50,platinum,IMG Platinum,6178,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,50,50,gold,IMG Gold,4854,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,50,50,silver,IMG Silver,3764,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,50,50,bronze_plus,IMG Bronze Plus,2651,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,50,50,bronze,IMG Bronze,1865,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,51,51,platinum,IMG Platinum,6566,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,51,51,gold,IMG Gold,5154,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,51,51,silver,IMG Silver,3996,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,51,51,bronze_plus,IMG Bronze Plus,2812,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,51,51,bronze,IMG Bronze,1981,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,52,52,platinum,IMG Platinum,6968,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,52,52,gold,IMG Gold,5466,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,52,52,silver,IMG Silver,4233,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,52,52,bronze_plus,IMG Bronze Plus,2978,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,52,52,bronze,IMG Bronze,2101,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,53,53,platinum,IMG Platinum,7378,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,53,53,gold,IMG Gold,5780,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,53,53,silver,IMG Silver,4479,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,53,53,bronze_plus,IMG Bronze Plus,3152,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,53,53,bronze,IMG Bronze,2223,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,54,54,platinum,IMG Platinum,7834,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,54,54,gold,IMG Gold,6139,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,54,54,silver,IMG Silver,4753,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,54,54,bronze_plus,IMG Bronze Plus,3343,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,54,54,bronze,IMG Bronze,2360,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,55,55,platinum,IMG Platinum,8238,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,55,55,gold,IMG Gold,6450,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,55,55,silver,IMG Silver,4993,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,55,55,bronze_plus,IMG Bronze Plus,3511,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,55,55,bronze,IMG Bronze,2479,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,56,56,platinum,IMG Platinum,8662,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,56,56,gold,IMG Gold,6783,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,56,56,silver,IMG Silver,5246,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,56,56,bronze_plus,IMG Bronze Plus,3689,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,56,56,bronze,IMG Bronze,2607,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,57,57,platinum,IMG Platinum,9093,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,57,57,gold,IMG Gold,7117,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,57,57,silver,IMG Silver,5505,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,57,57,bronze_plus,IMG Bronze Plus,3868,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,57,57,bronze,IMG Bronze,2735,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,58,58,platinum,IMG Platinum,9532,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,58,58,gold,IMG Gold,7456,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,58,58,silver,IMG Silver,5766,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,58,58,bronze_plus,IMG Bronze Plus,4051,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,58,58,bronze,IMG Bronze,2867,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,59,59,platinum,IMG Platinum,9967,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,59,59,gold,IMG Gold,7793,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,59,59,silver,IMG Silver,6025,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,59,59,bronze_plus,IMG Bronze Plus,4234,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,59,59,bronze,IMG Bronze,2996,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,60,60,platinum,IMG Platinum,10535,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,60,60,gold,IMG Gold,8233,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,60,60,silver,IMG Silver,6366,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,60,60,bronze_plus,IMG Bronze Plus,4473,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,60,60,bronze,IMG Bronze,3166,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,61,61,platinum,IMG Platinum,11133,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,61,61,gold,IMG Gold,8698,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,61,61,silver,IMG Silver,6726,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,61,61,bronze_plus,IMG Bronze Plus,4723,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,61,61,bronze,IMG Bronze,3346,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,62,62,platinum,IMG Platinum,11827,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,62,62,gold,IMG Gold,9239,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,62,62,silver,IMG Silver,7138,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,62,62,bronze_plus,IMG Bronze Plus,5012,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,62,62,bronze,IMG Bronze,3552,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,63,63,platinum,IMG Platinum,12514,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,63,63,gold,IMG Gold,9774,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,63,63,silver,IMG Silver,7549,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,63,63,bronze_plus,IMG Bronze Plus,5300,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,63,63,bronze,IMG Bronze,3758,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,64,64,platinum,IMG Platinum,13208,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,64,64,gold,IMG Gold,10310,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,64,64,silver,IMG Silver,7962,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,64,64,bronze_plus,IMG Bronze Plus,5590,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,64,64,bronze,IMG Bronze,3963,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,65,65,platinum,IMG Platinum,13987,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,65,65,gold,IMG Gold,10914,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,65,65,silver,IMG Silver,8427,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,65,65,bronze_plus,IMG Bronze Plus,5915,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,65,65,bronze,IMG Bronze,4196,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,66,66,platinum,IMG Platinum,14947,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,66,66,gold,IMG Gold,11655,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,66,66,silver,IMG Silver,8999,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,66,66,bronze_plus,IMG Bronze Plus,6315,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,66,66,bronze,IMG Bronze,4483,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,67,67,platinum,IMG Platinum,15992,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,67,67,gold,IMG Gold,12471,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,67,67,silver,IMG Silver,9623,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,67,67,bronze_plus,IMG Bronze Plus,6753,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,67,67,bronze,IMG Bronze,4796,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,68,68,platinum,IMG Platinum,17112,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,68,68,gold,IMG Gold,13340,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,68,68,silver,IMG Silver,10293,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,68,68,bronze_plus,IMG Bronze Plus,7220,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,68,68,bronze,IMG Bronze,5129,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,69,69,platinum,IMG Platinum,18244,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,69,69,gold,IMG Gold,14216,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,69,69,silver,IMG Silver,10970,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,69,69,bronze_plus,IMG Bronze Plus,7695,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,69,69,bronze,IMG Bronze,5469,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,70,70,platinum,IMG Platinum,19399,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,70,70,gold,IMG Gold,15114,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,70,70,silver,IMG Silver,11661,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,70,70,bronze_plus,IMG Bronze Plus,8178,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,70,70,bronze,IMG Bronze,5814,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,71,71,platinum,IMG Platinum,20412,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,71,71,gold,IMG Gold,15900,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,71,71,silver,IMG Silver,12268,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,71,71,bronze_plus,IMG Bronze Plus,8603,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,71,71,bronze,IMG Bronze,6117,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,72,72,platinum,IMG Platinum,21364,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,72,72,gold,IMG Gold,16637,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,72,72,silver,IMG Silver,12836,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,72,72,bronze_plus,IMG Bronze Plus,9001,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,72,72,bronze,IMG Bronze,6401,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,73,73,platinum,IMG Platinum,22510,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,73,73,gold,IMG Gold,17531,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,73,73,silver,IMG Silver,13518,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,73,73,bronze_plus,IMG Bronze Plus,9479,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,73,73,bronze,IMG Bronze,6743,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,74,74,platinum,IMG Platinum,23606,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,74,74,gold,IMG Gold,18377,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,74,74,silver,IMG Silver,14172,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,74,74,bronze_plus,IMG Bronze Plus,9937,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,74,74,bronze,IMG Bronze,7069,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,75,75,platinum,IMG Platinum,24747,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,75,75,gold,IMG Gold,19267,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,75,75,silver,IMG Silver,14854,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,75,75,bronze_plus,IMG Bronze Plus,10413,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,75,75,bronze,IMG Bronze,7409,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,76,76,platinum,IMG Platinum,26050,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,76,76,gold,IMG Gold,20278,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,76,76,silver,IMG Silver,15633,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,76,76,bronze_plus,IMG Bronze Plus,10957,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,76,76,bronze,IMG Bronze,7800,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,77,77,platinum,IMG Platinum,27418,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,77,77,gold,IMG Gold,21338,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,77,77,silver,IMG Silver,16451,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,77,77,bronze_plus,IMG Bronze Plus,11532,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,77,77,bronze,IMG Bronze,8208,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,78,78,platinum,IMG Platinum,28864,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,78,78,gold,IMG Gold,22462,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,78,78,silver,IMG Silver,17314,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,78,78,bronze_plus,IMG Bronze Plus,12134,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,78,78,bronze,IMG Bronze,8640,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,79,79,platinum,IMG Platinum,30382,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,79,79,gold,IMG Gold,23640,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,79,79,silver,IMG Silver,18220,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,79,79,bronze_plus,IMG Bronze Plus,12770,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,79,79,bronze,IMG Bronze,9093,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,80,120,platinum,IMG Platinum,31986,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,80,120,gold,IMG Gold,24882,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,80,120,silver,IMG Silver,19178,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,80,120,bronze_plus,IMG Bronze Plus,13442,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.
+img,IMG,img_europe_2025_current,Greece,area1,80,120,bronze,IMG Bronze,9573,EUR,IMG Europe/Zone A legacy current dataset; EUR 150 base excess noted in source.

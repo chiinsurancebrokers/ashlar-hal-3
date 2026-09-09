@@ -1,0 +1,144 @@
+{
+  "morgan_price": {
+    "standard": {
+      "badge": "MP",
+      "coverage": "Full inpatient hospitalisation · Cancer care",
+      "annual_limit": "€500,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Essential international inpatient protection."
+    },
+    "standard_plus": {
+      "badge": "MP",
+      "coverage": "Full inpatient · Outpatient up to €2,500 · MRI/CT/PET",
+      "annual_limit": "€750,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Adds outpatient cover and diagnostic scans."
+    },
+    "comprehensive": {
+      "badge": "MP",
+      "coverage": "Full inpatient · Outpatient up to €5,000 · Dental · Mental health",
+      "annual_limit": "€1,000,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Broad outpatient and dental protection."
+    },
+    "premium": {
+      "badge": "MP",
+      "coverage": "Full inpatient · Outpatient up to €10,000 · Dental · Maternity",
+      "annual_limit": "€1,500,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Comprehensive plan with routine maternity."
+    },
+    "elite": {
+      "badge": "MP",
+      "coverage": "Full inpatient · Full outpatient · Dental · Maternity · Wellness",
+      "annual_limit": "€2,000,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Highest limits and broadest Evolution benefits."
+    }
+  },
+  "img": {
+    "bronze": {
+      "badge": "IMG",
+      "coverage": "International inpatient-focused medical cover",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Lower-cost international medical option."
+    },
+    "bronze_plus": {
+      "badge": "IMG",
+      "coverage": "Enhanced international inpatient medical cover",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Enhanced entry-level international protection."
+    },
+    "silver": {
+      "badge": "IMG",
+      "coverage": "International hospital and medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Balanced mid-range international option."
+    },
+    "gold": {
+      "badge": "IMG",
+      "coverage": "Higher-tier international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Broader international protection."
+    },
+    "platinum": {
+      "badge": "IMG",
+      "coverage": "Premium international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Premium IMG option for broader protection."
+    }
+  },
+  "april": {
+    "international": {
+      "badge": "APR",
+      "coverage": "International hospital and medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Core APRIL international medical option."
+    },
+    "intl_plus": {
+      "badge": "APR",
+      "coverage": "Enhanced international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Enhanced APRIL international option."
+    },
+    "intl_plus_nxs": {
+      "badge": "APR",
+      "coverage": "Enhanced international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "Alternative excess option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Enhanced APRIL cover with alternative excess structure."
+    },
+    "executive": {
+      "badge": "APR",
+      "coverage": "Higher-tier international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Executive-level international protection."
+    },
+    "executive_nxs": {
+      "badge": "APR",
+      "coverage": "Higher-tier international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "Alternative excess option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Executive cover with alternative excess structure."
+    },
+    "executive_plus": {
+      "badge": "APR",
+      "coverage": "Comprehensive international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "See selected option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Premium APRIL international option."
+    },
+    "executive_plus_nxs": {
+      "badge": "APR",
+      "coverage": "Comprehensive international medical protection",
+      "annual_limit": "See plan schedule",
+      "deductible": "Alternative excess option",
+      "evacuation": "Subject to current plan terms",
+      "why": "Premium APRIL cover with alternative excess structure."
+    }
+  }
+}
