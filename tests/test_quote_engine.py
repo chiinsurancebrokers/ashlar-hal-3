@@ -1,0 +1,80 @@
+from datetime import date
+
+from backend.app.core.config import Settings
+from backend.app.schemas.applicant import Applicant, Dependent
+from backend.app.rates.quote_engine import quote_current, quote_shortlist, quote_exclusions
+
+
+def _settings(**overrides) -> Settings:
+    return Settings(**overrides)
+
+
+def test_single_applicant_matches_original_v1_premium():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    quotes = quote_current(applicant, _settings())
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    assert standard.premium == 1490.80
+    assert standard.official_rate is True
+    assert standard.family_size == 1
+
+
+def test_maternity_hard_exclusion_visible_end_to_end():
+    applicant = Applicant(age=51, residence_country="Greece", coverage_area="area2", maternity_required=True)
+    quotes = quote_current(applicant, _settings())
+    codes = {q.product_code for q in quotes if q.insurer.startswith("Morgan Price")}
+    assert codes == {"premium", "elite"}, "lower tiers must be fully absent from quote_current, not merely ranked low"
+
+    excluded = quote_exclusions(applicant, _settings())
+    excluded_codes = {e["plan_key"].split(":")[1] for e in excluded if "morgan_price" in e["plan_key"]}
+    assert excluded_codes == {"standard", "standard_plus", "comprehensive"}
+    for e in excluded:
+        assert "Routine maternity" in e["gaps"]
+
+
+def test_family_quote_sums_and_requires_every_member_to_qualify():
+    applicant = Applicant(
+        age=42, residence_country="Greece", coverage_area="area1",
+        dependents=[Dependent(relationship="spouse", age=40), Dependent(relationship="child", age=8)],
+    )
+    quotes = quote_current(applicant, _settings())
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    assert standard.family_size == 3
+    assert len(standard.per_member_premiums) == 3
+    assert standard.premium == round(sum(standard.per_member_premiums) * 0.95, 2)  # default 5% family discount
+
+
+def test_deductible_model_off_by_default_matches_base_price():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1", deductible=1000, deductible_preference="fixed")
+    quotes = quote_current(applicant, _settings())
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    assert standard.premium == 1490.80  # unaffected: deductible_model_enabled defaults False
+    assert standard.deductible_note == "deductible_preference_not_used_in_pricing"
+
+
+def test_deductible_model_on_actually_changes_price():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1", deductible=1000, deductible_preference="fixed")
+    quotes = quote_current(applicant, _settings(deductible_model_enabled=True))
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    assert standard.premium < 1490.80
+    assert "illustrative_estimate" in standard.deductible_note
+
+
+def test_quote_validity_window():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    today = date(2026, 1, 1)
+    quotes = quote_current(applicant, _settings(quote_validity_days=30), today=today)
+    assert all(q.quoted_on == date(2026, 1, 1) for q in quotes)
+    assert all(q.valid_until == date(2026, 1, 31) for q in quotes)
+
+
+def test_shortlist_is_deduplicated_by_carrier_and_marks_recommended():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    shortlist = quote_shortlist(applicant, _settings(), limit=5)
+    assert shortlist[0].recommended is True
+    carriers_in_top3 = {q.insurer for q in shortlist[:3]}
+    assert len(carriers_in_top3) == len(shortlist[:3]), "first 3 shortlist entries must be from distinct carriers"
+
+
+def test_unsupported_residence_returns_no_quotes():
+    applicant = Applicant(age=40, residence_country="Germany", coverage_area="area1")
+    assert quote_current(applicant, _settings()) == []
