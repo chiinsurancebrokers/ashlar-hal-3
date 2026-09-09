@@ -1,0 +1,83 @@
+from fastapi.testclient import TestClient
+
+from backend.app.main import app
+
+client = TestClient(app)
+
+
+def test_health_endpoint():
+    r = client.get("/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["family_pricing"] == "active"
+
+
+def test_quotes_preview_real_data():
+    r = client.post("/api/v1/quotes/preview", json={"age": 40, "residence_country": "Greece", "coverage_area": "area1"})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["shortlist"]) > 0
+    assert any(q["insurer"].startswith("Morgan Price") for q in body["shortlist"])
+
+
+def test_quotes_preview_maternity_hard_exclusion_over_http():
+    r = client.post("/api/v1/quotes/preview", json={
+        "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,
+    })
+    assert r.status_code == 200
+    body = r.json()
+    codes = {q["product_code"] for q in body["shortlist"] if q["insurer"].startswith("Morgan Price")}
+    assert "standard" not in codes
+    assert "premium" in codes or "elite" in codes
+    excluded_codes = {e["plan_key"].split(":")[1] for e in body["exclusions"] if "morgan_price" in e["plan_key"]}
+    assert "standard" in excluded_codes
+
+
+def test_chat_turn_first_message_asks_age():
+    r = client.post("/api/v1/chat/turn", json={"message": "Hi, I need international health insurance", "state": {}, "history": []})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ai_status"] == "guided_discovery"
+    assert body["state"]["pending_question"] == "age"
+
+
+def test_lead_requires_consent():
+    r = client.post("/api/v1/leads", json={
+        "insurance_interest": "IPMI", "first_name": "Chris", "last_name": "T",
+        "email": "chris@example.com", "consent": False,
+    })
+    assert r.status_code == 400
+
+
+def test_lead_honeypot_silently_accepted():
+    r = client.post("/api/v1/leads", json={
+        "insurance_interest": "IPMI", "first_name": "Bot", "last_name": "T",
+        "email": "bot@example.com", "consent": True, "website": "http://spam.example",
+    })
+    assert r.status_code == 200
+    assert r.json()["reference"] == "HAL-SPAM-FILTERED"
+
+
+def test_lead_invalid_email_rejected_by_schema():
+    r = client.post("/api/v1/leads", json={
+        "insurance_interest": "IPMI", "first_name": "Chris", "last_name": "T",
+        "email": "not-an-email", "consent": True,
+    })
+    assert r.status_code == 422
+
+
+def test_comparison_rejects_forged_plan_key():
+    r = client.post("/api/v1/leads/comparison", json={
+        "name": "Chris", "email": "chris@example.com",
+        "applicant_state": {"age": 40, "residence_country": "Greece", "coverage_area": "area1"},
+        "plan_keys": ["fantasy_carrier:free_plan"],
+    })
+    assert r.status_code == 400
+
+
+def test_rate_limit_kicks_in_after_threshold():
+    for _ in range(20):
+        client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})
+    r = client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})
+    assert r.status_code == 429
