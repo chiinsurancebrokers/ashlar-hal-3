@@ -1,0 +1,23 @@
+{
+  "signals": {
+    "en": [
+      "i want the best hospitals available", "budget is secondary", "i want comprehensive protection",
+      "i want treatment in switzerland", "i want treatment in germany", "i want treatment in the uk",
+      "i want to keep the same policy if i relocate", "i want high annual limits", "broad outpatient",
+      "i want direct billing", "private room", "high net worth", "affluent", "business owner",
+      "entrepreneur", "family office", "executive", "top hospitals", "maximum coverage", "best coverage"
+    ],
+    "el": [
+      "τα καλύτερα νοσοκομεία", "το budget είναι δευτερεύον", "πλήρη κάλυψη",
+      "θέλω θεραπεία στην ελβετία", "θέλω θεραπεία στη γερμανία",
+      "να κρατήσω το ίδιο συμβόλαιο αν μετακομίσω", "υψηλά όρια κάλυψης",
+      "direct billing", "ιδιωτικό δωμάτιο", "εύπορ", "πλούσι", "επιχειρηματ", "στέλεχος",
+      "κορυφαία νοσοκομεία", "μέγιστη κάλυψη"
+    ]
+  },
+  "positioning": {
+    "cta_label": "Request a private consultation",
+    "framing_note": "When HNWI signals are detected, adjust language toward 'Private Client Recommendation' / 'comprehensive international protection' / 'priority: choice, continuity and global access' — without becoming flashy or salesy. This changes tone and CTA label only. It must never change which plans are eligible or their price — that remains entirely the deterministic engine's decision.",
+    "not_only_expats_note": "HNWI/affluent need for IPMI is not limited to people relocating internationally. An affluent local resident may want the same breadth of choice, limits and continuity."
+  }
+}

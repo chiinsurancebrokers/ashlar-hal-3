@@ -1,0 +1,66 @@
+{
+  "country": "Greece",
+  "as_of": "2026-09-10",
+  "review_note": "Figures sourced from OECD Health at a Glance 2025 (published Nov 2025) and Eurostat 2024 data (published 2025). Re-verify against primary sources at least annually — these are the kind of numbers that change with each annual release.",
+  "indicators": [
+    {
+      "id": "core_coverage",
+      "value": "100% of the population is covered for a core set of services in Greece",
+      "comparator": "OECD average is 98%",
+      "source": "OECD Health at a Glance 2025, Greece country note",
+      "source_url": "https://www.oecd.org/en/publications/health-at-a-glance-2025_15a55280-en/greece_8b1399f8-en.html"
+    },
+    {
+      "id": "satisfaction",
+      "value": "27% of people in Greece report satisfaction with the availability of quality healthcare",
+      "comparator": "OECD average is 64%",
+      "source": "OECD Health at a Glance 2025, Greece country note",
+      "source_url": "https://www.oecd.org/en/publications/health-at-a-glance-2025_15a55280-en/greece_8b1399f8-en.html"
+    },
+    {
+      "id": "mandatory_prepayment",
+      "value": "61% of health spending in Greece is covered by mandatory prepayment (public/social schemes)",
+      "comparator": "OECD average is 75%",
+      "source": "OECD Health at a Glance 2025, Greece country note",
+      "source_url": "https://www.oecd.org/en/publications/health-at-a-glance-2025_15a55280-en/greece_8b1399f8-en.html"
+    },
+    {
+      "id": "unmet_needs_oecd",
+      "value": "12.1% of people in Greece report unmet healthcare needs due to cost, distance or waiting times",
+      "comparator": "OECD average is 3.4%",
+      "source": "OECD Health at a Glance 2025",
+      "source_url": "https://www.oecd.org/en/publications/health-at-a-glance-2025_15a55280-en/greece_8b1399f8-en.html",
+      "denominator_note": "Denominator: the whole population aged 16+, regardless of whether they reported needing care. Do not merge this figure with unmet_needs_eu_profile below — they measure different populations and are not directly comparable."
+    },
+    {
+      "id": "unmet_needs_eu_profile",
+      "value": "21.9% — the highest share in the EU — of people in Greece who reported needing medical care said they could not get it",
+      "comparator": "EU average by this same measure is 3.6%",
+      "source": "Eurostat, 2024 data (hlth_silc_08b), as cited in the EU State of Health / Country Health Profile 2025 series",
+      "source_url": "https://ec.europa.eu/eurostat/web/products-eurostat-news/w/ddn-20250820-2",
+      "denominator_note": "Denominator: ONLY people who reported actually needing medical or dental care in the past 12 months. This is why the figure is much higher than unmet_needs_oecd above — narrower, more affected population."
+    },
+    {
+      "id": "out_of_pocket_share",
+      "value": "Households in Greece cover more than one third of total health spending directly out of pocket",
+      "comparator": "among the highest shares in the OECD, alongside Mexico, Chile and Latvia",
+      "source": "OECD Health at a Glance 2025",
+      "source_url": "https://www.oecd.org/en/publications/health-at-a-glance-2025_15a55280-en/greece_8b1399f8-en.html",
+      "caveat": "This measures direct household payment share of total health expenditure. It does NOT by itself prove people were uninsured, nor that a private contract rejected a claim — it includes co-payments, medicines, services outside any benefit package, and discretionary private choice of doctor/hospital."
+    }
+  ],
+  "argument_translations": [
+    {
+      "indicator": "unmet_needs_oecd",
+      "reads_as": "A meaningful share of the population faces real barriers to getting care when they need it — this is a description of access barriers, not a claim that private insurance eliminates them entirely."
+    },
+    {
+      "indicator": "out_of_pocket_share",
+      "reads_as": "A material part of healthcare in Greece is financed directly by households rather than pooled cover — insurance can improve financial predictability for the portion of spending it actually covers."
+    },
+    {
+      "indicator": "satisfaction",
+      "reads_as": "Availability of quality care, as experienced by residents, falls well short of what people in most other OECD countries report — this supports discussing alternative access routes, not disparaging the system."
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "position": "A well-designed comprehensive IPMI is generally the stronger fit for someone who wants maximum breadth, choice, higher limits and international flexibility — but this must be argued from the applicant's actual stated priorities and the real policy wording, never asserted as a blanket rule that international always beats local.",
+
+  "outpatient_first_argument": {
+    "summary": "For an applicant seeking genuinely comprehensive protection, a large share of real-world value sits BEFORE any hospital admission — in outpatient care. This is the argument to lead with, not worldwide geography alone.",
+    "categories": [
+      "specialist consultations",
+      "diagnostics (e.g. MRI/CT/PET) where covered",
+      "prescribed medicines, where covered",
+      "physiotherapy",
+      "mental-health treatment (psychologist/psychiatrist)",
+      "complementary therapies where the policy includes them (e.g. acupuncture, chiropractic, osteopathy) — tier-dependent, always confirm",
+      "dental",
+      "optical",
+      "wellness / preventive screening",
+      "maternity"
+    ],
+    "rule": "Never state a specific limit, sub-limit, waiting period or 'full refund' claim here. Those must always be pulled live from the evidence layer (verified_fact_texts) for the specific plan being discussed, never asserted generically or from memory."
+  },
+
+  "physician_fee_protection_argument": {
+    "summary": "A person can be insured and still face significant personal cost if their plan uses a fixed fee schedule or sub-limit for physician/surgeon fees and their chosen doctor charges more than that ceiling. Some IPMI plans instead use full-refund or reasonable-and-customary reimbursement — but this varies by plan and must always be checked against the actual wording, never assumed as a universal IPMI feature.",
+    "rule": "Always phrase this as 'may use' / 'some plans use', never 'international plans always use'. Confirm the specific plan's basis via the evidence layer before stating it as fact for that plan."
+  },
+
+  "access_route_arguments": {
+    "waiting_lists": "Where waiting-list pressure exists for consultations, diagnostics or elective procedures, private cover can provide an alternative access route to private providers — this is a claim about an additional route, not a guarantee of zero waiting.",
+    "out_of_pocket": "Where a material share of care is financed directly by households, insurance can improve financial predictability for the portion of spending the specific policy actually covers.",
+    "provider_choice": "Broader private-hospital and specialist choice, direct billing, and (where confirmed) international portability are real IPMI advantages for applicants who value control over where and how they are treated."
+  },
+
+  "local_review_playbook": {
+    "principle": "Never treat a request for local insurance as a reason to disengage. Treat it as a needs-discovery opportunity.",
+    "steps": [
+      "Briefly explain what a local private health plan is and when it can be sufficient.",
+      "Ask what specifically matters to the applicant: lower premium, Greece-only cover, private hospital access, outpatient breadth, family cover, etc.",
+      "Compare those stated needs against what IPMI typically adds.",
+      "If the needs are simple and purely domestic, say plainly that a local plan may be the more cost-effective and appropriate choice.",
+      "If the needs include high limits, broad outpatient, treatment abroad, portability, international networks, mental health, maternity or evacuation, explain why IPMI fits those needs better.",
+      "Never invent a local quote if no verified local rate/product data is loaded — offer to log the enquiry for a broker review instead."
+    ]
+  },
+
+  "hnwi_local_recognition": "The need for IPMI is not limited to expats. An affluent local resident or HNWI may want international cover for reasons such as: broader choice of private hospitals/specialists, planned treatment abroad, very high annual limits, comprehensive cover under one contract, continuity if they relocate, direct billing, international assistance services, private room, and general control over where and how they receive care."
+}

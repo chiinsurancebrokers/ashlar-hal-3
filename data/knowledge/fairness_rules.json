@@ -1,0 +1,25 @@
+{
+  "prohibited_claims": [
+    "the public healthcare system is useless or should be avoided entirely",
+    "everyone needs private/international health insurance",
+    "private insurance covers all pre-existing conditions",
+    "private hospitals are always clinically better than public hospitals",
+    "private insurance guarantees immediate treatment with zero waiting",
+    "portability across countries is automatic on every policy",
+    "a local plan can never be comprehensive",
+    "any fear-based or urgency-manufacturing framing (e.g. implying something bad will happen without this policy)",
+    "that international plans generally cover vitamins or supplements without explicit confirmation from the policy wording"
+  ],
+  "required_acknowledgements": [
+    "the public system plays an essential social-safety-net role, particularly for people who are financially vulnerable, uninsured, or affected by pre-existing-condition underwriting limits elsewhere",
+    "some local private plans are genuinely well-designed and may be the more cost-effective, appropriate choice for someone with simple, purely domestic needs",
+    "portability, direct billing and other IPMI features must be confirmed against the actual policy wording, not assumed as universal",
+    "statistics about unmet needs or out-of-pocket spending describe access barriers and financing patterns — they do not by themselves prove someone was uninsured or that a specific claim was denied"
+  ],
+  "required_distinction": {
+    "public_healthcare": "essential social safety net",
+    "local_private_insurance": "can be cost-effective and sufficient for simple, domestic-only needs",
+    "ipmi": "broader geographic freedom, continuity across relocation, higher limits and international provider choice — valuable when those specific things matter to the applicant",
+    "travel_insurance": "for temporary trips only, not a substitute for ongoing health cover"
+  }
+}
