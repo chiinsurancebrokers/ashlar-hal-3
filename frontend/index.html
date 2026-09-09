@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ashlar Assurance — HAL Insurance Adviser</title>
+<style>
+:root{
+  --navy:#0c1727; --navy-2:#172333; --white:#ffffff; --bg:#f5f7f9;
+  --border:#e7ebef; --text:#172333; --muted:#687586;
+  --accent:#5747e8; --accent-soft:#f3f0ff; --good:#1a7a4c;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:var(--white);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+header .brand{font-weight:700;letter-spacing:.08em;font-size:13px}
+header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd;font-size:11px;margin-top:2px}
+
+.progress-bar{display:flex;gap:6px;padding:10px 20px;background:var(--white);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)}
+.progress-step{flex:1;text-align:center;padding-bottom:6px;border-bottom:3px solid var(--border)}
+.progress-step.active{color:var(--navy);font-weight:700;border-color:var(--accent)}
+.progress-step.done{color:var(--good);border-color:var(--good)}
+
+.container{max-width:900px;margin:0 auto;padding:16px}
+
+.product-toggle{display:flex;gap:8px;justify-content:center;margin:14px 0}
+.product-btn{padding:10px 16px;border-radius:999px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;font-weight:600}
+.product-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+
+.needs-panel{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.needs-title{font-weight:700;font-size:13px}
+.needs-empty{color:var(--muted);font-size:13px}
+.need-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.need-chip{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:12px}
+.need-chip.must{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.edit-link{color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;background:none;border:none}
+
+#chat{min-height:200px;padding-bottom:120px}
+.msg{max-width:85%;margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.5}
+.msg.user{background:var(--navy);color:var(--white);margin-left:auto;border-bottom-right-radius:4px}
+.msg.hal{background:var(--white);border:1px solid var(--border);margin-right:auto;border-bottom-left-radius:4px}
+
+.thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding:8px 0}
+.thinking-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin-left:2px;animation:pulse 1.2s infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+
+.guided-choices{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.guided-choice{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
+
+.quotes-row{display:flex;gap:14px;overflow-x:auto;padding:10px 2px 16px;scroll-snap-type:x mandatory}
+@media(min-width:720px){.quotes-row{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible}}
+.quote-card{scroll-snap-align:start;flex:0 0 82%;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative}
+@media(min-width:720px){.quote-card{flex:none}}
+.quote-card.recommended{border-color:var(--accent);box-shadow:0 8px 24px rgba(87,71,232,.12)}
+.rec-ribbon{position:absolute;top:-10px;left:14px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px}
+.q-head{display:flex;align-items:center;gap:10px;margin-top:8px}
+.q-logo{width:36px;height:36px;border-radius:8px;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.q-plan{font-weight:700;font-size:14px}
+.q-provider{color:var(--muted);font-size:12px}
+.q-badges{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.q-badge{background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
+.q-price{font-size:22px;font-weight:800;margin-top:6px}
+.q-price span{font-size:12px;font-weight:400;color:var(--muted)}
+.q-month{font-size:12px;color:var(--muted);margin-bottom:8px}
+.q-divider{border-top:1px solid var(--border);margin:8px 0}
+.q-spec{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
+.q-spec b{display:block;color:var(--muted);font-weight:600}
+.q-checks{margin-top:8px;font-size:11px;color:var(--good)}
+.q-check{display:block}
+.q-why{font-size:12px;color:var(--muted);margin-top:8px}
+.q-note{font-size:11px;color:#a15c00;margin-top:6px}
+.q-actions{display:flex;gap:8px;margin-top:12px}
+.q-primary{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:10px;padding:10px;font-weight:700;font-size:13px;cursor:pointer}
+.q-secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer}
+.compare-pick{position:absolute;top:10px;right:10px;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:10px;padding:4px 8px;cursor:pointer}
+.compare-pick.selected{background:var(--accent);color:var(--white);border-color:var(--accent)}
+
+.excluded-wrap{margin:6px 0 16px}
+.excluded-btn{background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:0}
+.excluded-list{display:none;margin-top:8px;font-size:12px;color:var(--muted)}
+.excluded-list.open{display:block}
+.excluded-item{padding:6px 0;border-bottom:1px solid var(--border)}
+
+.lead-cta{display:block;width:100%;background:var(--accent);color:var(--white);border:none;border-radius:10px;padding:12px;font-weight:700;margin-top:10px;cursor:pointer}
+
+.compare-tray{position:fixed;bottom:90px;left:0;right:0;background:var(--navy);color:var(--white);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:40}
+.compare-tray.show{display:flex}
+.compare-tray button{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+
+.composer{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:50}
+.composer input{flex:1;border:1px solid var(--border);border-radius:999px;padding:12px 16px;font-size:14px}
+.composer button{background:var(--navy);color:var(--white);border:none;border-radius:999px;padding:0 20px;font-weight:700;cursor:pointer}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(12,23,39,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:22px;max-width:520px;width:100%;max-height:85vh;overflow:auto}
+.modal h3{margin-top:0}
+.modal label{display:block;font-size:12px;font-weight:700;margin:10px 0 4px}
+.modal input,.modal select,.modal textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions button{flex:1;padding:11px;border-radius:9px;font-weight:700;cursor:pointer;border:none}
+.btn-primary{background:var(--navy);color:var(--white)}
+.btn-secondary{background:var(--bg);border:1px solid var(--border) !important}
+.need-toggle-box{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.honeypot{position:absolute;left:-9999px;opacity:0}
+.compare-table{width:100%;border-collapse:collapse;font-size:12px}
+.compare-table td,.compare-table th{border-bottom:1px solid var(--border);padding:8px;text-align:left}
+.trust-line{text-align:center;font-size:11px;color:var(--muted);padding:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">ASHLAR ASSURANCE<small>HAL Insurance Adviser</small></div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-step" id="ps1">1 Understand needs</div>
+  <div class="progress-step" id="ps2">2 Compare plans</div>
+  <div class="progress-step" id="ps3">3 Request proposal</div>
+</div>
+
+<div class="container">
+  <div class="product-toggle">
+    <button class="product-btn active" id="btnHealth" onclick="setJourney('ipmi')">🏥 Health Insurance</button>
+    <button class="product-btn" id="btnTravel" onclick="setJourney('travel')">✈️ Travel Insurance</button>
+  </div>
+
+  <div class="needs-panel">
+    <div>
+      <div class="needs-title">Your needs</div>
+      <div id="needsBody" class="needs-empty">Tell HAL what matters to you.</div>
+    </div>
+    <button class="edit-link" onclick="openNeedsEditor()">Edit</button>
+  </div>
+
+  <div id="chat"></div>
+</div>
+
+<div class="compare-tray" id="compareTray">
+  <span id="compareCount">0 plans selected</span>
+  <div style="display:flex;gap:8px">
+    <button onclick="compareSelected.clear();renderState()" style="background:transparent;color:#fff">Clear</button>
+    <button onclick="openCompare()">Compare</button>
+  </div>
+</div>
+
+<div class="composer">
+  <input id="input" placeholder="Tell HAL what you need..." onkeydown="if(event.key==='Enter')sendMessage()">
+  <button onclick="sendMessage()" id="sendBtn">Send</button>
+</div>
+
+<!-- Needs editor modal -->
+<div class="modal-backdrop" id="needsModal" onclick="if(event.target===this)closeModal('needsModal')">
+  <div class="modal">
+    <h3>Edit your needs</h3>
+    <label>Age</label><input type="number" id="needAge">
+    <label>Country of residence</label><input id="needResidence" value="Greece">
+    <label>Coverage area</label>
+    <select id="needArea">
+      <option value="area1">Europe</option>
+      <option value="area2">Worldwide excl. USA, Singapore, HK, China</option>
+      <option value="area3">Worldwide excl. USA</option>
+      <option value="area4">Worldwide incl. USA</option>
+    </select>
+    <label>Annual budget (optional)</label><input type="number" id="needBudget">
+    <label>Must-haves</label>
+    <div class="need-toggle-box" id="needToggleBox"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('needsModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveNeeds()">Save & recalculate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Compare modal -->
+<div class="modal-backdrop" id="compareModal" onclick="if(event.target===this)closeModal('compareModal')">
+  <div class="modal" style="max-width:760px">
+    <h3>Compare plans</h3>
+    <div id="compareContent"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('compareModal')">Close</button>
+      <button class="btn-primary" onclick="openComparisonEmail()">✉ Send me this comparison</button>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison email modal -->
+<div class="modal-backdrop" id="emailModal" onclick="if(event.target===this)closeModal('emailModal')">
+  <div class="modal">
+    <h3>Email me this comparison</h3>
+    <label>Name</label><input id="emailName">
+    <label>Email</label><input id="emailAddress" type="email">
+    <p style="font-size:11px;color:var(--muted)">All figures are recalculated by our server before sending — this is always the current, accurate premium.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
+      <button class="btn-primary" onclick="sendComparisonEmail()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lead form modal -->
+<div class="modal-backdrop" id="leadModal" onclick="if(event.target===this)closeModal('leadModal')">
+  <div class="modal">
+    <h3 id="leadTitle">Request a proposal</h3>
+    <p id="leadSubtitle" style="color:var(--muted);font-size:13px">Tell us about you and Ashlar will follow up.</p>
+    <label>First name</label><input id="leadFirstName">
+    <label>Last name</label><input id="leadLastName">
+    <label>Email</label><input id="leadEmail" type="email">
+    <label>Country of residence</label><input id="leadResidence">
+    <label>Age</label><input id="leadAge" type="number">
+    <label>Coverage area / destination</label><input id="leadCoverage">
+    <label>Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
+    <label>Approx. annual budget</label><input id="leadBudget">
+    <label>Anything else you want us to know?</label>
+    <textarea id="leadMessage" rows="3" placeholder="Please do not enter detailed medical records or sensitive medical history here."></textarea>
+    <input class="honeypot" id="leadWebsite" tabindex="-1" autocomplete="off">
+    <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
+      <input type="checkbox" id="leadConsent" style="width:auto;margin-top:3px">
+      <span>I agree that Ashlar Assurance may use the information above to contact me about my insurance enquiry. This form is not an insurance application and does not confirm cover.</span>
+    </label>
+    <div id="leadStatus" style="font-size:12px;margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('leadModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitLead()">Send enquiry</button>
+    </div>
+  </div>
+</div>
+
+<div class="trust-line">✓ Independent advice &nbsp; ✓ Multiple insurers &nbsp; ✓ Verified plan data</div>
+
+<script>
+const API = '/api/v1';
+let state = {};
+let history = [];
+let currentJourney = 'ipmi';
+let lastQuotes = [];
+let excludedPlans = [];
+const compareSelected = new Set();
+
+const MUST_FIELDS = {
+  outpatient_required:'Outpatient', maternity_required:'Maternity', dental_required:'Dental',
+  mental_health_required:'Mental health', wellness_required:'Wellness', optical_required:'Optical',
+  evacuation_required:'Evacuation', chronic_required:'Chronic cover',
+};
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
+function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
+
+function setJourney(j){
+  currentJourney = j;
+  document.getElementById('btnHealth').classList.toggle('active', j!=='travel');
+  document.getElementById('btnTravel').classList.toggle('active', j==='travel');
+  if (j === 'travel') {
+    addMsg("Travel insurance is being built right now — I can log your details for a broker to follow up.", 'hal');
+  }
+}
+
+function renderState(){
+  // Needs chips
+  const box = document.getElementById('needsBody');
+  const chips = [];
+  if (state.age) chips.push(['Age '+state.age, false]);
+  if (state.residence_country) chips.push([state.residence_country, false]);
+  if (state.coverage_area) chips.push([areaLabel(state.coverage_area), false]);
+  if (state.budget_annual) chips.push([money(state.budget_annual)+'/yr budget', false]);
+  Object.entries(MUST_FIELDS).forEach(([k,label]) => { if (state[k]) chips.push([label, true]); });
+  box.innerHTML = chips.length
+    ? '<div class="need-chips">' + chips.map(([l,must]) => `<span class="need-chip ${must?'must':''}">${esc(l)}</span>`).join('') + '</div>'
+    : 'Tell HAL what matters to you.';
+
+  // Progress
+  let step = 1;
+  if (lastQuotes.length) step = 2;
+  ['ps1','ps2','ps3'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('active', i+1===step);
+    el.classList.toggle('done', i+1<step);
+  });
+
+  // Compare tray
+  const n = compareSelected.size;
+  document.getElementById('compareCount').textContent = `${n} plan${n===1?'':'s'} selected`;
+  document.getElementById('compareTray').classList.toggle('show', n>=2);
+}
+
+function areaLabel(a){
+  return {area1:'Europe',area2:'Worldwide excl. USA/SG/HK/CN',area3:'Worldwide excl. USA',area4:'Worldwide incl. USA'}[a] || a;
+}
+
+function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickReplies=[]) {
+  const chat = document.getElementById('chat');
+  const box = document.createElement('div');
+  box.className = 'msg ' + who;
+  let html = esc(text).replace(/\n/g,'<br>');
+
+  if (quotes && quotes.length) {
+    html += '<div class="quotes-row">' + quotes.map((q,i) => renderQuoteCard(q,i)).join('') + '</div>';
+    if (excluded && excluded.length) {
+      html += `<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">Why were ${excluded.length} plan${excluded.length===1?'':'s'} excluded?</button>
+        <div class="excluded-list">${excluded.map(e => `<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).join(', '))}</div>`).join('')}</div></div>`;
+    }
+  }
+  if (leadCta && leadCta.show) {
+    let label = leadCta.label || 'Request a proposal';
+    if (state.client_segment === 'hnwi') label = 'Request a private consultation';
+    html += `<button class="lead-cta" onclick="openLeadForm('${esc(leadCta.journey)}')">${esc(label)}</button>`;
+  }
+  if (quickReplies && quickReplies.length) {
+    html += '<div class="guided-choices">' + quickReplies.map(r => `<button class="guided-choice" onclick="sendQuickReply('${encodeURIComponent(r.value)}')">${esc(r.label)}</button>`).join('') + '</div>';
+  }
+  box.innerHTML = html;
+  chat.appendChild(box);
+  window.scrollTo(0, document.body.scrollHeight);
+  renderState();
+}
+
+function renderQuoteCard(q, i) {
+  const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
+  const selected = compareSelected.has(key);
+  return `<div class="quote-card ${q.recommended?'recommended':''}">
+    ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
+    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}')">${selected?'✓ Selected':'+ Compare'}</button>
+    <div class="q-head">
+      <div class="q-logo">${esc(q.card_badge || 'PLAN')}</div>
+      <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
+    </div>
+    <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
+    <div class="q-price">${money(annual,q.currency)}<span>/year</span></div>
+    <div class="q-month">${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}</div>
+    <div class="q-divider"></div>
+    <div class="q-spec">
+      <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>
+      <div><b>Annual limit</b>${esc(q.card_annual_limit||'—')}</div>
+      <div><b>Deductible</b>${esc(q.card_deductible||'—')}</div>
+      <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
+    </div>
+    ${(q.must_have_checks||[]).length ? `<div class="q-checks">${q.must_have_checks.map(c => `<span class="q-check">✓ ${esc(c)}</span>`).join('')}</div>` : ''}
+    <div class="q-why">${esc(q.card_why||'')}</div>
+    ${q.client_note ? `<div class="q-note">${esc(q.client_note)}</div>` : ''}
+    <div class="q-actions">
+      <button class="q-primary" onclick="openLeadForm(currentJourney)">Get proposal</button>
+      <button class="q-secondary" onclick="tellMeMore(${i})">Tell me more</button>
+    </div>
+  </div>`;
+}
+
+function toggleCompare(key){
+  if (compareSelected.has(key)) compareSelected.delete(key); else compareSelected.add(key);
+  renderState();
+  // Re-render last message's cards to reflect selection state
+  const cards = document.querySelectorAll('.compare-pick');
+  cards.forEach(btn => {
+    // no-op: simplest correct approach is a full re-render on next message;
+    // for immediate visual feedback we just toggle this button directly.
+  });
+}
+
+function tellMeMore(i){
+  const q = lastQuotes[i];
+  if (!q) return;
+  const facts = (q.verified_facts||[]).slice(0,6).map(f => '• '+f).join('\n') || 'No additional verified facts loaded for this plan yet.';
+  addMsg(`${q.product_name} (${q.insurer})\n\n${facts}`, 'hal');
+}
+
+function openCompare(){
+  const plans = lastQuotes.filter(q => compareSelected.has(qkey(q)));
+  const content = document.getElementById('compareContent');
+  if (!plans.length) { content.innerHTML = '<p>Select at least 2 plans to compare.</p>'; }
+  else {
+    const rows = [
+      ['Annual premium', p => money(p.premium,p.currency)],
+      ['Monthly', p => money(p.premium/12,p.currency)],
+      ['Coverage', p => p.card_coverage],
+      ['Annual limit', p => p.card_annual_limit],
+      ['Deductible', p => p.card_deductible],
+      ['Evacuation', p => p.card_evacuation],
+      ['Why it fits', p => p.card_why],
+      ['Must-haves', p => (p.must_have_checks||[]).length ? '✓ '+p.must_have_checks.join(', ') : 'To confirm'],
+    ];
+    let html = '<table class="compare-table"><tr><th>Plan</th>' + plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
+    rows.forEach(([label,fn]) => { html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>'; });
+    html += '</table>';
+    content.innerHTML = html;
+  }
+  document.getElementById('compareModal').classList.add('open');
+}
+
+function openComparisonEmail(){
+  document.getElementById('compareModal').classList.remove('open');
+  document.getElementById('emailModal').classList.add('open');
+}
+
+async function sendComparisonEmail(){
+  const name = document.getElementById('emailName').value.trim();
+  const email = document.getElementById('emailAddress').value.trim();
+  if (!email) { alert('Please enter an email address.'); return; }
+  try {
+    const r = await fetch(API+'/leads/comparison', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, applicant_state: state, plan_keys: [...compareSelected]})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Could not send comparison.');
+    closeModal('emailModal');
+    addMsg('Sent! Check your inbox for the comparison — the figures were recalculated by our server just now.', 'hal');
+  } catch(e) { alert(e.message); }
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function openNeedsEditor(){
+  document.getElementById('needAge').value = state.age || '';
+  document.getElementById('needResidence').value = state.residence_country || 'Greece';
+  document.getElementById('needArea').value = state.coverage_area || 'area1';
+  document.getElementById('needBudget').value = state.budget_annual || '';
+  document.getElementById('needToggleBox').innerHTML = Object.entries(MUST_FIELDS).map(([k,label]) =>
+    `<button type="button" class="need-chip ${state[k]?'must':''}" data-field="${k}" onclick="this.classList.toggle('must')">${esc(label)}</button>`
+  ).join('');
+  document.getElementById('needsModal').classList.add('open');
+}
+
+async function saveNeeds(){
+  state.age = Number(document.getElementById('needAge').value || 0) || undefined;
+  state.residence_country = document.getElementById('needResidence').value.trim() || 'Greece';
+  state.coverage_area = document.getElementById('needArea').value;
+  const b = Number(document.getElementById('needBudget').value || 0);
+  if (b) state.budget_annual = b; else delete state.budget_annual;
+  Object.keys(MUST_FIELDS).forEach(k => state[k] = false);
+  document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el => state[el.dataset.field] = true);
+  closeModal('needsModal');
+  renderState();
+  if (!state.age || !state.residence_country || !state.coverage_area) return;
+
+  try {
+    const r = await fetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Could not recalculate.');
+    lastQuotes = d.shortlist || [];
+    excludedPlans = d.exclusions || [];
+    addMsg('I updated the shortlist using your edited needs.', 'hal', lastQuotes, excludedPlans, {show:true, journey:currentJourney, label:'Request a proposal'});
+  } catch(e) { addMsg('I could not recalculate the shortlist just now. Please try again.', 'hal'); }
+}
+
+function sendQuickReply(encodedValue){
+  document.getElementById('input').value = decodeURIComponent(encodedValue);
+  sendMessage();
+}
+
+function showThinking(label){
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = 'thinking'; el.id = 'thinkingEl';
+  el.innerHTML = `<span>${esc(label)}</span><span class="thinking-dots"><span></span><span></span><span></span></span>`;
+  chat.appendChild(el);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+function removeThinking(){ const el = document.getElementById('thinkingEl'); if (el) el.remove(); }
+
+async function sendMessage(){
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg(text, 'user');
+  history.push({role:'user', content:text});
+  input.value = '';
+  document.getElementById('sendBtn').disabled = true;
+  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
+  showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
+
+  try {
+    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
+    const d = await r.json();
+    removeThinking();
+    if (!r.ok) throw new Error(d.detail || 'HAL service error');
+    state = d.state || state;
+    currentJourney = d.journey || currentJourney;
+    lastQuotes = d.quotes || [];
+    excludedPlans = d.excluded_plans || [];
+    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || []);
+    history.push({role:'assistant', content: d.reply || ''});
+  } catch(e) {
+    removeThinking();
+    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
+  }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function openLeadForm(journey){
+  currentJourney = journey || currentJourney;
+  const titles = {ipmi:['Request a proposal','Tell us about you and Ashlar will follow up.'],
+                   travel:['Travel insurance enquiry','Tell us about your trip and Ashlar will follow up.'],
+                   local_review:['Request a local-vs-international review','Tell us your priorities and Ashlar will follow up.']};
+  const [title, sub] = titles[journey] || titles.ipmi;
+  document.getElementById('leadTitle').textContent = state.client_segment==='hnwi' ? 'Request a private consultation' : title;
+  document.getElementById('leadSubtitle').textContent = sub;
+  if (state.residence_country) document.getElementById('leadResidence').value = state.residence_country;
+  if (state.age) document.getElementById('leadAge').value = state.age;
+  if (state.coverage_area) document.getElementById('leadCoverage').value = areaLabel(state.coverage_area);
+  if (state.budget_annual) document.getElementById('leadBudget').value = state.budget_annual;
+  document.getElementById('leadStatus').textContent = '';
+  document.getElementById('leadModal').classList.add('open');
+}
+
+async function submitLead(){
+  const payload = {
+    insurance_interest: currentJourney === 'travel' ? 'Travel Insurance' : 'International Health Insurance',
+    first_name: document.getElementById('leadFirstName').value.trim(),
+    last_name: document.getElementById('leadLastName').value.trim(),
+    email: document.getElementById('leadEmail').value.trim(),
+    residence_country: document.getElementById('leadResidence').value.trim(),
+    age: document.getElementById('leadAge').value.trim(),
+    coverage_area: document.getElementById('leadCoverage').value.trim(),
+    family_members: document.getElementById('leadFamily').value.trim(),
+    budget: document.getElementById('leadBudget').value.trim(),
+    message: document.getElementById('leadMessage').value.trim(),
+    consent: document.getElementById('leadConsent').checked,
+    website: document.getElementById('leadWebsite').value,
+  };
+  const status = document.getElementById('leadStatus');
+  if (!payload.first_name || !payload.last_name || !payload.email) { status.textContent = 'Please fill in your name and email.'; status.style.color = '#b3261e'; return; }
+  if (!payload.consent) { status.textContent = 'Please confirm consent to proceed.'; status.style.color = '#b3261e'; return; }
+  status.textContent = 'Sending...'; status.style.color = 'var(--muted)';
+  try {
+    const r = await fetch(API+'/leads', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Could not send enquiry.');
+    status.textContent = 'Sent! Reference: ' + (d.reference || ''); status.style.color = 'var(--good)';
+    setTimeout(() => closeModal('leadModal'), 1400);
+  } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; }
+}
+
+// Initial greeting
+addMsg("Hi, I'm HAL, Ashlar's insurance adviser. Are you looking for international health insurance, or something else?", 'hal');
+renderState();
+</script>
+</body>
+</html>
