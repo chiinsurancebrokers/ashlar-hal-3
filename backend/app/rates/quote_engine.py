@@ -116,6 +116,7 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
 
         quotes.append(QuoteResult(
             insurer=carrier_name, product_code=product_code, product_name=member_rows[0].product_name,  # type: ignore[union-attr]
+            plan_key=f"{carrier}:{product_code}",
             eligible=True,
             base_premium=base_each[0],
             premium=family_quote.total,

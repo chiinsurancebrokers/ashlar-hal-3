@@ -365,27 +365,57 @@ function tellMeMore(i){
   addMsg(`${q.product_name} (${q.insurer})\n\n${facts}`, 'hal');
 }
 
-function openCompare(){
-  const plans = lastQuotes.filter(q => compareSelected.has(qkey(q)));
+async function openCompare(){
   const content = document.getElementById('compareContent');
-  if (!plans.length) { content.innerHTML = '<p>Select at least 2 plans to compare.</p>'; }
-  else {
-    const rows = [
-      ['Annual premium', p => money(p.premium,p.currency)],
-      ['Monthly', p => money(p.premium/12,p.currency)],
-      ['Coverage', p => p.card_coverage],
-      ['Annual limit', p => p.card_annual_limit],
-      ['Deductible', p => p.card_deductible],
-      ['Evacuation', p => p.card_evacuation],
-      ['Why it fits', p => p.card_why],
-      ['Must-haves', p => (p.must_have_checks||[]).length ? '✓ '+p.must_have_checks.join(', ') : 'To confirm'],
-    ];
-    let html = '<table class="compare-table"><tr><th>Plan</th>' + plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
-    rows.forEach(([label,fn]) => { html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>'; });
-    html += '</table>';
-    content.innerHTML = html;
-  }
+  content.innerHTML = '<p style="color:var(--muted)">Building your detailed comparison…</p>';
   document.getElementById('compareModal').classList.add('open');
+
+  try {
+    const r = await fetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected]})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Could not build the comparison.');
+    content.innerHTML = renderDetailedCompare(d);
+  } catch(e) {
+    content.innerHTML = `<p style="color:#b3261e">${esc(e.message)}</p>`;
+  }
+}
+
+function renderDetailedCompare(d){
+  const plans = d.plans, matrix = d.matrix;
+  const summaryRows = [
+    ['Annual premium', p => money(p.premium, p.currency)],
+    ['Monthly', p => money(p.premium/12, p.currency)],
+    ['Coverage area', p => p.coverage_area_label],
+    ['Annual limit', p => p.card_annual_limit],
+    ['Deductible', p => p.card_deductible],
+  ];
+  let html = '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
+    plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
+  summaryRows.forEach(([label,fn]) => {
+    html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';
+  });
+  matrix.rows.forEach(row => {
+    html += `<tr><td>${esc(row.label)}</td>` + plans.map(p => {
+      const v = row.values[p.plan_key];
+      const dim = (v === 'Not confirmed') ? 'style="color:var(--muted)"' : '';
+      return `<td ${dim}>${esc(v || '—')}</td>`;
+    }).join('') + '</tr>';
+  });
+  html += '</table>';
+
+  if (d.unsupported_note) {
+    html += `<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(d.unsupported_note)}</p>`;
+  }
+  html += `<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px">
+    <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">Σύντομο Συμπέρασμα</div>
+    <div style="font-size:13px">${esc(d.conclusion)}</div>
+  </div>`;
+  html += `<p style="font-size:10px;color:var(--muted);margin-top:12px">
+    Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί
+    συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους/εξαιρέσεις κάθε πλάνου. Υπόκειται σε έγκριση αναδοχής (underwriting approval).
+  </p>`;
+  return html;
 }
 
 function openComparisonEmail(){

@@ -161,6 +161,67 @@ def _deterministic_plan_summary(quote: QuoteResult, greek: bool) -> str:
     return f"{quote.product_name} ({quote.insurer}): {quote.currency} {quote.premium:,.2f}/year. {facts}"
 
 
+def build_comparison_conclusion_instructions(matrix_rows: list[dict], plan_labels: dict[str, str], greek: bool) -> str:
+    """Mirrors the 'Σύντομο Συμπέρασμα' pattern from the Ashlar comparison
+    PDF: 1-3 short bullet points summarising genuine trade-offs. The ONLY
+    facts available are the matrix rows passed in — never general knowledge
+    about these insurers."""
+    labels = "\n".join(f"- {k}: {v}" for k, v in plan_labels.items())
+    rows_text = "\n".join(
+        f"- {r['label']}: " + "; ".join(f"{plan_labels.get(k, k)}={v}" for k, v in r["values"].items())
+        for r in matrix_rows
+    ) or "(no comparable verified benefit rows)"
+
+    return f"""You are HAL, writing a short comparison conclusion in {"Greek" if greek else "English"}, in the style of:
+"Plan A is cheaper and includes X from day one, but has a lower outpatient limit and no Y."
+"Plan B has a materially higher overall limit and includes Z, but does not cover W at this tier."
+
+Plans being compared:
+{labels}
+
+The ONLY verified data you may reference:
+{rows_text}
+
+Hard rules:
+- 2-3 short sentences maximum, one genuine trade-off framing per plan.
+- Never state a number, benefit or limit not present in the data above.
+- If a row says "Not confirmed" for a plan, either omit it or say explicitly that it is not confirmed for that plan — never guess a value.
+- No sales pressure, no superlatives beyond what the data supports.
+
+{_fairness_clause()}
+"""
+
+
+async def comparison_conclusion(matrix_rows: list[dict], plan_labels: dict[str, str], greek: bool) -> str:
+    try:
+        text = await adviser_response(
+            instructions=build_comparison_conclusion_instructions(matrix_rows, plan_labels, greek),
+            message="Write the comparison conclusion.", max_output_tokens=300,
+        )
+        if fairness_check(text):
+            return _deterministic_comparison_conclusion(matrix_rows, plan_labels, greek)
+        return text
+    except Exception:
+        return _deterministic_comparison_conclusion(matrix_rows, plan_labels, greek)
+
+
+def _deterministic_comparison_conclusion(matrix_rows: list[dict], plan_labels: dict[str, str], greek: bool) -> str:
+    """Network-free fallback: purely mechanical, but still never invents
+    anything — it only ever restates rows that are already in the matrix."""
+    if not matrix_rows or len(plan_labels) < 2:
+        return ("Δεν υπάρχουν αρκετά επαληθευμένα στοιχεία για σύγκριση αυτή τη στιγμή."
+                if greek else "There isn't enough verified data to compare these plans yet.")
+    keys = list(plan_labels.keys())
+    parts = []
+    for key in keys:
+        confirmed = [r["label"] for r in matrix_rows if r["values"].get(key, "Not confirmed") != "Not confirmed"]
+        if confirmed:
+            sample = ", ".join(confirmed[:3])
+            parts.append((f"{plan_labels[key]}: επιβεβαιωμένη κάλυψη σε {sample}." if greek
+                           else f"{plan_labels[key]}: verified cover confirmed for {sample}."))
+    return " ".join(parts) or ("Επαληθεύστε τα στοιχεία στον πίνακα παρακάτω." if greek else "Please review the table below for verified details.")
+
+
 def build_local_review_instructions(greek: bool) -> str:
     playbook = international_vs_local()["local_review_playbook"]
     steps = "\n".join(f"{i+1}. {s}" for i, s in enumerate(playbook["steps"]))

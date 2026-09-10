@@ -76,6 +76,27 @@ def test_comparison_rejects_forged_plan_key():
     assert r.status_code == 400
 
 
+def test_quotes_compare_returns_detailed_matrix_and_conclusion():
+    r = client.post("/api/v1/quotes/compare", json={
+        "applicant_state": {"age": 40, "residence_country": "Greece", "coverage_area": "area1"},
+        "plan_keys": ["morgan_price:standard", "morgan_price:premium"],
+    })
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["plans"]) == 2
+    assert len(body["matrix"]["rows"]) > 10
+    assert body["conclusion"]
+    assert body["unsupported_note"] is None
+
+
+def test_quotes_compare_rejects_single_plan():
+    r = client.post("/api/v1/quotes/compare", json={
+        "applicant_state": {"age": 40, "residence_country": "Greece", "coverage_area": "area1"},
+        "plan_keys": ["morgan_price:standard"],
+    })
+    assert r.status_code == 422  # min_length=2 on plan_keys
+
+
 def test_rate_limit_kicks_in_after_threshold():
     for _ in range(20):
         client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})

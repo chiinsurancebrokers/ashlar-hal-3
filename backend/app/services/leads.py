@@ -9,7 +9,7 @@ import httpx
 
 from backend.app.core.config import get_settings, Settings
 from backend.app.schemas.applicant import Applicant
-from backend.app.rates.quote_engine import quote_shortlist
+from backend.app.rates.quote_engine import quote_current
 from backend.app.schemas.quote import QuoteResult
 
 
@@ -130,8 +130,8 @@ async def send_lead(payload: dict) -> dict:
 def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: Settings) -> list[QuoteResult]:
     fields = {k: v for k, v in (applicant_state or {}).items() if k in Applicant.model_fields}
     applicant = Applicant(**fields)
-    shortlist = quote_shortlist(applicant, settings, limit=10)
-    by_key = {q.plan_key: q for q in shortlist if q.plan_key}
+    all_current = quote_current(applicant, settings)
+    by_key = {q.plan_key: q for q in all_current if q.plan_key}
     selected = [by_key[k] for k in plan_keys if k in by_key]
     if not selected:
         raise ValueError("None of the requested plan_keys match a currently eligible plan for this applicant.")
