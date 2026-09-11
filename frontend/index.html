@@ -52,35 +52,37 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 
 .quotes-row{display:flex;gap:14px;overflow-x:auto;padding:10px 2px 16px;scroll-snap-type:x mandatory}
 @media(min-width:720px){.quotes-row{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible}}
-.quote-card{scroll-snap-align:start;flex:0 0 82%;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative}
+.quote-card{scroll-snap-align:start;flex:0 0 82%;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
 @media(min-width:720px){.quote-card{flex:none}}
-.quote-card.recommended{border-color:var(--accent);box-shadow:0 8px 24px rgba(87,71,232,.12)}
-.rec-ribbon{position:absolute;top:-10px;left:14px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px}
-.q-head{display:flex;align-items:center;gap:10px;margin-top:8px}
-.q-logo{width:36px;height:36px;border-radius:8px;background:var(--navy);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.q-plan{font-weight:700;font-size:14px}
-.q-provider{color:var(--muted);font-size:12px}
-.q-badges{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
-.q-badge{background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px}
-.q-price{font-size:22px;font-weight:800;margin-top:6px}
+.quote-card.recommended{border-color:var(--accent);box-shadow:0 10px 28px rgba(87,71,232,.14)}
+.rec-ribbon{position:absolute;top:-11px;left:16px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.02em}
+.q-stat-line{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.q-stat-dot{width:4px;height:4px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.q-head{display:flex;align-items:center;gap:12px;margin-top:10px}
+.q-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:#fff}
+.q-plan{font-weight:700;font-size:15px;line-height:1.25}
+.q-provider{color:var(--muted);font-size:12px;margin-top:1px}
+.q-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.q-badge{background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px}
+.q-price{font-size:24px;font-weight:800;margin-top:14px;letter-spacing:-.01em}
 .q-price span{font-size:12px;font-weight:400;color:var(--muted)}
-.q-month{font-size:12px;color:var(--muted);margin-bottom:8px}
-.q-divider{border-top:1px solid var(--border);margin:8px 0}
-.q-spec{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
-.q-spec b{display:block;color:var(--muted);font-weight:600}
-.benefit-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:10px;font-size:11px}
-.benefit-item{display:flex;align-items:center;gap:5px}
-.benefit-item.covered{color:var(--good)}
-.benefit-item.not-covered{color:#b7bfc9}
-.benefit-item.unconfirmed{color:#a15c00}
-.benefit-icon{width:13px;text-align:center;flex-shrink:0}
-.q-why{font-size:12px;color:var(--muted);margin-top:8px}
+.q-month{font-size:12px;color:var(--muted);margin-bottom:12px}
+.q-divider{border-top:1px solid var(--border);margin:4px 0 14px}
+.q-spec{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:11px;margin-bottom:14px}
+.q-spec b{display:block;color:var(--muted);font-weight:600;margin-bottom:1px}
+.benefit-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.benefit-chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--bg)}
+.benefit-chip.covered{background:#eaf7ef;color:var(--good)}
+.benefit-chip.not-covered{background:var(--bg);color:#a7afba}
+.benefit-chip.unconfirmed{background:#fdf3e5;color:#a15c00}
+.benefit-icon{font-size:10px}
+.q-why{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
 .q-note{font-size:11px;color:#a15c00;margin-top:6px}
-.q-warnings{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;border-top:1px solid var(--border);padding-top:6px}
-.q-actions{display:flex;gap:8px;margin-top:12px}
-.q-primary{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:10px;padding:10px;font-weight:700;font-size:13px;cursor:pointer}
-.q-secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer}
-.compare-pick{position:absolute;top:10px;right:10px;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:10px;padding:4px 8px;cursor:pointer}
+.q-warnings{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
+.q-actions{display:flex;gap:8px;margin-top:16px}
+.q-primary{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:10px;padding:11px;font-weight:700;font-size:13px;cursor:pointer}
+.q-secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;cursor:pointer}
+.compare-pick{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:10px;padding:4px 9px;cursor:pointer}
 .compare-pick.selected{background:var(--accent);color:var(--white);border-color:var(--accent)}
 
 .excluded-wrap{margin:6px 0 16px}
@@ -438,9 +440,17 @@ function renderBenefitGrid(checklist){
     if (item.covered === true) { cls = 'covered'; icon = '✓'; }
     else if (item.covered === false) { cls = 'not-covered'; icon = '–'; }
     else { cls = 'unconfirmed'; icon = '?'; }
-    return `<div class="benefit-item ${cls}"><span class="benefit-icon">${icon}</span>${esc(item.label)}</div>`;
+    return `<span class="benefit-chip ${cls}"><span class="benefit-icon">${icon}</span>${esc(item.label)}</span>`;
   }).join('');
-  return `<div class="benefit-grid">${items}</div>`;
+  return `<div class="benefit-chips">${items}</div>`;
+}
+
+function logoColor(insurer){
+  const s = (insurer||'').toLowerCase();
+  if (s.includes('morgan')) return 'var(--navy)';
+  if (s.includes('img')) return '#0f7a5c';
+  if (s.includes('april')) return '#1d5fb0';
+  return '#5a6472';
 }
 
 function renderQuoteCard(q, i) {
@@ -449,8 +459,10 @@ function renderQuoteCard(q, i) {
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
     <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}')">${selected?'✓ Selected':'+ Compare'}</button>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.card_annual_limit||'Annual limit on request')}</div>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.coverage_area_label||'')}</div>
     <div class="q-head">
-      <div class="q-logo">${esc(q.card_badge || 'PLAN')}</div>
+      <div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge || 'PLAN')}</div>
       <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
     </div>
     <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
@@ -459,7 +471,6 @@ function renderQuoteCard(q, i) {
     <div class="q-divider"></div>
     <div class="q-spec">
       <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>
-      <div><b>Annual limit</b>${esc(q.card_annual_limit||'—')}</div>
       <div><b>Deductible</b>${esc(q.card_deductible||'—')}</div>
       <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
     </div>
