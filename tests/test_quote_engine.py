@@ -84,6 +84,25 @@ def test_card_metadata_present_on_every_quote_current_result_not_just_shortlist(
     assert img.plan_key and img.plan_key.startswith("img:")
 
 
+def test_benefit_checklist_present_and_honest_on_every_quote():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    quotes = quote_current(applicant, _settings())
+
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    checklist = {item["field"]: item["covered"] for item in standard.benefit_checklist}
+    assert len(standard.benefit_checklist) == 8
+    assert checklist["maternity_required"] is False  # verified real fact, not a guess
+    assert checklist["evacuation_required"] is True
+
+    premium = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "premium")
+    checklist_p = {item["field"]: item["covered"] for item in premium.benefit_checklist}
+    assert checklist_p["maternity_required"] is True
+
+    img = next(q for q in quotes if q.insurer.startswith("IMG"))
+    checklist_img = {item["field"]: item["covered"] for item in img.benefit_checklist}
+    assert all(v is None for v in checklist_img.values()), "no TOB evidence for IMG -> every item must be honestly 'not confirmed', never guessed"
+
+
 def test_unsupported_residence_returns_no_quotes():
     applicant = Applicant(age=40, residence_country="Germany", coverage_area="area1")
     assert quote_current(applicant, _settings()) == []

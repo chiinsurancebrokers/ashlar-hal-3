@@ -68,8 +68,12 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .q-divider{border-top:1px solid var(--border);margin:8px 0}
 .q-spec{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:11px}
 .q-spec b{display:block;color:var(--muted);font-weight:600}
-.q-checks{margin-top:8px;font-size:11px;color:var(--good)}
-.q-check{display:block}
+.benefit-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:10px;font-size:11px}
+.benefit-item{display:flex;align-items:center;gap:5px}
+.benefit-item.covered{color:var(--good)}
+.benefit-item.not-covered{color:#b7bfc9}
+.benefit-item.unconfirmed{color:#a15c00}
+.benefit-icon{width:13px;text-align:center;flex-shrink:0}
 .q-why{font-size:12px;color:var(--muted);margin-top:8px}
 .q-note{font-size:11px;color:#a15c00;margin-top:6px}
 .q-warnings{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5;border-top:1px solid var(--border);padding-top:6px}
@@ -427,6 +431,18 @@ function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickRepl
   renderState();
 }
 
+function renderBenefitGrid(checklist){
+  if (!checklist || !checklist.length) return '';
+  const items = checklist.map(item => {
+    let cls, icon;
+    if (item.covered === true) { cls = 'covered'; icon = '✓'; }
+    else if (item.covered === false) { cls = 'not-covered'; icon = '–'; }
+    else { cls = 'unconfirmed'; icon = '?'; }
+    return `<div class="benefit-item ${cls}"><span class="benefit-icon">${icon}</span>${esc(item.label)}</div>`;
+  }).join('');
+  return `<div class="benefit-grid">${items}</div>`;
+}
+
 function renderQuoteCard(q, i) {
   const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
   const selected = compareSelected.has(key);
@@ -447,7 +463,7 @@ function renderQuoteCard(q, i) {
       <div><b>Deductible</b>${esc(q.card_deductible||'—')}</div>
       <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
     </div>
-    ${(q.must_have_checks||[]).length ? `<div class="q-checks">${q.must_have_checks.map(c => `<span class="q-check">✓ ${esc(c)}</span>`).join('')}</div>` : ''}
+    ${renderBenefitGrid(q.benefit_checklist)}
     <div class="q-why">${esc(q.card_why||'')}</div>
     ${q.client_note ? `<div class="q-note">${esc(q.client_note)}</div>` : ''}
     ${(q.warnings||[]).length ? `<div class="q-warnings">${q.warnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>` : ''}
@@ -515,6 +531,13 @@ async function openCompare(){
 
 function renderDetailedCompare(d){
   const plans = d.plans, matrix = d.matrix;
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(' + plans.length + ',1fr);gap:10px;margin-bottom:16px">' +
+    plans.map(p => `<div style="background:var(--bg);border-radius:10px;padding:10px">
+      <div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>
+      ${renderBenefitGrid(p.benefit_checklist)}
+    </div>`).join('') + '</div>';
+
   const summaryRows = [
     ['Annual premium', p => money(p.premium, p.currency)],
     ['Monthly', p => money(p.premium/12, p.currency)],
@@ -522,7 +545,7 @@ function renderDetailedCompare(d){
     ['Annual limit', p => p.card_annual_limit],
     ['Deductible', p => p.card_deductible],
   ];
-  let html = '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
+  html += '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
     plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
   summaryRows.forEach(([label,fn]) => {
     html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';

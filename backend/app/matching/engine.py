@@ -16,6 +16,25 @@ REQUIREMENT_CHECKS = {
     "chronic_required": ("Chronic condition cover", lambda code: covered(code, "inpatient_chronic_conditions")),
 }
 
+CHECKLIST_ORDER = [
+    "outpatient_required", "maternity_required", "dental_required", "mental_health_required",
+    "wellness_required", "optical_required", "evacuation_required", "chronic_required",
+]
+
+
+def benefit_checklist(carrier: str, product_code: str) -> list[dict]:
+    """A fixed, always-the-same-order checklist for every quote card — the
+    fast-scan pattern (green check / grey dash / '?'), but never a guess:
+    if we hold no TOB evidence for this carrier, every item is explicitly
+    'not confirmed' rather than a fabricated tick or cross."""
+    has_evidence = carrier == "morgan_price"
+    items = []
+    for field in CHECKLIST_ORDER:
+        label, check = REQUIREMENT_CHECKS[field]
+        covered_status = bool(check(product_code)) if has_evidence else None
+        items.append({"field": field, "label": label, "covered": covered_status})
+    return items
+
 
 @dataclass(frozen=True)
 class RequirementResult:

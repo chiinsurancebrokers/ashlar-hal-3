@@ -7,7 +7,7 @@ from backend.app.schemas.quote import QuoteResult
 from backend.app.rates.registry import load_rates, load_card_meta, RateRecord
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
-from backend.app.matching.engine import evaluate_requirements
+from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest
 
 SUPPORTED_RESIDENCE = {"greece", "gr", "hellas", "ελλάδα", "ellada"}
@@ -39,6 +39,7 @@ def _distinct_products(area: str) -> list[tuple[str, str]]:
 def _enrich_card_meta(q: QuoteResult) -> None:
     carrier = (q.plan_key or "").split(":")[0]
     meta = _card_meta(carrier, q.product_code)
+    q.benefit_checklist = benefit_checklist(carrier, q.product_code)
     q.card_badge = meta.get("badge") or (q.insurer.split()[0][:3].upper() if q.insurer else "PLAN")
     q.card_coverage = meta.get("coverage") or "International medical cover"
     q.card_annual_limit = meta.get("annual_limit") or "See plan schedule"

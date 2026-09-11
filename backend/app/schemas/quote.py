@@ -51,6 +51,7 @@ class QuoteResult(BaseModel):
     client_note: str | None = None
     fit_badges: list[str] = []
     must_have_checks: list[str] = []
+    benefit_checklist: list[dict] = []
     recommended: bool = False
     recommendation_rank: int | None = None
 
