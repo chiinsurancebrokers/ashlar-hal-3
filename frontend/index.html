@@ -113,6 +113,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <body>
 <header>
   <div class="brand">ASHLAR ASSURANCE<small>HAL Insurance Adviser</small></div>
+  <button id="speakerToggle" onclick="toggleSpeaker()" style="background:none;border:1px solid #33415a;color:#fff;border-radius:999px;padding:6px 12px;font-size:11px;cursor:pointer">🔇 Voice off</button>
 </header>
 
 <div class="progress-bar">
@@ -147,9 +148,11 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 </div>
 
 <div class="composer">
+  <button id="micBtn" onclick="toggleRecording()" title="Speak" style="background:var(--bg);border:1px solid var(--border);border-radius:999px;width:44px;height:44px;font-size:18px;cursor:pointer;flex-shrink:0">🎙</button>
   <input id="input" placeholder="Tell HAL what you need..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button onclick="sendMessage()" id="sendBtn">Send</button>
 </div>
+<div id="voiceStatus" style="position:fixed;bottom:66px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);display:none"></div>
 
 <!-- Needs editor modal -->
 <div class="modal-backdrop" id="needsModal" onclick="if(event.target===this)closeModal('needsModal')">
@@ -511,6 +514,84 @@ function showThinking(label){
 }
 function removeThinking(){ const el = document.getElementById('thinkingEl'); if (el) el.remove(); }
 
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let speakerOn = false;
+
+function isGreekText(t){ return /[\u0370-\u03ff]/.test(t||''); }
+
+function toggleSpeaker(){
+  speakerOn = !speakerOn;
+  const btn = document.getElementById('speakerToggle');
+  btn.textContent = speakerOn ? '🔊 Voice on' : '🔇 Voice off';
+}
+
+async function speakText(text){
+  if (!speakerOn || !text) return;
+  try {
+    const language = isGreekText(text) ? 'el' : 'en';
+    const r = await fetch(API+'/speak', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,2000), language})});
+    if (!r.ok) { console.warn('Voice output unavailable:', (await r.json()).detail); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play().catch(() => {});
+  } catch(e) { console.warn('Voice output failed', e); }
+}
+
+async function toggleRecording(){
+  const micBtn = document.getElementById('micBtn');
+  const status = document.getElementById('voiceStatus');
+
+  if (isRecording) {
+    mediaRecorder.stop();
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstart = () => {
+      isRecording = true;
+      micBtn.textContent = '⏹';
+      micBtn.style.background = '#fdeaea';
+      status.style.display = 'block';
+      status.textContent = 'Listening…';
+    };
+    mediaRecorder.onstop = async () => {
+      isRecording = false;
+      micBtn.textContent = '🎙';
+      micBtn.style.background = 'var(--bg)';
+      stream.getTracks().forEach(t => t.stop());
+      status.textContent = 'Transcribing…';
+
+      const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      const form = new FormData();
+      form.append('file', blob, 'audio.webm');
+      try {
+        const r = await fetch(API+'/transcribe', {method:'POST', body: form});
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || 'Could not transcribe audio.');
+        document.getElementById('input').value = d.text;
+        status.textContent = 'Transcription ready — review it, then press Send.';
+        document.getElementById('input').focus();
+        setTimeout(() => { status.style.display = 'none'; }, 4000);
+      } catch(e) {
+        status.textContent = e.message;
+        setTimeout(() => { status.style.display = 'none'; }, 4000);
+      }
+    };
+    mediaRecorder.start();
+  } catch(e) {
+    status.style.display = 'block';
+    status.textContent = 'Microphone access was not granted.';
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+  }
+}
+
 async function sendMessage(){
   const input = document.getElementById('input');
   const text = input.value.trim();
@@ -533,6 +614,7 @@ async function sendMessage(){
     lastQuotes = d.quotes || [];
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
+    speakText(d.reply || '');
     history.push({role:'assistant', content: d.reply || ''});
   } catch(e) {
     removeThinking();

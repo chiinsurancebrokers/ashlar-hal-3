@@ -97,6 +97,17 @@ def test_quotes_compare_rejects_single_plan():
     assert r.status_code == 422  # min_length=2 on plan_keys
 
 
+def test_speak_returns_503_when_elevenlabs_not_configured():
+    r = client.post("/api/v1/speak", json={"text": "Hello", "language": "en"})
+    assert r.status_code == 503
+    assert "ELEVENLABS_API_KEY" in r.json()["detail"]
+
+
+def test_transcribe_returns_400_for_empty_audio():
+    r = client.post("/api/v1/transcribe", files={"file": ("audio.webm", b"", "audio/webm")})
+    assert r.status_code == 400
+
+
 def test_rate_limit_kicks_in_after_threshold():
     for _ in range(20):
         client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})

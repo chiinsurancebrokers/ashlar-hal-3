@@ -54,7 +54,6 @@ in from day one instead of retrofitted:
 
 ## Known gaps (being honest about scope)
 
-- **Voice input/output** is not wired in this rebuild yet.
 - **Deductible model discount percentages are illustrative**, pending
   carrier confirmation — do not enable in production before that
   conversation happens.
@@ -104,6 +103,17 @@ frontend/
   index.html       single-file vanilla frontend, no build step
 tests/             102... (run `pytest -v` for the current count)
 ```
+
+## Voice
+
+Speech-to-text uses OpenAI's transcription API (`OPENAI_API_KEY`, same key as
+the adviser layer — no separate credential needed). Text-to-speech uses
+ElevenLabs (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`, with optional
+`ELEVENLABS_VOICE_ID_EL`/`ELEVENLABS_VOICE_ID_EN` for per-language voices).
+Both are fully optional — if unconfigured, the mic button and speaker toggle
+simply report "unavailable" (503) rather than breaking the rest of HAL.
+Recorded audio is always shown back to the applicant as editable text before
+sending, never auto-submitted.
 
 ## Deploying
 
