@@ -5,6 +5,12 @@ from backend.app.main import app
 client = TestClient(app)
 
 
+def test_homepage_never_cached_by_browser():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "no-store" in r.headers.get("cache-control", "")
+
+
 def test_health_endpoint():
     r = client.get("/health")
     assert r.status_code == 200

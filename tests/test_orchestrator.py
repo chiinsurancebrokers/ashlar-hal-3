@@ -4,6 +4,21 @@ from backend.app.services.orchestrator import chat_turn
 
 
 @pytest.mark.asyncio
+async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
+    state: dict = {
+        "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,
+        "discovery_complete": True, "pending_question": None, "deductible_answered": True,
+        "outpatient_answered": True, "chronic_answered": True, "maternity_answered": True,
+        "dental_answered": True, "mental_health_answered": True, "wellness_answered": True,
+        "optical_answered": True, "evacuation_answered": True, "budget_answered": True,
+    }
+    r = await chat_turn("continue", state, [])
+    assert r["ai_status"] == "deterministic_shortlist"
+    assert "top pick" in r["reply"].lower()
+    assert "excluded" in r["reply"].lower()  # maternity exclusions must be mentioned, not just hidden in a link
+
+
+@pytest.mark.asyncio
 async def test_full_guided_flow_reaches_shortlist_without_openai_configured():
     state: dict = {}
     history: list = []

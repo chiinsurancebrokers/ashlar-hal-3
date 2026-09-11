@@ -78,6 +78,38 @@ def _exclusions_payload(state: dict, settings: Settings) -> list[dict]:
     return quote_exclusions(applicant, settings)
 
 
+def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) -> str:
+    """Pure, deterministic explanation of the shortlist — built entirely
+    from data the matching engine already computed, never from the LLM.
+    This is the 'why these plans' the applicant should always see, not just
+    find buried inside a card."""
+    if not quotes:
+        return ""
+    top = quotes[0]
+    matched = top.get("matched_requirements") or []
+    price = f'{top.get("currency", "EUR")} {top.get("premium", 0):,.2f}'
+
+    if greek:
+        if matched:
+            why = f"γιατί είναι η φθηνότερη επιλογή που καλύπτει επαληθευμένα: {', '.join(matched)}"
+        else:
+            why = "γιατί είναι η πιο οικονομική επιλογή από τις επιλέξιμες"
+        line = f"Η κορυφαία επιλογή είναι {top.get('product_name')} ({top.get('insurer')}) στα {price}/έτος — {why}."
+        if excluded:
+            names = ", ".join(e.get("product_name", "") for e in excluded[:3])
+            line += f" {len(excluded)} πρόγραμμα{'τα' if len(excluded) != 1 else ''} αποκλείστηκαν επειδή δεν καλύπτουν κάποια από τις απαιτήσεις σας ({names})."
+    else:
+        if matched:
+            why = f"it's the lowest-priced option that verifiably covers: {', '.join(matched)}"
+        else:
+            why = "it's the lowest-priced eligible option"
+        line = f"HAL's top pick is {top.get('product_name')} ({top.get('insurer')}) at {price}/year — {why}."
+        if excluded:
+            names = ", ".join(e.get("product_name", "") for e in excluded[:3])
+            line += f" {len(excluded)} plan{'s' if len(excluded) != 1 else ''} were excluded because they don't cover something you asked for ({names})."
+    return line
+
+
 async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
     settings = get_settings()
     greek = _resolve_language(message, state)
@@ -182,8 +214,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     quotes = _quote_payload(state, settings)
     excluded = _exclusions_payload(state, settings)
     label = "Request a private consultation" if state.get("client_segment") == "hnwi" else "Request a proposal"
-    reply = ("Τέλεια — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
+    intro = ("Τέλεια — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
               if greek else "Great — I now have enough information. Here is HAL's shortlist.")
+    reasoning = _shortlist_reasoning(quotes, excluded, greek)
+    reply = f"{intro} {reasoning}".strip()
     return {
         "reply": reply, "state": state, "quotes": quotes, "excluded_plans": excluded,
         "ai_status": "deterministic_shortlist", "journey": journey if journey != "undetermined" else "ipmi",

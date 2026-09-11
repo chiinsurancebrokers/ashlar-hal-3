@@ -49,7 +49,10 @@ if FRONTEND_DIR.exists():
 
     @app.get("/", include_in_schema=False)
     def homepage():
-        return FileResponse(FRONTEND_DIR / "index.html")
+        return FileResponse(
+            FRONTEND_DIR / "index.html",
+            headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+        )
 
 
 @app.get("/health")
