@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
 <title>Ashlar Assurance — HAL Insurance Adviser</title>
 <style>
 :root{
@@ -253,11 +254,42 @@ function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'cu
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
 
 function setJourney(j){
+  const switching = (j !== currentJourney);
   currentJourney = j;
   document.getElementById('btnHealth').classList.toggle('active', j!=='travel');
   document.getElementById('btnTravel').classList.toggle('active', j==='travel');
-  if (j === 'travel') {
-    addMsg("Travel insurance is being built right now — I can log your details for a broker to follow up.", 'hal');
+  if (j === 'travel' && switching) {
+    state = {journey: 'travel'};
+    history = [];
+    sendHiddenMessage("I need travel insurance");
+  } else if (j !== 'travel' && switching) {
+    state = {};
+    history = [];
+  }
+}
+
+async function sendHiddenMessage(text){
+  // Same as sendMessage(), but the trigger text isn't shown as a user
+  // bubble — used when a UI control (not typing) starts a new journey.
+  history.push({role:'user', content:text});
+  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
+  showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
+  try {
+    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
+    const d = await r.json();
+    removeThinking();
+    if (!r.ok) throw new Error(d.detail || 'HAL service error');
+    state = d.state || state;
+    currentJourney = d.journey || currentJourney;
+    lastQuotes = d.quotes || [];
+    excludedPlans = d.excluded_plans || [];
+    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
+    speakText(d.reply || '');
+    history.push({role:'assistant', content: d.reply || ''});
+  } catch(e) {
+    removeThinking();
+    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
   }
 }
 
@@ -569,6 +601,11 @@ async function toggleRecording(){
       status.textContent = 'Transcribing…';
 
       const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
+      if (blob.size < 2000) {
+        status.textContent = 'I didn\'t catch that — please try speaking again.';
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
+        return;
+      }
       const form = new FormData();
       form.append('file', blob, 'audio.webm');
       try {
