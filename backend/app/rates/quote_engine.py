@@ -36,6 +36,25 @@ def _distinct_products(area: str) -> list[tuple[str, str]]:
     return seen
 
 
+def _enrich_card_meta(q: QuoteResult) -> None:
+    carrier = (q.plan_key or "").split(":")[0]
+    meta = _card_meta(carrier, q.product_code)
+    q.card_badge = meta.get("badge") or (q.insurer.split()[0][:3].upper() if q.insurer else "PLAN")
+    q.card_coverage = meta.get("coverage") or "International medical cover"
+    q.card_annual_limit = meta.get("annual_limit") or "See plan schedule"
+    q.card_deductible = meta.get("deductible") or "See selected option"
+    q.card_evacuation = meta.get("evacuation") or "Subject to plan terms"
+    q.must_have_checks = list(q.matched_requirements) if q.evidence_confidence == 1.0 else []
+
+    if q.evidence_confidence == 1.0 and q.matched_requirements:
+        q.card_why = "Matches your priorities: " + ", ".join(q.matched_requirements[:3]) + "."
+    elif q.evidence_confidence < 1.0:
+        q.card_why = meta.get("why") or "Alternative provider option."
+        q.client_note = "Current benefits should be confirmed before proposal."
+    else:
+        q.card_why = meta.get("why") or "International health insurance option."
+
+
 def quote_current(applicant: Applicant, settings: Settings, *, today: date | None = None) -> list[QuoteResult]:
     """Every eligible product for this applicant (family-aware), hard-filtered
     on any selected MUST-HAVE, never merely down-scored."""
@@ -141,6 +160,7 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             quoted_on=today,
             valid_until=QuoteResult.validity_window(today, settings.quote_validity_days),
         ))
+        _enrich_card_meta(quotes[-1])
 
     def rank(q: QuoteResult):
         over_budget = bool(applicant.budget_annual and q.premium > applicant.budget_annual)
@@ -157,24 +177,7 @@ def quote_shortlist(applicant: Applicant, settings: Settings, *, limit: int = 5,
     seen_carriers: set[str] = set()
 
     for q in candidates:
-        meta = _card_meta(_carrier_key_from_insurer(q.insurer), q.product_code)
-        q.card_badge = meta.get("badge") or (q.insurer.split()[0][:3].upper() if q.insurer else "PLAN")
-        q.card_coverage = meta.get("coverage") or "International medical cover"
-        q.card_annual_limit = meta.get("annual_limit") or "See plan schedule"
-        q.card_deductible = meta.get("deductible") or "See selected option"
-        q.card_evacuation = meta.get("evacuation") or "Subject to plan terms"
-        q.plan_key = f"{_carrier_key_from_insurer(q.insurer)}:{q.product_code}"
-        q.must_have_checks = list(q.matched_requirements) if q.evidence_confidence == 1.0 else []
-
-        if q.evidence_confidence == 1.0 and q.matched_requirements:
-            q.card_why = "Matches your priorities: " + ", ".join(q.matched_requirements[:3]) + "."
-        elif q.evidence_confidence < 1.0:
-            q.card_why = meta.get("why") or "Alternative provider option."
-            q.client_note = "Current benefits should be confirmed before proposal."
-        else:
-            q.card_why = meta.get("why") or "International health insurance option."
-
-        key = _carrier_key_from_insurer(q.insurer)
+        key = (q.plan_key or "").split(":")[0]
         if key in seen_carriers:
             continue
         shortlist.append(q)

@@ -60,6 +60,36 @@ async def test_travel_intent_starts_guided_travel_discovery():
 
 
 @pytest.mark.asyncio
+async def test_language_stays_greek_after_a_purely_numeric_answer():
+    state: dict = {}
+    history: list = []
+
+    async def turn(msg):
+        nonlocal state
+        r = await chat_turn(msg, state, history)
+        state = r["state"]
+        return r
+
+    r = await turn("Γεια, θέλω διεθνή ασφάλιση υγείας")
+    assert state["language"] == "el"
+    assert any(ch in r["reply"] for ch in "άέήίόύώ") or "χρον" in r["reply"].lower()
+
+    r2 = await turn("51")  # no Greek characters at all — must NOT flip language back
+    assert state["language"] == "el"
+    assert any(ch in r2["reply"] for ch in "άέήίόύώ") or "χώρα" in r2["reply"].lower() or "μένετε" in r2["reply"].lower()
+
+
+@pytest.mark.asyncio
+async def test_language_switches_back_on_clear_latin_text():
+    state: dict = {}
+    r = await chat_turn("Γεια σου", state, [])
+    state = r["state"]
+    assert state["language"] == "el"
+    r2 = await chat_turn("actually let's continue in English please", state, [])
+    assert r2["state"]["language"] == "en"
+
+
+@pytest.mark.asyncio
 async def test_full_travel_flow_reaches_tier_recommendation():
     state: dict = {}
     history: list = []

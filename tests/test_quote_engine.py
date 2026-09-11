@@ -75,6 +75,15 @@ def test_shortlist_is_deduplicated_by_carrier_and_marks_recommended():
     assert len(carriers_in_top3) == len(shortlist[:3]), "first 3 shortlist entries must be from distinct carriers"
 
 
+def test_card_metadata_present_on_every_quote_current_result_not_just_shortlist():
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    quotes = quote_current(applicant, _settings())
+    img = next(q for q in quotes if q.insurer.startswith("IMG"))
+    assert img.card_coverage == "International inpatient-focused medical cover"
+    assert img.card_annual_limit  # never None/empty — falls back to honest placeholder text, not a blank
+    assert img.plan_key and img.plan_key.startswith("img:")
+
+
 def test_unsupported_residence_returns_no_quotes():
     applicant = Applicant(age=40, residence_country="Germany", coverage_area="area1")
     assert quote_current(applicant, _settings()) == []

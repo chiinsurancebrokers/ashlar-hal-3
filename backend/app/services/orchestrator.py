@@ -28,6 +28,26 @@ def _is_greek(text: str) -> bool:
     return bool(re.search(r"[\u0370-\u03ff]", text or ""))
 
 
+def _has_latin_words(text: str) -> bool:
+    return bool(re.search(r"[A-Za-z]{2,}", text or ""))
+
+
+def _resolve_language(message: str, state: dict) -> bool:
+    """Returns True if the conversation should continue in Greek.
+
+    Sticky by design: once the applicant writes in Greek, HAL keeps
+    replying in Greek even on turns with no Greek characters at all (a bare
+    age like "51", a Skip tap, a quick-reply value) — those shouldn't
+    silently flip the conversation back to English. It only switches back
+    if the applicant clearly writes actual Latin-script words again.
+    """
+    if _is_greek(message):
+        state["language"] = "el"
+    elif _has_latin_words(message):
+        state["language"] = "en"
+    return state.get("language") == "el"
+
+
 def _applicant_from_state(state: dict) -> Applicant | None:
     if not state.get("age") or not state.get("coverage_area"):
         return None
@@ -60,7 +80,7 @@ def _exclusions_payload(state: dict, settings: Settings) -> list[dict]:
 
 async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
     settings = get_settings()
-    greek = _is_greek(message)
+    greek = _resolve_language(message, state)
 
     previous_journey = str((state or {}).get("journey") or "undetermined")
     provisional = classify_journey(message, state)
