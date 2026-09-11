@@ -10,6 +10,8 @@ from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions
 from backend.app.services.openai_client import adviser_response
 from backend.app.knowledge.service import detect_hnwi
+from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
+from backend.app.travel.europesure import recommend_tier, public_catalog
 
 APPLICANT_STATE_KEYS = {
     "age", "residence_country", "nationality", "coverage_area", "currency", "deductible",
@@ -69,14 +71,42 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         history = []
 
     if provisional == "travel":
+        state = {**state, "journey": "travel"}
+        state = _merge(state, deterministic_travel_updates(message, state))
+
+        long_stay_prefix = ""
+        if state.get("travel_long_stay_flag") and not state.get("travel_long_stay_warning_shown"):
+            state["travel_long_stay_warning_shown"] = True
+            long_stay_prefix = (
+                "Αυτό ακούγεται περισσότερο σαν μετεγκατάσταση παρά ταξίδι — αν θα μείνετε μόνιμα ή για μεγάλο διάστημα, "
+                "η διεθνής ασφάλιση υγείας (IPMI) συνήθως ταιριάζει καλύτερα από την ταξιδιωτική. Μπορούμε πάντα να συνεχίσουμε με το ταξιδιωτικό αν προτιμάτε. "
+                if greek else
+                "This sounds more like a relocation than a trip — if you'll be staying long-term, international health insurance (IPMI) is usually a better fit than travel cover. "
+                "We can still continue with travel insurance if you'd prefer. "
+            )
+
+        next_q = next_travel_question(state)
+        if next_q is not None:
+            state["travel_pending_question"] = next_q["key"]
+            return {
+                "reply": (long_stay_prefix + next_q["reply"]).strip(), "state": state, "quotes": [], "excluded_plans": [],
+                "ai_status": "travel_guided_discovery", "journey": "travel",
+                "lead_cta": {"show": False, "journey": "travel", "label": "Request a travel insurance callback"},
+                "open_application_form": False, "quick_replies": next_q["quick_replies"],
+            }
+
+        state["travel_pending_question"] = None
+        result = recommend_tier(state)
+        reply = (f"Βάσει των legacy Europesure στοιχείων, το {result['plan_name']} ταιριάζει καλύτερα. "
+                 "Τα τρέχοντα όρια/όροι/τιμή πρέπει να επιβεβαιωθούν στο Europesure portal πριν την αγορά."
+                 if greek else
+                 f"Based on the legacy Europesure data, {result['plan_name']} looks like the best fit. "
+                 "Current limits, terms and price must be confirmed in the Europesure portal before purchase.")
+        if not result["eligible_on_legacy_data"]:
+            reply += " " + (result["eligibility_note"] or "")
         return {
-            "reply": ("Αυτό ακούγεται σαν ταξιδιωτική ασφάλιση. Αυτό το κομμάτι είναι υπό κατασκευή αυτή τη στιγμή — "
-                      "μπορώ να καταγράψω το αίτημά σας για έναν broker να επικοινωνήσει μαζί σας."
-                      if greek else
-                      "That sounds like travel insurance. This part of HAL is still being built — "
-                      "I can log your request for a broker to follow up directly."),
-            "state": {**state, "journey": "travel"}, "quotes": [], "excluded_plans": [],
-            "ai_status": "travel_not_yet_implemented", "journey": "travel",
+            "reply": reply, "state": state, "quotes": [], "excluded_plans": [],
+            "ai_status": "travel_recommendation", "journey": "travel", "travel_recommendation": result,
             "lead_cta": {"show": True, "journey": "travel", "label": "Request a travel insurance callback"},
             "open_application_form": False, "quick_replies": [],
         }

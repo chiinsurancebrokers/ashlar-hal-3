@@ -52,11 +52,69 @@ async def test_hnwi_signal_sets_client_segment():
 
 
 @pytest.mark.asyncio
-async def test_travel_intent_is_isolated_and_clearly_labelled_as_pending():
+async def test_travel_intent_starts_guided_travel_discovery():
     state: dict = {}
     r = await chat_turn("I need travel insurance for a single trip", state, [])
     assert r["journey"] == "travel"
-    assert r["ai_status"] == "travel_not_yet_implemented"
+    assert r["ai_status"] == "travel_guided_discovery"
+
+
+@pytest.mark.asyncio
+async def test_full_travel_flow_reaches_tier_recommendation():
+    state: dict = {}
+    history: list = []
+
+    async def turn(msg):
+        nonlocal state
+        r = await chat_turn(msg, state, history)
+        state = r["state"]
+        return r
+
+    await turn("I need travel insurance")
+    await turn("single trip")
+    await turn("Italy")
+    await turn("45")
+    final = await turn("balanced")
+
+    assert final["ai_status"] == "travel_recommendation"
+    assert final["travel_recommendation"]["tier"] == "gold"
+    assert final["travel_recommendation"]["current_terms_confirmed"] is False
+
+
+@pytest.mark.asyncio
+async def test_travel_garbage_voice_input_never_becomes_a_destination():
+    state: dict = {}
+    history: list = []
+
+    async def turn(msg):
+        nonlocal state
+        r = await chat_turn(msg, state, history)
+        state = r["state"]
+        return r
+
+    await turn("I need travel insurance")
+    await turn("single trip")
+    r = await turn(">>>>>>>>")
+    assert r["ai_status"] == "travel_guided_discovery"
+    assert state.get("travel_destination") is None  # still not set — the flow must ask again, never accept noise
+
+
+@pytest.mark.asyncio
+async def test_relocation_language_triggers_ipmi_note_once():
+    state: dict = {}
+    history: list = []
+
+    async def turn(msg):
+        nonlocal state
+        r = await chat_turn(msg, state, history)
+        state = r["state"]
+        return r
+
+    await turn("I need travel insurance")
+    await turn("single trip")
+    r = await turn("I'm moving to Berlin permanently")
+    assert "international health insurance" in r["reply"].lower() or "ipmi" in r["reply"].lower()
+    assert state["travel_long_stay_warning_shown"] is True
 
 
 @pytest.mark.asyncio

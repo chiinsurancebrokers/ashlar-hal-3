@@ -290,7 +290,7 @@ function areaLabel(a){
   return {area1:'Europe',area2:'Worldwide excl. USA/SG/HK/CN',area3:'Worldwide excl. USA',area4:'Worldwide incl. USA'}[a] || a;
 }
 
-function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickReplies=[]) {
+function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickReplies=[], travelRec=null) {
   const chat = document.getElementById('chat');
   const box = document.createElement('div');
   box.className = 'msg ' + who;
@@ -302,6 +302,9 @@ function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickRepl
       html += `<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">Why were ${excluded.length} plan${excluded.length===1?'':'s'} excluded?</button>
         <div class="excluded-list">${excluded.map(e => `<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).join(', '))}</div>`).join('')}</div></div>`;
     }
+  }
+  if (travelRec) {
+    html += renderTravelCard(travelRec);
   }
   if (leadCta && leadCta.show) {
     let label = leadCta.label || 'Request a proposal';
@@ -343,6 +346,27 @@ function renderQuoteCard(q, i) {
     <div class="q-actions">
       <button class="q-primary" onclick="openLeadForm(currentJourney)">Get proposal</button>
       <button class="q-secondary" onclick="tellMeMore(${i})">Tell me more</button>
+    </div>
+  </div>`;
+}
+
+function renderTravelCard(rec){
+  const alt = (rec.alternatives||[]).map(a => `<div style="font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+    <strong>${esc(a.name)}</strong> — ${money(a.emergency_medical_eur)} medical, ${money(a.cancellation_eur)} cancellation, ${money(a.baggage_eur)} baggage</div>`).join('');
+  return `<div class="quote-card" style="max-width:420px;margin-top:10px">
+    <div class="q-head"><div class="q-logo">EU</div><div><div class="q-plan">${esc(rec.plan_name)}</div><div class="q-provider">${esc(rec.positioning)}</div></div></div>
+    <div class="q-spec" style="margin-top:10px">
+      <div><b>Emergency medical</b>${money(rec.emergency_medical_eur)}</div>
+      <div><b>Cancellation</b>${money(rec.cancellation_eur)}</div>
+      <div><b>Baggage</b>${money(rec.baggage_eur)}</div>
+      <div><b>Trip type</b>${esc(rec.trip_type||'—')}</div>
+    </div>
+    <div class="q-why">${esc(rec.reason)}</div>
+    <div class="q-note">${esc(rec.client_note)}</div>
+    ${!rec.eligible_on_legacy_data ? `<div class="q-note" style="color:#b3261e">${esc(rec.eligibility_note||'')}</div>` : ''}
+    ${alt}
+    <div class="q-actions">
+      <a class="q-primary" style="text-decoration:none;text-align:center;display:block" href="${esc(rec.portal_url)}" target="_blank" rel="noopener">Get current price in Europesure portal</a>
     </div>
   </div>`;
 }
@@ -508,7 +532,7 @@ async function sendMessage(){
     currentJourney = d.journey || currentJourney;
     lastQuotes = d.quotes || [];
     excludedPlans = d.excluded_plans || [];
-    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || []);
+    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     history.push({role:'assistant', content: d.reply || ''});
   } catch(e) {
     removeThinking();

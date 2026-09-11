@@ -1,0 +1,57 @@
+{
+  "dataset": {
+    "provider": "Europesure",
+    "source_type": "legacy_hal_uploaded_source",
+    "source_file": "source-6a8bf9066e21fe5a466b7995-a27c56da9b8bff02.zip",
+    "source_label": "HAL Quote Engine v26 legacy Europesure travel configuration",
+    "verification_status": "legacy_unverified_current",
+    "current_terms_confirmed": false,
+    "client_use": "Indicative product matching only. Current eligibility, benefits, terms and premium must be confirmed in the Europesure portal before purchase.",
+    "max_age_legacy": 79,
+    "annual_multi_trip_from_eur_legacy": 53.52,
+    "trip_types": [
+      "single",
+      "annual"
+    ],
+    "portal_url": "https://quote.europesuretravelinsurance.eu/?agentId=3SYkkVnritYhUgwsZ1z01YuRNcQiZrxwyArCU0BOlcU1&campaignId=JzMcgVNYlEqOkrr1_hWq2-EKQFOO05d6Yi4xQ9Y5Va01&agentFee=EYq3BmLjIYJQM5BYSmiJB7YDJmJlMJrfibR_RfsQ7Fg1",
+    "common_benefits_legacy": [
+      "Travel delay",
+      "Missed departure",
+      "Personal accident",
+      "Legal expenses"
+    ],
+    "optional_addons_legacy": [
+      "Winter Sports",
+      "Business Cover",
+      "Gadget Cover",
+      "COVID-19 extension",
+      "Car Hire Excess Waiver"
+    ]
+  },
+  "plans": {
+    "silver": {
+      "name": "Silver",
+      "emergency_medical_eur": 1000000,
+      "cancellation_eur": 1500,
+      "baggage_eur": 750,
+      "positioning": "Entry level",
+      "legacy_fit": "Good for short EU trips and budget travellers."
+    },
+    "gold": {
+      "name": "Gold",
+      "emergency_medical_eur": 3500000,
+      "cancellation_eur": 3000,
+      "baggage_eur": 5000,
+      "positioning": "Most popular / balanced",
+      "legacy_fit": "Strong balance of cover and value."
+    },
+    "platinum": {
+      "name": "Platinum",
+      "emergency_medical_eur": 10000000,
+      "cancellation_eur": 10000,
+      "baggage_eur": 7500,
+      "positioning": "Premium",
+      "legacy_fit": "Best for worldwide travel / highest legacy limits."
+    }
+  }
+}
