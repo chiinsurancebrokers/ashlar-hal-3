@@ -186,53 +186,51 @@ def _skip_result(pending: str) -> dict:
 def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
     """Return the next question. None means shortlist-ready."""
     if not state.get("age"):
-        return _q("age", "Πόσων ετών είναι το άτομο που θα ασφαλιστεί;" if greek else "How old is the person to be insured?", skippable=False)
+        return _q("age", "How old are you?" if not greek else "Πόσων χρονών είστε;", skippable=False)
     if not state.get("residence_country"):
-        return _q("residence", "Σε ποια χώρα κατοικεί μόνιμα;" if greek else "Which country does the applicant normally reside in?", skippable=False)
+        return _q("residence", "Which country do you live in?" if not greek else "Σε ποια χώρα μένετε;", skippable=False)
     if not state.get("coverage_area"):
         return _q("coverage_area",
-            "Πού θέλετε να ισχύει η κάλυψη;" if greek else "Where would you like the policy to provide cover?",
+            "Where do you want your cover to apply?" if not greek else "Πού θέλετε να ισχύει η κάλυψή σας;",
             [("Europe", "Europe only"), ("Worldwide excl. USA", "Worldwide excluding USA"), ("Worldwide incl. USA", "Worldwide including USA")])
     if not state.get("deductible_answered"):
-        text = ("Τι απαλλαγή θα προτιμούσατε; Μεγαλύτερη απαλλαγή συνήθως μειώνει το ασφάλιστρο."
-                if greek else
-                "What deductible would you prefer? A higher deductible will often reduce the premium.")
+        text = ("What deductible would you prefer? A higher one usually means a lower price."
+                if not greek else
+                "Τι απαλλαγή θα θέλατε; Μεγαλύτερη απαλλαγή σημαίνει συνήθως χαμηλότερη τιμή.")
         return _q("deductible", text, [("€0", "€0 deductible"), ("€500", "€500 deductible"), ("€1,000", "€1000 deductible")])
     if not state.get("outpatient_answered"):
-        text = ("Θέλετε μόνο νοσοκομειακή κάλυψη ή και εξωνοσοκομειακή;"
-                if greek else
-                "Would you like hospital-only cover, or should the plan also include outpatient care?")
+        text = ("Do you want cover for hospital stays only, or also everyday doctor visits?"
+                if not greek else
+                "Θέλετε κάλυψη μόνο για νοσηλεία, ή και για καθημερινές επισκέψεις στον γιατρό;")
         return _q("outpatient", text, [("Hospital only", "Hospital only"), ("Include outpatient", "Include outpatient cover")])
     if not state.get("chronic_answered"):
-        text = ("Έχετε κάποια χρόνια πάθηση που θα θέλατε να μας πείτε τώρα, ή σας ενδιαφέρει το πρόγραμμα να καλύπτει χρόνιες παθήσεις γενικότερα; "
-                "Αυτό είναι σημαντικό να το ξέρουμε νωρίς γιατί επηρεάζει την επιλεξιμότητα — δεν χρειάζεται λεπτομέρειες τώρα, μόνο ναι/όχι."
-                if greek else
-                "Do you have an existing chronic condition you'd like to flag now, or is cover for chronic conditions in general important to you? "
-                "It's worth knowing this early since it can affect eligibility — no details needed yet, just yes/no.")
+        text = ("Do you have an ongoing health condition, or want cover for one in the future? Just yes or no for now."
+                if not greek else
+                "Έχετε κάποια χρόνια πάθηση, ή θέλετε κάλυψη γι' αυτό στο μέλλον; Για τώρα, απλώς ναι ή όχι.")
         return _q("chronic", text, [("Yes", "Yes"), ("No", "No")])
     age = int(state.get("age") or 0)
     if 18 <= age <= 45 and not state.get("maternity_answered"):
-        text = ("Σας ενδιαφέρει routine maternity κάλυψη;" if greek else "Is routine maternity cover important for you or anyone who will be insured?")
+        text = ("Do you want maternity cover included?" if not greek else "Θέλετε να περιλαμβάνεται κάλυψη εγκυμοσύνης/τοκετού;")
         return _q("maternity", text, [("Yes, maternity", "Yes, maternity is required"), ("No", "No maternity needed")])
     if not state.get("maternity_answered"):
         state["maternity_answered"] = True
     if not state.get("dental_answered"):
-        return _q("dental", "Σας ενδιαφέρει και οδοντιατρική κάλυψη;" if greek else "Would you like dental cover as part of the plan?",
+        return _q("dental", "Do you want dental cover too?" if not greek else "Θέλετε να περιλαμβάνεται και οδοντιατρική κάλυψη;",
                    [("Yes", "Yes, dental is important"), ("No", "No dental needed")])
     if not state.get("mental_health_answered"):
-        text = "Θέλετε κάλυψη mental health;" if greek else "Would you like mental-health cover, such as psychologist/psychiatrist treatment?"
+        text = "Do you want mental health cover, like therapy or psychiatry?" if not greek else "Θέλετε κάλυψη για ψυχική υγεία, όπως ψυχοθεραπεία;"
         return _q("mental_health", text, [("Yes", "Yes, mental health is important"), ("No", "No mental health cover needed")])
     if not state.get("wellness_answered"):
-        text = "Σας ενδιαφέρει προληπτικός έλεγχος (wellness screening);" if greek else "Would you like wellness/preventive screening included?"
+        text = "Do you want yearly check-ups included?" if not greek else "Θέλετε να περιλαμβάνονται ετήσιες προληπτικές εξετάσεις;"
         return _q("wellness", text, [("Yes", "Yes, wellness is important"), ("No", "No wellness cover needed")])
     if not state.get("optical_answered"):
-        text = "Σας ενδιαφέρει οφθαλμολογική κάλυψη;" if greek else "Would you like optical cover (eye tests, glasses contribution)?"
+        text = "Do you want eye care included, like eye tests or glasses?" if not greek else "Θέλετε να περιλαμβάνεται οφθαλμολογική φροντίδα, όπως εξετάσεις ή γυαλιά;"
         return _q("optical", text, [("Yes", "Yes, optical is important"), ("No", "No optical cover needed")])
     if not state.get("evacuation_answered"):
-        text = "Σας ενδιαφέρει medical evacuation / repatriation;" if greek else "Is medical evacuation/repatriation important to you?"
+        text = "Do you want cover for emergency transport home if you get seriously ill abroad?" if not greek else "Θέλετε κάλυψη επείγουσας μεταφοράς σπίτι αν αρρωστήσετε σοβαρά στο εξωτερικό;"
         return _q("evacuation", text, [("Yes", "Yes, evacuation is important"), ("No", "No evacuation priority")])
     if not state.get("budget_answered"):
-        return _q("budget", "Έχετε κάποιο προτιμώμενο ετήσιο budget;" if greek else "Do you have a preferred annual budget?",
+        return _q("budget", "Do you have a yearly budget in mind?" if not greek else "Έχετε κάποιο ετήσιο ποσό κατά νου;",
                    [("No fixed budget", "No fixed budget"), ("Up to €3,000", "Budget €3000"), ("Up to €5,000", "Budget €5000")])
     return None
 

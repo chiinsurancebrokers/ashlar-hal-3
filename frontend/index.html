@@ -90,7 +90,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .compare-tray.show{display:flex}
 .compare-tray button{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
 
-.composer{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;z-index:50}
+.composer{position:static;background:none;border:none;padding:0;display:flex;gap:8px;flex:1}
 .composer input{flex:1;border:1px solid var(--border);border-radius:999px;padding:12px 16px;font-size:14px}
 .composer button{background:var(--navy);color:var(--white);border:none;border-radius:999px;padding:0 20px;font-weight:700;cursor:pointer}
 
@@ -138,7 +138,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .ghost-btn{background:none;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;cursor:pointer;color:var(--muted)}
 .chat-card .progress-bar{padding:8px 18px;background:var(--white)}
 .chat-card #chat{flex:1;overflow-y:auto;padding:16px 18px;min-height:0}
-.dynamic-input-row{border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:8px;align-items:center}
+.dynamic-input-row{border-top:1px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:6px}
 .stepper-input{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;flex:1}
 .stepper-input input{border:none;flex:1;padding:10px 12px;font-size:14px;width:60px}
 .stepper-input .stepper-btns{display:flex;flex-direction:column;border-left:1px solid var(--border)}
@@ -215,7 +215,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
   <input id="input" placeholder="Tell HAL what you need..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button onclick="sendMessage()" id="sendBtn">Send</button>
 </div>
-<div id="voiceStatus" style="position:fixed;bottom:66px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);display:none"></div>
+<div id="voiceStatus" style="text-align:center;font-size:12px;color:var(--muted);display:none;padding-bottom:6px"></div>
 
 <!-- Needs editor modal -->
 <div class="modal-backdrop" id="needsModal" onclick="if(event.target===this)closeModal('needsModal')">
@@ -319,7 +319,7 @@ function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
   addMsg("Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.", 'hal');
   addMsg("I'll ask a few questions and then calculate an indicative shortlist from the rate data currently available to me.", 'hal');
-  addMsg("First, how old is the person to be insured?", 'hal');
+  addMsg("First, how old are you?", 'hal');
   updateDynamicInput([]);
 }
 
@@ -685,7 +685,10 @@ function submitStepper(){
   sendMessage();
 }
 
-// The composer (mic + input + send) lives inside the dynamic input row by default.
+// The composer (mic + input + send) and voice status text live inside the
+// dynamic input row by default, anchored to the chat card — not floating
+// at the page edge.
+document.getElementById('dynamicInputRow').appendChild(document.getElementById('voiceStatus'));
 document.getElementById('dynamicInputRow').appendChild(document.querySelector('.composer'));
 document.querySelector('.composer').style.display = 'flex';
 
