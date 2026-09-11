@@ -61,6 +61,13 @@ in from day one instead of retrofitted:
 - **Deductible model discount percentages are illustrative**, pending
   carrier confirmation — do not enable in production before that
   conversation happens.
+- **Additional carriers (Now Health, IMG Global Prima, etc.) are added only
+  once verified.** Policy confirmed 2026-09: a carrier is onboarded to the
+  detailed comparison matrix (`backend/app/evidence/compare_matrix.py`)
+  only once you have BOTH a real, structured Table of Benefits AND a real
+  current price list for it — never partial or assumed data. Until then,
+  `/quotes/compare` includes such plans in the price comparison but reports
+  them honestly via `unsupported_note` rather than fabricating benefit rows.
 
 ## Running locally
 

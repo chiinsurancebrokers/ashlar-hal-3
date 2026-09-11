@@ -6,9 +6,13 @@ from backend.app.evidence.morgan_price_2026 import load_table_of_benefits
 NOT_CONFIRMED = "Not confirmed"
 
 # Only carriers we currently hold a real, structured Table of Benefits for.
-# Adding a new carrier here means loading its TOB into evidence/ in the same
-# shape as morgan_price_2026/table_of_benefits.json — never means hand-typing
-# numbers into this file.
+#
+# POLICY (confirmed 2026-09): a carrier is added here ONLY once you have
+# both (a) a verified Table of Benefits in the same structured format as
+# morgan_price_2026/table_of_benefits.json, and (b) a real, current price
+# list for it in data/rates/. Never add a carrier with partial, assumed, or
+# placeholder data — the whole point of this matrix is that every cell is
+# either a real verified fact or explicitly "Not confirmed", never a guess.
 SUPPORTED_CARRIERS = {"morgan_price"}
 
 
