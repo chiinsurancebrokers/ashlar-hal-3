@@ -54,9 +54,6 @@ in from day one instead of retrofitted:
 
 ## Known gaps (being honest about scope)
 
-- **Travel insurance** is routed and isolated correctly but not yet priced —
-  `orchestrator.py` returns a clear "being built" message and a lead-capture
-  CTA rather than pretending to quote it.
 - **Voice input/output** is not wired in this rebuild yet.
 - **Deductible model discount percentages are illustrative**, pending
   carrier confirmation — do not enable in production before that
@@ -68,6 +65,12 @@ in from day one instead of retrofitted:
   current price list for it — never partial or assumed data. Until then,
   `/quotes/compare` includes such plans in the price comparison but reports
   them honestly via `unsupported_note` rather than fabricating benefit rows.
+- **Travel insurance (Europesure) uses legacy, not-currently-verified
+  data.** The three tiers (Silver/Gold/Platinum) and their limits come from
+  a legacy HAL export explicitly marked `legacy_unverified_current` — every
+  recommendation links to the real Europesure quote portal for current
+  price/terms rather than displaying a number HAL invented. See
+  `data/travel/europesure/SOURCE-NOTE.md`.
 
 ## Running locally
 
