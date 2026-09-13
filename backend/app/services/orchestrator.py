@@ -168,12 +168,12 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if detect_hnwi(message) and not state.get("client_segment"):
         state["client_segment"] = "hnwi"
 
-    openai_ack = ""
+    claude_ack = ""
     provisional = classify_journey(message, state)
     if settings.anthropic_api_key and provisional not in {"travel", "local_review"} and not state.get("discovery_complete"):
         intake = await intake_analysis(message, state, history, greek)
         state = _merge(state, intake.get("applicant_updates", {}))
-        openai_ack = intake.get("acknowledgement", "")
+        claude_ack = intake.get("acknowledgement", "")
 
     journey = classify_journey(message, state)
     state["journey"] = journey
@@ -200,7 +200,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if next_q is not None:
         state["pending_question"] = next_q["key"]
         state["discovery_complete"] = False
-        reply = ((openai_ack.rstrip() + " " + next_q["reply"]) if openai_ack else next_q["reply"]).strip()
+        reply = ((claude_ack.rstrip() + " " + next_q["reply"]) if claude_ack else next_q["reply"]).strip()
         return {
             "reply": reply, "state": state, "quotes": [], "excluded_plans": [],
             "ai_status": "guided_discovery", "journey": journey if journey != "undetermined" else "ipmi",

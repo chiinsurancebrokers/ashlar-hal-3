@@ -327,8 +327,8 @@ function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
   addMsg("Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.", 'hal');
   addMsg("I'll ask a few questions and then calculate an indicative shortlist from the rate data currently available to me.", 'hal');
-  addMsg("First, how old are you?", 'hal');
-  updateDynamicInput([]);
+  addMsg("Before we start — what's your name?", 'hal');
+  updateDynamicInput([{label:'Not sure / Skip', value:'skip'}]);
 }
 
 function setJourney(j){
@@ -341,7 +341,7 @@ function setJourney(j){
     history = [];
     sendHiddenMessage("I need travel insurance");
   } else if (j !== 'travel' && switching) {
-    state = {pending_question: 'age'};
+    state = {pending_question: 'name'};
     history = [];
     showIpmiGreeting();
   }
@@ -898,9 +898,10 @@ async function submitLead(){
   } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; }
 }
 
-// Initial state: HAL greets immediately and asks for age (with the stepper
-// input already showing) — no separate "tap to begin" step.
-state = {pending_question: 'age'};
+// Initial state: HAL greets immediately and asks for the applicant's name
+// first (with a friendly, personalised follow-up into age) — no separate
+// "tap to begin" step.
+state = {pending_question: 'name'};
 showIpmiGreeting();
 renderState();
 </script>
