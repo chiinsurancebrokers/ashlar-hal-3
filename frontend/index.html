@@ -153,6 +153,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .dynamic-input-row .pill-row{display:flex;flex-wrap:wrap;gap:8px;flex:1}
 .dynamic-input-row .pill-choice{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
 .dynamic-continue{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer}
+.or-type-label{font-size:10px;color:var(--muted);text-align:center;margin:2px 0}
 
 @media(max-width:860px){
   .split-shell{grid-template-columns:1fr;min-height:auto}
@@ -666,14 +667,21 @@ function currentPendingKey(){
   return state.pending_question || state.travel_pending_question || null;
 }
 
+function _orTypeLabel(){
+  const el = document.createElement('div');
+  el.className = 'or-type-label';
+  el.textContent = 'or type your own answer below';
+  return el;
+}
+
 function updateDynamicInput(quickReplies){
   const row = document.getElementById('dynamicInputRow');
   const composer = document.querySelector('.composer');
   const key = currentPendingKey();
-  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue').forEach(el => el.remove());
+  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el => el.remove());
+  composer.style.display = 'flex'; // the text box is ALWAYS available — quick widgets are an addition, never a replacement
 
   if (quickReplies && quickReplies.length) {
-    composer.style.display = 'none';
     const wrap = document.createElement('div');
     wrap.className = 'pill-row';
     quickReplies.forEach(r => {
@@ -695,8 +703,8 @@ function updateDynamicInput(quickReplies){
       wrap.appendChild(s);
     }
     row.insertBefore(wrap, composer);
+    row.insertBefore(_orTypeLabel(), composer);
   } else if (key === 'age' || key === 'travel_age') {
-    composer.style.display = 'none';
     const stepper = document.createElement('div');
     stepper.className = 'stepper-input';
     stepper.innerHTML = `<input type="number" id="stepperInput" min="0" max="120" placeholder="Age">
@@ -707,8 +715,7 @@ function updateDynamicInput(quickReplies){
     btn.onclick = submitStepper;
     row.insertBefore(stepper, composer);
     row.insertBefore(btn, composer);
-  } else {
-    composer.style.display = 'flex';
+    row.insertBefore(_orTypeLabel(), composer);
   }
 }
 
