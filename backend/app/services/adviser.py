@@ -3,7 +3,7 @@ import json
 import re
 from typing import Any
 
-from backend.app.services.openai_client import adviser_response
+from backend.app.services.anthropic_client import claude_response as adviser_response
 from backend.app.schemas.quote import QuoteResult
 from backend.app.knowledge.service import fairness_rules, international_vs_local, fairness_check
 
@@ -104,7 +104,7 @@ async def intake_analysis(message: str, state: dict, history: list[dict] | None,
     try:
         text = await adviser_response(
             instructions=build_intake_instructions(state, greek),
-            message=message, history=history, json_mode=True, max_output_tokens=500,
+            message=message, history=history, json_mode=True, max_tokens=500,
         )
         parsed = _extract_json(text)
         return {
@@ -143,7 +143,7 @@ Hard rules:
 
 async def explain_plan(quote: QuoteResult, question: str, greek: bool) -> str:
     try:
-        text = await adviser_response(instructions=build_explain_plan_instructions(quote, greek), message=question, max_output_tokens=400)
+        text = await adviser_response(instructions=build_explain_plan_instructions(quote, greek), message=question, max_tokens=400)
         flags = fairness_check(text)
         if flags:
             # Fail closed to a safe deterministic fallback rather than ever
@@ -196,7 +196,7 @@ async def comparison_conclusion(matrix_rows: list[dict], plan_labels: dict[str, 
     try:
         text = await adviser_response(
             instructions=build_comparison_conclusion_instructions(matrix_rows, plan_labels, greek),
-            message="Write the comparison conclusion.", max_output_tokens=300,
+            message="Write the comparison conclusion.", max_tokens=300,
         )
         if fairness_check(text):
             return _deterministic_comparison_conclusion(matrix_rows, plan_labels, greek)

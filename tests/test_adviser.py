@@ -4,7 +4,8 @@ from backend.app.services.adviser import (
     clean_applicant_updates, build_intake_instructions, build_explain_plan_instructions,
     build_local_review_instructions, _deterministic_plan_summary,
 )
-from backend.app.services.openai_client import build_request_body
+from backend.app.services.anthropic_client import build_request_body as build_claude_request_body, build_messages
+from backend.app.services.openai_client import build_request_body as build_openai_request_body
 from backend.app.schemas.quote import QuoteResult
 
 
@@ -61,6 +62,31 @@ def test_local_review_instructions_include_never_lose_the_prospect_principle():
     assert "opportunity" in instr.lower()
 
 
-def test_request_body_always_disables_storage():
-    body = build_request_body(instructions="x", message="hi", history=None, json_mode=False)
+def test_claude_request_body_shape():
+    body = build_claude_request_body(instructions="You are HAL.", message="hi", history=None, json_mode=False)
+    assert body["system"] == "You are HAL."
+    assert body["messages"] == [{"role": "user", "content": "hi"}]
+    assert "model" in body and "max_tokens" in body
+
+
+def test_claude_json_mode_appends_strict_instruction_no_response_format_param():
+    # Unlike OpenAI's Responses API, Claude has no structured 'text.format'
+    # param — JSON mode is enforced via a strict system-prompt instruction.
+    body = build_claude_request_body(instructions="Base.", message="hi", history=None, json_mode=True)
+    assert "JSON object only" in body["system"]
+    assert "text" not in body
+
+
+def test_claude_messages_always_start_with_user_even_with_odd_history():
+    # A malformed/trimmed history should never produce an invalid
+    # assistant-first turn sequence sent to the API.
+    history = [{"role": "assistant", "content": "stray leading reply"}, {"role": "user", "content": "ok"}]
+    messages = build_messages(history, "next question")
+    assert messages[0]["role"] == "user"
+
+
+def test_openai_client_still_usable_standalone_for_future_deep_analysis():
+    # OpenAI is no longer the chat provider, but stays available/tested for
+    # the planned deep policy-wording comparison feature.
+    body = build_openai_request_body(instructions="x", message="hi", history=None, json_mode=False)
     assert body["store"] is False

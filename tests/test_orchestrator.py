@@ -19,7 +19,7 @@ async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
 
 
 @pytest.mark.asyncio
-async def test_full_guided_flow_reaches_shortlist_without_openai_configured():
+async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     state: dict = {}
     history: list = []
 
@@ -163,7 +163,7 @@ async def test_relocation_language_triggers_ipmi_note_once():
 
 
 @pytest.mark.asyncio
-async def test_local_review_without_openai_key_uses_deterministic_fallback():
+async def test_local_review_without_claude_key_uses_deterministic_fallback():
     state: dict = {}
     r = await chat_turn("Do you have local insurance?", state, [])
     assert r["journey"] == "local_review"

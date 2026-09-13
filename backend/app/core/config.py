@@ -7,7 +7,15 @@ class Settings(BaseSettings):
     app_name: str = "Ashlar Advisor"
     api_prefix: str = "/api/v1"
 
-    # OpenAI powers the conversational adviser and speech transcription.
+    # Claude powers HAL's chat/intake/explain layer — the 'first analysis'.
+    anthropic_api_key: str | None = None
+    anthropic_chat_model: str = "claude-sonnet-5"
+    anthropic_chat_max_tokens: int = 1400
+    anthropic_chat_timeout_seconds: int = 60
+
+    # OpenAI stays configured for two things only: (1) speech-to-text, since
+    # the Anthropic API has no transcription endpoint, and (2) reserved for
+    # the future deep policy-wording comparison feature — not the chat layer.
     openai_api_key: str | None = None
     openai_chat_model: str = "gpt-5.6-terra"
     openai_chat_max_output_tokens: int = 1400

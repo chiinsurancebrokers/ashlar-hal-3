@@ -8,7 +8,7 @@ from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions
 from backend.app.discovery.flow import apply_discovery_answer, next_discovery_question, discovery_progress
 from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions
-from backend.app.services.openai_client import adviser_response
+from backend.app.services.anthropic_client import claude_response as adviser_response
 from backend.app.knowledge.service import detect_hnwi
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
@@ -170,7 +170,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     openai_ack = ""
     provisional = classify_journey(message, state)
-    if settings.openai_api_key and provisional not in {"travel", "local_review"} and not state.get("discovery_complete"):
+    if settings.anthropic_api_key and provisional not in {"travel", "local_review"} and not state.get("discovery_complete"):
         intake = await intake_analysis(message, state, history, greek)
         state = _merge(state, intake.get("applicant_updates", {}))
         openai_ack = intake.get("acknowledgement", "")
@@ -180,7 +180,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     if journey == "local_review":
         try:
-            reply = await adviser_response(instructions=build_local_review_instructions(greek), message=message, history=history, max_output_tokens=300)
+            reply = await adviser_response(instructions=build_local_review_instructions(greek), message=message, history=history, max_tokens=300)
         except Exception:
             reply = ("Ένα local πρόγραμμα μπορεί να ταιριάζει αν θέλετε κάλυψη κυρίως στην Ελλάδα με χαμηλότερο κόστος. "
                       "Αν όμως θέλετε ευρύτερη επιλογή νοσοκομείων, υψηλότερα όρια ή θεραπεία στο εξωτερικό, ένα διεθνές πρόγραμμα ταιριάζει καλύτερα. "

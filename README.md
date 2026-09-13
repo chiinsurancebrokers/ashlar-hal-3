@@ -5,7 +5,7 @@ A premium AI insurance adviser built on a **two-brains architecture**:
 ```
 User
   ↓
-Discovery flow + Adviser layer (OpenAI)      — understands natural language,
+Discovery flow + Adviser layer (Claude)       — understands natural language,
   ↓                                            extracts facts, explains results
 Deterministic quote engine                    — eligibility, premiums,
   ↓                                            MUST-HAVE filters, evidence
@@ -13,9 +13,16 @@ Verified shortlist / natural advice
 ```
 
 The deterministic engine is the single source of truth for **facts** (is this
-plan eligible, what does it cost). The LLM layer is only ever allowed to
+plan eligible, what does it cost). Claude is only ever allowed to
 **explain** those facts in natural language — it cannot invent benefits,
 override eligibility, or state a price other than the one the engine computed.
+
+**Two AI providers, two distinct jobs — not interchangeable:**
+- **Claude (Anthropic API)** powers chat, intake understanding, plan
+  explanations and the comparison conclusion — HAL's "first analysis" layer.
+- **OpenAI** is kept configured for exactly two things: speech-to-text
+  (Claude has no transcription endpoint) and the *planned* deep
+  policy-wording comparison feature — not the chat layer.
 
 ## Why this exists
 
