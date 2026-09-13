@@ -82,8 +82,11 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .q-actions{display:flex;gap:8px;margin-top:16px}
 .q-primary{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:10px;padding:11px;font-weight:700;font-size:13px;cursor:pointer}
 .q-secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;cursor:pointer}
-.compare-pick{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:10px;padding:4px 9px;cursor:pointer}
+.compare-pick{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border);border-radius:999px;font-size:10px;padding:4px 9px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .1s}
+.compare-pick:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.compare-pick:active{transform:scale(0.94)}
 .compare-pick.selected{background:var(--accent);color:var(--white);border-color:var(--accent)}
+.compare-pick.selected:hover{background:var(--navy);border-color:var(--navy)}
 
 .excluded-wrap{margin:6px 0 16px}
 .excluded-btn{background:none;border:none;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;padding:0}
@@ -95,7 +98,9 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 
 .compare-tray{position:fixed;bottom:90px;left:0;right:0;background:var(--navy);color:var(--white);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:40}
 .compare-tray.show{display:flex}
-.compare-tray button{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+.compare-tray button{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
+.compare-tray button:hover{background:#4636c9;opacity:.85}
+.compare-tray button:active{transform:scale(0.96)}
 
 .composer{position:static;background:none;border:none;padding:0;display:flex;gap:8px;flex:1}
 .composer input{flex:1;border:1px solid var(--border);border-radius:999px;padding:12px 16px;font-size:14px}
