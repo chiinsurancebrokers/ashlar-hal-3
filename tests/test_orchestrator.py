@@ -6,7 +6,7 @@ from backend.app.services.orchestrator import chat_turn
 @pytest.mark.asyncio
 async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
     state: dict = {
-        "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,
+        "name_asked": True, "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,
         "discovery_complete": True, "pending_question": None, "deductible_answered": True,
         "outpatient_answered": True, "chronic_answered": True, "maternity_answered": True,
         "dental_answered": True, "mental_health_answered": True, "wellness_answered": True,
@@ -31,7 +31,9 @@ async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
 
     r = await turn("I'm looking for international health insurance")
     assert r["ai_status"] == "guided_discovery"
+    assert r["state"]["pending_question"] == "name"
 
+    r = await turn("Christos")
     r = await turn("51")
     r = await turn("Greece")
     r = await turn("Worldwide excluding USA")

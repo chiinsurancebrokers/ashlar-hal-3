@@ -45,7 +45,7 @@ def test_chat_turn_first_message_asks_age():
     assert r.status_code == 200
     body = r.json()
     assert body["ai_status"] == "guided_discovery"
-    assert body["state"]["pending_question"] == "age"
+    assert body["state"]["pending_question"] == "name"
 
 
 def test_lead_requires_consent():

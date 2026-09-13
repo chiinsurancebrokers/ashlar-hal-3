@@ -430,7 +430,7 @@ function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickRepl
   }
   box.innerHTML = html;
   chat.appendChild(box);
-  window.scrollTo(0, document.body.scrollHeight);
+  box.scrollIntoView({behavior: 'smooth', block: 'start'});
   renderState();
 }
 
@@ -654,7 +654,7 @@ function showThinking(label){
   el.className = 'thinking'; el.id = 'thinkingEl';
   el.innerHTML = `<span>${esc(label)}</span><span class="thinking-dots"><span></span><span></span><span></span></span>`;
   chat.appendChild(el);
-  window.scrollTo(0, document.body.scrollHeight);
+  el.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 function removeThinking(){ const el = document.getElementById('thinkingEl'); if (el) el.remove(); }
 
@@ -862,6 +862,7 @@ function openLeadForm(journey){
   document.getElementById('leadTitle').textContent = state.client_segment==='hnwi' ? 'Request a private consultation' : title;
   document.getElementById('leadSubtitle').textContent = sub;
   if (state.residence_country) document.getElementById('leadResidence').value = state.residence_country;
+  if (state.applicant_name) document.getElementById('leadFirstName').value = state.applicant_name;
   if (state.age) document.getElementById('leadAge').value = state.age;
   if (state.coverage_area) document.getElementById('leadCoverage').value = areaLabel(state.coverage_area);
   if (state.budget_annual) document.getElementById('leadBudget').value = state.budget_annual;

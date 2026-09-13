@@ -39,6 +39,38 @@ def _q(key: str, reply: str, choices: list[tuple[str, str]] | None = None, skipp
     return {"key": key, "reply": reply, "quick_replies": replies}
 
 
+# Deterministic, no-LLM-required extra-signal scan. Runs on every raw answer
+# regardless of which question is currently pending, so a sentence like
+# "greece and i am looking for in patient and outpatient insurance coverage"
+# pre-fills outpatient even if the applicant was only asked for their country.
+# This works identically with or without Claude configured — Claude's
+# intake_analysis layer, when available, does the same job with far more
+# nuance; this is the reliable floor underneath it, not a replacement.
+OPPORTUNISTIC_SIGNALS: list[tuple[str, str]] = [
+    ("outpatient", r"out[\s-]?patient|εξωνοσοκομειακ"),
+    ("dental", r"\bdental\b|dentist|οδοντιατρικ"),
+    ("maternity", r"maternity|pregnan|τοκετ|μαιευτικ"),
+    ("mental_health", r"mental[\s-]?health|psychiat|patholog|therap(y|ist)|ψυχικ"),
+    ("wellness", r"wellness|check[\s-]?up|screening|προληπτικ"),
+    ("optical", r"\boptical\b|eye\s?(test|care)|glasses|οφθαλμολογικ"),
+    ("evacuation", r"evacuation|repatriation|διακομιδ"),
+    ("chronic", r"\bchronic\b|χρονι(ο|α|ας|ών)"),
+]
+
+
+def _opportunistic_extras(text: str, state: dict, exclude_key: str | None) -> dict:
+    out: dict = {}
+    for key, pattern in OPPORTUNISTIC_SIGNALS:
+        if key == exclude_key:
+            continue  # the dedicated branch for the pending question already handles this field, with proper yes/no nuance
+        if state.get(f"{key}_answered"):
+            continue  # already settled — never silently override an earlier explicit answer
+        if re.search(pattern, text):
+            out[f"{key}_required"] = True
+            out[f"{key}_answered"] = True
+    return out
+
+
 def apply_discovery_answer(message: str, state: dict) -> dict:
     """Interpret the applicant's answer to whatever question is pending.
     A skip is ALWAYS honoured — the applicant can never get stuck repeating
@@ -52,7 +84,16 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
     if _is_skip(text):
         return _skip_result(pending)
 
-    if pending == "age":
+    out.update(_opportunistic_extras(text, state, exclude_key=pending))
+
+    if pending == "name":
+        raw = message.strip(" .,!?:;")
+        cleaned = re.sub(r"^(?:my\s+name\s+is|i'?m|i\s+am|με\s+λένε|με\s+λενε|είμαι|ειμαι)\s+", "", raw, flags=re.I).strip()
+        if cleaned and len(cleaned.split()) <= 4 and len(cleaned) <= 40 and re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿΑ-Ωα-ωΆ-ώ .'-]+", cleaned):
+            out["applicant_name"] = " ".join(p.capitalize() for p in cleaned.split())
+        out["name_asked"] = True
+
+    elif pending == "age":
         m = re.search(r"\b(\d{1,3})\b", text)
         if m:
             age = int(m.group(1))
@@ -64,7 +105,10 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
         aliases = {
             "greece": "Greece", "hellas": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece",
             "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
-            "usa": "United States", "united states": "United States",
+            "usa": "United States", "united states": "United States", "america": "United States",
+            "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus",
+            "germany": "Germany", "france": "France", "italy": "Italy", "spain": "Spain",
+            "malta": "Malta", "uae": "United Arab Emirates", "dubai": "United Arab Emirates",
         }
         cleaned = re.sub(
             r"^(?:i\s+(?:live|reside)\s+in|i'?m\s+(?:living|resident)\s+in|living\s+in|resident\s+in|residing\s+in|in|"
@@ -74,8 +118,24 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
         canonical = aliases.get(cleaned.lower())
         if canonical:
             out["residence_country"] = canonical
-        elif cleaned and len(cleaned) <= 80 and re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿΑ-Ωα-ωΆ-ώ .'-]+", cleaned):
-            out["residence_country"] = " ".join(p.capitalize() for p in cleaned.split())
+        else:
+            # The applicant may have bundled other information into the same
+            # message ("greece and i am looking for outpatient cover too") —
+            # search for a known country name anywhere in the raw text
+            # before falling back to anything looser.
+            found = None
+            for alias, name in aliases.items():
+                if re.search(rf"\b{re.escape(alias)}\b", raw, flags=re.I):
+                    found = name
+                    break
+            if found:
+                out["residence_country"] = found
+            elif cleaned and len(cleaned.split()) <= 4 and re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿΑ-Ωα-ωΆ-ώ .'-]+", cleaned):
+                # Short enough to plausibly BE a country name we don't have
+                # aliased (e.g. "Bulgaria") — a whole sentence never matches
+                # this word-count guard, so it can never get stored as a
+                # 'country' by mistake.
+                out["residence_country"] = " ".join(p.capitalize() for p in cleaned.split())
 
     elif pending == "coverage_area":
         if any(x in text for x in ["worldwide including usa", "including usa", "με ηπα", "με usa"]):
@@ -163,6 +223,7 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
 def _skip_result(pending: str) -> dict:
     """Sensible, explicit defaults for a skipped question — never a stuck flow."""
     defaults: dict[str, dict] = {
+        "name": {"name_asked": True},
         "age": {},  # age has no safe default; skip re-asks (handled by next_discovery_question)
         "residence": {},
         "coverage_area": {"coverage_area": "area1"},  # Europe is the safest narrow default
@@ -185,8 +246,12 @@ def _skip_result(pending: str) -> dict:
 
 def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
     """Return the next question. None means shortlist-ready."""
+    if not state.get("name_asked"):
+        return _q("name",
+            "Hi, I'm HAL. Before we start — what's your name?" if not greek else "Γεια σας, είμαι ο HAL. Πριν ξεκινήσουμε — πώς σας λένε;")
     if not state.get("age"):
-        return _q("age", "How old are you?" if not greek else "Πόσων χρονών είστε;", skippable=False)
+        greeting = f"Nice to meet you, {state['applicant_name']}. " if state.get("applicant_name") else ""
+        return _q("age", f"{greeting}How old are you?" if not greek else f"{greeting}Πόσων χρονών είστε;", skippable=False)
     if not state.get("residence_country"):
         return _q("residence", "Which country do you live in?" if not greek else "Σε ποια χώρα μένετε;", skippable=False)
     if not state.get("coverage_area"):
@@ -236,7 +301,7 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
 
 
 def discovery_progress(state: dict) -> dict:
-    keys = ["age", "residence_country", "coverage_area", "deductible_answered", "outpatient_answered",
+    keys = ["name_asked", "age", "residence_country", "coverage_area", "deductible_answered", "outpatient_answered",
             "chronic_answered", "dental_answered", "mental_health_answered", "wellness_answered",
             "optical_answered", "evacuation_answered", "budget_answered"]
     age = int(state.get("age") or 0)

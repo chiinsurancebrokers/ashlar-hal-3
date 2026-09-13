@@ -214,8 +214,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     quotes = _quote_payload(state, settings)
     excluded = _exclusions_payload(state, settings)
     label = "Request a private consultation" if state.get("client_segment") == "hnwi" else "Request a proposal"
-    intro = ("Τέλεια — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
-              if greek else "Great — I now have enough information. Here is HAL's shortlist.")
+    name = state.get("applicant_name")
+    intro = (f"Τέλεια{', ' + name if name else ''} — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
+              if greek else f"Great{', ' + name if name else ''} — I now have enough information. Here is HAL's shortlist.")
     reasoning = _shortlist_reasoning(quotes, excluded, greek)
     reply = f"{intro} {reasoning}".strip()
     return {
