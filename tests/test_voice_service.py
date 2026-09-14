@@ -44,6 +44,46 @@ def test_validate_audio_accepts_real_browser_codec_suffixed_types():
     validate_audio_upload(b"some bytes", "AUDIO/WEBM;codecs=opus")  # case-insensitive too
 
 
+@pytest.mark.asyncio
+async def test_transcribe_audio_pins_language_to_avoid_wrong_language_guesses(monkeypatch):
+    # Regression: without an explicit language hint, Whisper auto-detects
+    # from audio alone, which on short phrases produced wrong-language
+    # transcriptions (e.g. "Greece" came back as Slovak "Grécko").
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-key-for-test")
+    config_module.get_settings.cache_clear()
+
+    captured = {}
+
+    class FakeResponse:
+        status_code = 200
+        def json(self): return {"text": "Greece"}
+
+    class FakeAsyncClient:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers=None, files=None, data=None):
+            captured["data"] = data
+            return FakeResponse()
+
+    import backend.app.services.voice as voice_module
+    monkeypatch.setattr(voice_module.httpx, "AsyncClient", FakeAsyncClient)
+
+    try:
+        await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "en")
+        assert captured["data"]["language"] == "en"
+
+        await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", None)
+        assert "language" not in captured["data"], "no hint given -> must not force a language"
+
+        await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "fr")
+        assert "language" not in captured["data"], "we only ever run in en/el -> an unknown hint must not be forwarded blindly"
+    finally:
+        config_module.get_settings.cache_clear()
+
+
 def test_pick_voice_id_prefers_language_specific_voice(monkeypatch):
     from backend.app.core import config as config_module
     config_module.get_settings.cache_clear()

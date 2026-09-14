@@ -8,10 +8,10 @@ router = APIRouter(tags=["voice"])
 
 
 @router.post("/transcribe")
-async def transcribe(file: UploadFile = File(...)):
+async def transcribe(file: UploadFile = File(...), language: str | None = Form(None)):
     try:
         data = await file.read()
-        text = await transcribe_audio(data, file.filename or "audio.webm", file.content_type or "")
+        text = await transcribe_audio(data, file.filename or "audio.webm", file.content_type or "", language)
         return {"text": text}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

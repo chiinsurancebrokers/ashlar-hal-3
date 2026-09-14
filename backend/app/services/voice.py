@@ -28,7 +28,7 @@ def validate_audio_upload(file_bytes: bytes, content_type: str | None) -> None:
         raise ValueError(f"Unsupported audio format: {content_type}")
 
 
-async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str) -> str:
+async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, language: str | None = None) -> str:
     validate_audio_upload(file_bytes, content_type)
     settings = get_settings()
     if not settings.openai_api_key:
@@ -36,6 +36,12 @@ async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str) 
 
     files = {"file": (filename or "audio.webm", file_bytes, content_type or "audio/webm")}
     data = {"model": settings.openai_transcribe_model}
+    # Whisper auto-detects language purely from audio when none is given,
+    # which is unreliable on short utterances (a single word like "Greece"
+    # was coming back transcribed as Slovak "Grécko"). We only ever run in
+    # English or Greek, so pin it explicitly whenever the caller knows which.
+    if language in {"en", "el"}:
+        data["language"] = language
     headers = {"Authorization": f"Bearer {settings.openai_api_key}"}
 
     async with httpx.AsyncClient(timeout=60) as client:

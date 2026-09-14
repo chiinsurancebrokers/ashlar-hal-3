@@ -801,6 +801,7 @@ async function toggleRecording(){
       }
       const form = new FormData();
       form.append('file', blob, 'audio.webm');
+      form.append('language', (state && state.language) || 'en');
       try {
         const r = await fetch(API+'/transcribe', {method:'POST', body: form});
         const d = await r.json();
