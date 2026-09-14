@@ -785,12 +785,10 @@ async function toggleRecording(){
       micBtn.style.background = '#fdeaea';
       status.style.display = 'block';
       status.textContent = 'Listening…';
-      setOrbState('listening', 'Listening');
     };
     mediaRecorder.onstop = async () => {
       isRecording = false;
       micBtn.textContent = '🎙';
-      setOrbState('idle', 'Tap to begin');
       micBtn.style.background = 'var(--bg)';
       stream.getTracks().forEach(t => t.stop());
       status.textContent = 'Transcribing…';
