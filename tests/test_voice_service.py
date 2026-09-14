@@ -87,6 +87,111 @@ async def test_transcribe_audio_pins_language_to_avoid_wrong_language_guesses(mo
         config_module.get_settings.cache_clear()
 
 
+@pytest.mark.asyncio
+async def test_transcribe_falls_back_to_openai_when_elevenlabs_fails(monkeypatch):
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "fake-el-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-oa-key")
+    config_module.get_settings.cache_clear()
+
+    calls = []
+
+    class FailingResponse:
+        status_code = 503
+        text = "Service unavailable"
+        def json(self): return {}
+
+    class OkResponse:
+        status_code = 200
+        def json(self): return {"text": "fallback worked"}
+
+    class FakeAsyncClient:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers=None, files=None, data=None):
+            calls.append(url)
+            if "elevenlabs" in url:
+                return FailingResponse()
+            return OkResponse()
+
+    import backend.app.services.voice as voice_module
+    monkeypatch.setattr(voice_module.httpx, "AsyncClient", FakeAsyncClient)
+
+    try:
+        text = await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "en")
+        assert text == "fallback worked"
+        assert len(calls) == 2, "must try ElevenLabs first, then fall back to OpenAI"
+        assert "elevenlabs" in calls[0]
+        assert "openai" in calls[1]
+    finally:
+        config_module.get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_transcribe_uses_openai_directly_when_elevenlabs_not_configured(monkeypatch):
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-oa-key")
+    config_module.get_settings.cache_clear()
+
+    calls = []
+
+    class OkResponse:
+        status_code = 200
+        def json(self): return {"text": "openai only"}
+
+    class FakeAsyncClient:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers=None, files=None, data=None):
+            calls.append(url)
+            return OkResponse()
+
+    import backend.app.services.voice as voice_module
+    monkeypatch.setattr(voice_module.httpx, "AsyncClient", FakeAsyncClient)
+
+    try:
+        text = await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "en")
+        assert text == "openai only"
+        assert len(calls) == 1, "no ElevenLabs key -> must go straight to OpenAI, no wasted call"
+    finally:
+        config_module.get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_transcribe_raises_clear_error_when_both_providers_fail(monkeypatch):
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "fake-el-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-oa-key")
+    config_module.get_settings.cache_clear()
+
+    class FailingResponse:
+        status_code = 500
+        text = "Internal error"
+        def json(self): return {}
+
+    class FakeAsyncClient:
+        def __init__(self, *a, **kw): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *a): return False
+        async def post(self, url, headers=None, files=None, data=None):
+            return FailingResponse()
+
+    import backend.app.services.voice as voice_module
+    monkeypatch.setattr(voice_module.httpx, "AsyncClient", FakeAsyncClient)
+
+    try:
+        with pytest.raises(RuntimeError, match="every configured provider"):
+            await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "en")
+    finally:
+        config_module.get_settings.cache_clear()
+
+
 def test_pick_voice_id_prefers_language_specific_voice(monkeypatch):
     from backend.app.core import config as config_module
     config_module.get_settings.cache_clear()

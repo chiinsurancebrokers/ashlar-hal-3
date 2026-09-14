@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     elevenlabs_voice_id_el: str | None = None
     elevenlabs_voice_id_en: str | None = None
     elevenlabs_transcribe_model: str = "scribe_v2"
+    openai_transcribe_model: str = "whisper-1"
 
     database_url: str | None = None
 

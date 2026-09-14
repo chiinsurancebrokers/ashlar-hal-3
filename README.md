@@ -20,10 +20,11 @@ override eligibility, or state a price other than the one the engine computed.
 **Three providers, three distinct jobs — not interchangeable:**
 - **Claude (Anthropic API)** powers chat, intake understanding, plan
   explanations and the comparison conclusion — HAL's "first analysis" layer.
-- **ElevenLabs** powers both voice input (Scribe speech-to-text) and voice
-  output (text-to-speech).
+- **ElevenLabs** is the primary voice provider: Scribe for speech-to-text
+  and its standard API for text-to-speech.
 - **OpenAI** is reserved for the *planned* deep policy-wording comparison
-  feature — not currently used by the chat layer or voice.
+  feature, and doubles as an automatic transcription fallback if ElevenLabs
+  Scribe is unavailable or a request to it fails.
 
 ## Why this exists
 
@@ -114,14 +115,22 @@ tests/             102... (run `pytest -v` for the current count)
 
 ## Voice
 
-Both directions use ElevenLabs, on one API key (`ELEVENLABS_API_KEY`): Scribe
-for speech-to-text (`ELEVENLABS_TRANSCRIBE_MODEL`, default `scribe_v2`) and
-text-to-speech for voice output (`ELEVENLABS_VOICE_ID`, with optional
-`ELEVENLABS_VOICE_ID_EL`/`ELEVENLABS_VOICE_ID_EN` for per-language voices).
-The conversation's current language is pinned explicitly on every
-transcription request — language auto-detection on short utterances proved
+**Speech-to-text**: ElevenLabs Scribe is the primary provider
+(`ELEVENLABS_API_KEY`, `ELEVENLABS_TRANSCRIBE_MODEL`, default `scribe_v2`).
+If it isn't configured, or a request to it fails for any reason (outage,
+rate limit, network error), transcription automatically falls back to
+OpenAI Whisper (`OPENAI_API_KEY`, `OPENAI_TRANSCRIBE_MODEL`, default
+`whisper-1`) — provided that key is configured. Only if *neither* provider
+is available, or both fail, does the request return an error. The
+conversation's current language is pinned explicitly on every request to
+either provider — language auto-detection on short utterances proved
 unreliable (a single word could come back transcribed in the wrong language
-entirely). Voice is fully optional — if unconfigured, the mic button and
+entirely).
+
+**Text-to-speech**: ElevenLabs only (`ELEVENLABS_VOICE_ID`, with optional
+`ELEVENLABS_VOICE_ID_EL`/`ELEVENLABS_VOICE_ID_EN` for per-language voices).
+
+Voice is fully optional — if nothing is configured, the mic button and
 speaker toggle simply report "unavailable" (503) rather than breaking the
 rest of HAL.
 Recorded audio is always shown back to the applicant as editable text before

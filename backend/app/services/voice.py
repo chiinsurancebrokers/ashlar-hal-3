@@ -5,6 +5,7 @@ from backend.app.core.config import get_settings
 
 ELEVENLABS_STT_URL = "https://api.elevenlabs.io/v1/speech-to-text"
 ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+OPENAI_TRANSCRIBE_URL = "https://api.openai.com/v1/audio/transcriptions"
 
 ALLOWED_AUDIO_CONTENT_TYPES = {
     "audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "audio/mp3",
@@ -28,18 +29,10 @@ def validate_audio_upload(file_bytes: bytes, content_type: str | None) -> None:
         raise ValueError(f"Unsupported audio format: {content_type}")
 
 
-async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, language: str | None = None) -> str:
-    validate_audio_upload(file_bytes, content_type)
+async def _transcribe_via_elevenlabs(file_bytes: bytes, filename: str, content_type: str, language: str | None) -> str:
     settings = get_settings()
-    if not settings.elevenlabs_api_key:
-        raise RuntimeError("ELEVENLABS_API_KEY is not configured — voice input is unavailable.")
-
     files = {"file": (filename or "audio.webm", file_bytes, content_type or "audio/webm")}
     data = {"model_id": settings.elevenlabs_transcribe_model}
-    # Language auto-detection on short utterances is unreliable (e.g.
-    # "Greece" came back transcribed in the wrong language entirely) — pin
-    # it explicitly whenever the caller knows which of our two supported
-    # languages is active.
     if language in {"en", "el"}:
         data["language_code"] = language
     headers = {"xi-api-key": settings.elevenlabs_api_key}
@@ -47,12 +40,58 @@ async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, 
     async with httpx.AsyncClient(timeout=60) as client:
         response = await client.post(ELEVENLABS_STT_URL, headers=headers, files=files, data=data)
     if not (200 <= response.status_code < 300):
-        raise RuntimeError(f"Transcription failed ({response.status_code}): {(response.text or '')[:200]}")
-
+        raise RuntimeError(f"ElevenLabs transcription failed ({response.status_code}): {(response.text or '')[:200]}")
     text = (response.json() or {}).get("text", "").strip()
     if not text:
-        raise RuntimeError("Transcription returned no text — please try speaking again.")
+        raise RuntimeError("ElevenLabs transcription returned no text.")
     return text
+
+
+async def _transcribe_via_openai(file_bytes: bytes, filename: str, content_type: str, language: str | None) -> str:
+    settings = get_settings()
+    files = {"file": (filename or "audio.webm", file_bytes, content_type or "audio/webm")}
+    data = {"model": settings.openai_transcribe_model}
+    if language in {"en", "el"}:
+        data["language"] = language
+    headers = {"Authorization": f"Bearer {settings.openai_api_key}"}
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.post(OPENAI_TRANSCRIBE_URL, headers=headers, files=files, data=data)
+    if not (200 <= response.status_code < 300):
+        raise RuntimeError(f"OpenAI transcription failed ({response.status_code}): {(response.text or '')[:200]}")
+    text = (response.json() or {}).get("text", "").strip()
+    if not text:
+        raise RuntimeError("OpenAI transcription returned no text.")
+    return text
+
+
+async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, language: str | None = None) -> str:
+    """ElevenLabs Scribe is the primary transcription provider. If it isn't
+    configured, or the request fails for any reason (outage, rate limit,
+    network error), automatically falls back to OpenAI Whisper — but only
+    if that key is actually configured. Both providers get the same
+    language pin, since auto-detection on short utterances is unreliable."""
+    validate_audio_upload(file_bytes, content_type)
+    settings = get_settings()
+
+    if not settings.elevenlabs_api_key and not settings.openai_api_key:
+        raise RuntimeError("Voice input is not configured — no transcription provider is available.")
+
+    errors: list[str] = []
+
+    if settings.elevenlabs_api_key:
+        try:
+            return await _transcribe_via_elevenlabs(file_bytes, filename, content_type, language)
+        except Exception as exc:
+            errors.append(f"ElevenLabs — {exc}")
+
+    if settings.openai_api_key:
+        try:
+            return await _transcribe_via_openai(file_bytes, filename, content_type, language)
+        except Exception as exc:
+            errors.append(f"OpenAI — {exc}")
+
+    raise RuntimeError("Transcription failed on every configured provider: " + " | ".join(errors))
 
 
 def pick_voice_id(language: str) -> str | None:
