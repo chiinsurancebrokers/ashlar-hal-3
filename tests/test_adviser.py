@@ -30,6 +30,13 @@ def test_intake_instructions_never_let_llm_calculate_premium_or_eligibility():
     assert "Do not invent benefits" in instr
 
 
+def test_intake_instructions_discourage_repetitive_acknowledgement_template():
+    # Regression: Claude was falling into a repeating "Got it, X noted."
+    # template on almost every turn — explicitly told not to.
+    instr = build_intake_instructions({}, greek=False)
+    assert "repeating template" in instr or "vary your phrasing" in instr.lower()
+
+
 def _sample_quote() -> QuoteResult:
     return QuoteResult(
         insurer="Morgan Price (Europe) ApS", product_code="premium", product_name="Morgan Price Premium",

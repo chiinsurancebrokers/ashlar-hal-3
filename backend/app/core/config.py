@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str | None = None
     elevenlabs_voice_id: str | None = None
     elevenlabs_voice_id_el: str | None = None
-    elevenlabs_voice_id_en: str | None = None
+    # "George" — warm, articulate British male voice from ElevenLabs' standard
+    # library. Explicit ELEVENLABS_VOICE_ID_EN in the environment overrides this.
+    elevenlabs_voice_id_en: str | None = "JBFqnCBsd6RMkjVDRZzb"
     elevenlabs_transcribe_model: str = "scribe_v2"
     openai_transcribe_model: str = "whisper-1"
 

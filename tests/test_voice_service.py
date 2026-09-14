@@ -212,9 +212,23 @@ def test_pick_voice_id_falls_back_to_default_when_language_specific_missing(monk
     from backend.app.core import config as config_module
     config_module.get_settings.cache_clear()
     monkeypatch.setenv("ELEVENLABS_VOICE_ID", "default_voice")
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID_EN", raising=False)
     config_module.get_settings.cache_clear()
     try:
         assert pick_voice_id("el") == "default_voice"
     finally:
         monkeypatch.delenv("ELEVENLABS_VOICE_ID", raising=False)
+        config_module.get_settings.cache_clear()
+
+
+def test_default_english_voice_is_a_british_male_voice(monkeypatch):
+    # "George" — warm British male voice from ElevenLabs' standard library,
+    # used automatically for English replies with no extra config needed.
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID_EN", raising=False)
+    config_module.get_settings.cache_clear()
+    try:
+        assert pick_voice_id("en") == "JBFqnCBsd6RMkjVDRZzb"
+    finally:
         config_module.get_settings.cache_clear()
