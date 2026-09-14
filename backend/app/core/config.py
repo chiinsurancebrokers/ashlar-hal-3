@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     openai_chat_model: str = "gpt-5.6-terra"
     openai_chat_max_output_tokens: int = 1400
     openai_chat_timeout_seconds: int = 60
-    openai_transcribe_model: str = "gpt-4o-mini-transcribe"
+    openai_transcribe_model: str = "whisper-1"
     max_audio_upload_mb: int = 20
 
     elevenlabs_api_key: str | None = None
