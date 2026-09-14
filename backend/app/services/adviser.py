@@ -175,7 +175,11 @@ def build_comparison_conclusion_instructions(matrix_rows: list[dict], plan_label
         for r in matrix_rows
     ) or "(no comparable verified benefit rows)"
 
-    return f"""You are HAL, writing a short comparison conclusion in {"Greek" if greek else "English"}, in the style of:
+    return f"""You are HAL, writing a short comparison conclusion.
+
+Write ENTIRELY in {"Greek" if greek else "English"} — every single word, including
+if any of the data below happens to contain the other language. Never mix
+languages and never switch language mid-response, in the style of:
 "Plan A is cheaper and includes X from day one, but has a lower outpatient limit and no Y."
 "Plan B has a materially higher overall limit and includes Z, but does not cover W at this tier."
 
@@ -195,13 +199,29 @@ Hard rules:
 """
 
 
+def _language_mismatch(text: str, greek: bool) -> bool:
+    """Defensive guard: the model is instructed to answer in one language,
+    but occasionally slips into the other (e.g. pulled by non-English data
+    embedded in the prompt). Never ship a mismatched response silently."""
+    letters = [c for c in text if c.isalpha()]
+    if len(letters) < 20:
+        return False  # too short to judge reliably
+    greek_letters = sum(1 for c in letters if "\u0370" <= c <= "\u03ff" or "\u1f00" <= c <= "\u1fff")
+    greek_ratio = greek_letters / len(letters)
+    if greek and greek_ratio < 0.3:
+        return True   # asked for Greek, got mostly non-Greek
+    if not greek and greek_ratio > 0.15:
+        return True   # asked for English, got meaningfully Greek text
+    return False
+
+
 async def comparison_conclusion(matrix_rows: list[dict], plan_labels: dict[str, str], greek: bool) -> str:
     try:
         text = await adviser_response(
             instructions=build_comparison_conclusion_instructions(matrix_rows, plan_labels, greek),
             message="Write the comparison conclusion.", max_tokens=300,
         )
-        if fairness_check(text):
+        if fairness_check(text) or _language_mismatch(text, greek):
             return _deterministic_comparison_conclusion(matrix_rows, plan_labels, greek)
         return text
     except Exception:

@@ -29,6 +29,7 @@ async def preview(applicant: Applicant):
 class CompareRequest(BaseModel):
     applicant_state: dict = Field(default_factory=dict)
     plan_keys: list[str] = Field(min_length=2, max_length=4)
+    language: str = Field(default="en", pattern="^(en|el)$")
 
 
 @router.post("/compare")
@@ -58,11 +59,7 @@ async def compare(req: CompareRequest):
     matrix = build_comparison_matrix(plans_for_matrix)
     matrix_dict = matrix_to_dict(matrix)
 
-    # Note: language detection from applicant_state isn't wired yet, so this
-    # always returns an English conclusion for now — matches the current
-    # /quotes/preview endpoint too. Extending both to respect a language
-    # preference is a straightforward follow-up.
-    conclusion = await comparison_conclusion(matrix_dict["rows"], matrix_dict["plan_labels"], greek=False)
+    conclusion = await comparison_conclusion(matrix_dict["rows"], matrix_dict["plan_labels"], greek=(req.language == "el"))
 
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 

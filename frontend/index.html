@@ -473,7 +473,7 @@ function renderQuoteCard(q, i) {
   const selected = compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
-    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}')">${selected?'✓ Selected':'+ Compare'}</button>
+    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${selected?'✓ Selected':'+ Compare'}</button>
     <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.card_annual_limit||'Annual limit on request')}</div>
     <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.coverage_area_label||'')}</div>
     <div class="q-head">
@@ -521,15 +521,14 @@ function renderTravelCard(rec){
   </div>`;
 }
 
-function toggleCompare(key){
-  if (compareSelected.has(key)) compareSelected.delete(key); else compareSelected.add(key);
+function toggleCompare(key, btn){
+  const nowSelected = !compareSelected.has(key);
+  if (nowSelected) compareSelected.add(key); else compareSelected.delete(key);
+  if (btn) {
+    btn.classList.toggle('selected', nowSelected);
+    btn.textContent = nowSelected ? '✓ Selected' : '+ Compare';
+  }
   renderState();
-  // Re-render last message's cards to reflect selection state
-  const cards = document.querySelectorAll('.compare-pick');
-  cards.forEach(btn => {
-    // no-op: simplest correct approach is a full re-render on next message;
-    // for immediate visual feedback we just toggle this button directly.
-  });
 }
 
 function tellMeMore(i){
@@ -546,7 +545,7 @@ async function openCompare(){
 
   try {
     const r = await fetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected]})});
+      body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected], language: (state && state.language) || 'en'})});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not build the comparison.');
     content.innerHTML = renderDetailedCompare(d);
@@ -592,14 +591,15 @@ function renderDetailedCompare(d){
   if (allWarnings.length) {
     html += `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${allWarnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>`;
   }
+  const isGreek = (state && state.language) === 'el';
   html += `<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px">
-    <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">Σύντομο Συμπέρασμα</div>
+    <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${isGreek ? 'Σύντομο Συμπέρασμα' : 'Short Conclusion'}</div>
     <div style="font-size:13px">${esc(d.conclusion)}</div>
   </div>`;
   html += `<p style="font-size:10px;color:var(--muted);margin-top:12px">
-    Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί
-    συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους/εξαιρέσεις κάθε πλάνου. Υπόκειται σε έγκριση αναδοχής (underwriting approval).
-  </p>`;
+    ${isGreek
+      ? 'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους/εξαιρέσεις κάθε πλάνου. Υπόκειται σε έγκριση αναδοχής (underwriting approval).'
+      : 'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
   return html;
 }
 

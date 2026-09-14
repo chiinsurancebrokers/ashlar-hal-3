@@ -92,6 +92,8 @@ def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) 
     if greek:
         if matched:
             why = f"γιατί είναι η φθηνότερη επιλογή που καλύπτει επαληθευμένα: {', '.join(matched)}"
+        elif (top.get("evidence_confidence") if top.get("evidence_confidence") is not None else 1.0) < 1.0:
+            why = "γιατί είναι η πιο οικονομική επιλογή· δεν έχουμε ακόμα λεπτομερή στοιχεία παροχών για αυτόν τον ασφαλιστή ώστε να επιβεβαιώσουμε ότι καλύπτει όσα ζητήσατε"
         else:
             why = "γιατί είναι η πιο οικονομική επιλογή από τις επιλέξιμες"
         line = f"Η κορυφαία επιλογή είναι {top.get('product_name')} ({top.get('insurer')}) στα {price}/έτος — {why}."
@@ -101,6 +103,8 @@ def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) 
     else:
         if matched:
             why = f"it's the lowest-priced option that verifiably covers: {', '.join(matched)}"
+        elif (top.get("evidence_confidence") if top.get("evidence_confidence") is not None else 1.0) < 1.0:
+            why = "it's the lowest-priced option, though we don't yet hold detailed benefit data for this carrier to confirm it covers everything you asked for"
         else:
             why = "it's the lowest-priced eligible option"
         line = f"HAL's top pick is {top.get('product_name')} ({top.get('insurer')}) at {price}/year — {why}."
@@ -220,7 +224,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     intro = (f"Τέλεια{', ' + name if name else ''} — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
               if greek else f"Great{', ' + name if name else ''} — I now have enough information. Here is HAL's shortlist.")
     reasoning = _shortlist_reasoning(quotes, excluded, greek)
-    reply = f"{intro} {reasoning}".strip()
+    followup = (" Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
+                if greek else
+                " Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+    reply = f"{intro} {reasoning}{followup}".strip()
     return {
         "reply": reply, "state": state, "quotes": quotes, "excluded_plans": excluded,
         "ai_status": "deterministic_shortlist", "journey": journey if journey != "undetermined" else "ipmi",

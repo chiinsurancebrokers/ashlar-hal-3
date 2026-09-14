@@ -75,6 +75,25 @@ def test_shortlist_is_deduplicated_by_carrier_and_marks_recommended():
     assert len(carriers_in_top3) == len(shortlist[:3]), "first 3 shortlist entries must be from distinct carriers"
 
 
+def test_recommended_pick_never_outranks_on_price_alone_when_unverified_against_a_stated_must_have():
+    # Regression: a real reported bug — IMG Bronze (cheaper, but no loaded
+    # Table of Benefits) was being shown as "HAL's top pick" even though
+    # the applicant explicitly required outpatient cover, which IMG's fit
+    # against is entirely unverified. A verified Morgan Price match must
+    # always outrank an unverified-but-cheaper plan once a must-have is
+    # stated — price alone must never win that comparison.
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1", outpatient_required=True)
+    shortlist = quote_shortlist(applicant, _settings(), limit=5)
+    top = shortlist[0]
+    assert top.insurer.startswith("Morgan Price"), "the verified match must be recommended, not the cheaper unverified IMG Bronze"
+    assert top.evidence_confidence == 1.0
+    assert "Out-patient cover" in top.matched_requirements
+
+    img_bronze = next(q for q in shortlist if q.product_name == "IMG Bronze")
+    assert img_bronze.premium < top.premium, "sanity check: IMG Bronze really is cheaper — the fix must still hold despite that"
+    assert img_bronze.recommended is False
+
+
 def test_card_metadata_present_on_every_quote_current_result_not_just_shortlist():
     applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
     quotes = quote_current(applicant, _settings())

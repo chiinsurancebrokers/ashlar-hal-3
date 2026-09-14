@@ -2,7 +2,7 @@ from datetime import date
 
 from backend.app.services.adviser import (
     clean_applicant_updates, build_intake_instructions, build_explain_plan_instructions,
-    build_local_review_instructions, _deterministic_plan_summary,
+    build_local_review_instructions, _deterministic_plan_summary, _language_mismatch,
 )
 from backend.app.services.anthropic_client import build_request_body as build_claude_request_body, build_messages
 from backend.app.services.openai_client import build_request_body as build_openai_request_body
@@ -35,6 +35,28 @@ def test_intake_instructions_discourage_repetitive_acknowledgement_template():
     # template on almost every turn — explicitly told not to.
     instr = build_intake_instructions({}, greek=False)
     assert "repeating template" in instr or "vary your phrasing" in instr.lower()
+
+
+def test_language_mismatch_guard_catches_greek_when_english_was_requested():
+    # Regression: a real reported bug — the comparison conclusion came back
+    # in Greek even though the whole conversation was in English, and
+    # nothing caught it before it reached the user.
+    greek_text = "Το Σχέδιο Α είναι φθηνότερο και περιλαμβάνει εξωνοσοκομειακή περίθαλψη, αλλά δεν καλύπτει οδοντιατρική φροντίδα."
+    assert _language_mismatch(greek_text, greek=False) is True
+
+
+def test_language_mismatch_guard_accepts_correct_english():
+    english_text = "Plan A is cheaper and includes outpatient cover from day one, but does not cover dental treatment."
+    assert _language_mismatch(english_text, greek=False) is False
+
+
+def test_language_mismatch_guard_accepts_correct_greek():
+    greek_text = "Το Σχέδιο Α είναι φθηνότερο και περιλαμβάνει εξωνοσοκομειακή περίθαλψη, αλλά δεν καλύπτει οδοντιατρική φροντίδα."
+    assert _language_mismatch(greek_text, greek=True) is False
+
+
+def test_language_mismatch_guard_does_not_false_positive_on_short_text():
+    assert _language_mismatch("OK.", greek=False) is False
 
 
 def _sample_quote() -> QuoteResult:

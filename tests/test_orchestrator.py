@@ -43,6 +43,22 @@ async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
 
 
 @pytest.mark.asyncio
+async def test_shortlist_reply_invites_further_conversation_instead_of_ending_abruptly():
+    # Regression: the conversation just stopped dead after the shortlist,
+    # with no natural next step offered.
+    state: dict = {
+        "name_asked": True, "age": 51, "residence_country": "Greece", "coverage_area": "area1",
+        "discovery_complete": True, "pending_question": None, "deductible_answered": True,
+        "outpatient_answered": True, "chronic_answered": True, "maternity_answered": True,
+        "dental_answered": True, "mental_health_answered": True, "wellness_answered": True,
+        "optical_answered": True, "evacuation_answered": True, "budget_answered": True,
+    }
+    r = await chat_turn("continue", state, [])
+    assert r["ai_status"] == "deterministic_shortlist"
+    assert "?" in r["reply"], "must end with an inviting follow-up question, not just a flat statement"
+
+
+@pytest.mark.asyncio
 async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     state: dict = {}
     history: list = []

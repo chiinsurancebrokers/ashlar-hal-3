@@ -165,8 +165,15 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
 
     def rank(q: QuoteResult):
         over_budget = bool(applicant.budget_annual and q.premium > applicant.budget_annual)
+        # evidence_confidence is 1.0 whenever there's nothing to verify (no
+        # must-haves selected) OR the plan is a verified Morgan Price match;
+        # it drops to 0.0 only when must-haves WERE selected but this
+        # carrier has no benefit-level evidence to confirm it meets them.
+        # A plan we could not verify must never outrank a verified match on
+        # price alone — being cheap is not the same as being confirmed to fit.
+        unverified_against_stated_musts = q.evidence_confidence < 1.0
         gap = abs(q.premium - (applicant.budget_annual or q.premium))
-        return (over_budget, gap, q.premium)
+        return (over_budget, unverified_against_stated_musts, gap, q.premium)
 
     quotes.sort(key=rank)
     return quotes
