@@ -163,6 +163,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "open_application_form": False, "quick_replies": [],
         }
 
+    prior_pending = state.get("pending_question")
     state = _merge(state, apply_discovery_answer(message, state))
 
     if detect_hnwi(message) and not state.get("client_segment"):
@@ -170,7 +171,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     claude_ack = ""
     provisional = classify_journey(message, state)
-    if settings.anthropic_api_key and provisional not in {"travel", "local_review"} and not state.get("discovery_complete"):
+    if (settings.anthropic_api_key and provisional not in {"travel", "local_review"}
+            and not state.get("discovery_complete") and prior_pending != "name"):
         intake = await intake_analysis(message, state, history, greek)
         state = _merge(state, intake.get("applicant_updates", {}))
         claude_ack = intake.get("acknowledgement", "")

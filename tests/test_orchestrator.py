@@ -1,6 +1,30 @@
 import pytest
 
 from backend.app.services.orchestrator import chat_turn
+from backend.app.services import orchestrator as orchestrator_module
+from backend.app.core.config import get_settings
+
+
+@pytest.mark.asyncio
+async def test_claude_intake_is_skipped_right_after_the_name_answer(monkeypatch):
+    # Regression: calling Claude's intake layer here produced a redundant
+    # "Thanks, Chris. Nice to meet you, Chris." double name-mention. A name
+    # reply needs no LLM understanding — deterministic parsing is enough.
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "fake-key-for-test")
+    calls = {"n": 0}
+
+    async def fake_intake_analysis(*args, **kwargs):
+        calls["n"] += 1
+        return {"applicant_updates": {}, "acknowledgement": "Thanks, Chris."}
+
+    monkeypatch.setattr(orchestrator_module, "intake_analysis", fake_intake_analysis)
+
+    r1 = await chat_turn("Chris", {"pending_question": "name"}, [])
+    assert calls["n"] == 0, "intake_analysis must not be called for the turn right after the name question"
+    assert r1["reply"] == "Nice to meet you, Chris. How old are you?"
+
+    r2 = await chat_turn("Greece", r1["state"], [])
+    assert calls["n"] == 1, "intake_analysis should run normally on later turns"
 
 
 @pytest.mark.asyncio
