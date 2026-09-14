@@ -100,6 +100,15 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .compare-tray.show{display:flex}
 .compare-tray button{background:var(--accent);color:var(--white);border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
 .compare-tray button:hover{background:#4636c9;opacity:.85}
+.mic-btn{background:var(--bg);border:1px solid var(--border);border-radius:999px;width:44px;height:44px;font-size:18px;cursor:pointer;flex-shrink:0;transition:background .15s,border-color .15s,transform .1s;position:relative}
+.mic-btn:hover{background:var(--accent-soft);border-color:var(--accent)}
+.mic-btn:active{transform:scale(0.92)}
+.mic-btn.recording{background:#fdeaea;border-color:#e11d48;animation:mic-pulse 1.4s ease-out infinite}
+@keyframes mic-pulse{
+  0%{box-shadow:0 0 0 0 rgba(225,29,72,.45)}
+  70%{box-shadow:0 0 0 12px rgba(225,29,72,0)}
+  100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}
+}
 .compare-tray button:active{transform:scale(0.96)}
 
 .composer{position:static;background:none;border:none;padding:0;display:flex;gap:8px;flex:1}
@@ -224,7 +233,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 </div>
 
 <div class="composer" style="display:none">
-  <button id="micBtn" onclick="toggleRecording()" title="Speak" style="background:var(--bg);border:1px solid var(--border);border-radius:999px;width:44px;height:44px;font-size:18px;cursor:pointer;flex-shrink:0">🎙</button>
+  <button id="micBtn" class="mic-btn" onclick="toggleRecording()" title="Tap to speak" aria-label="Tap to speak">🎙</button>
   <input id="input" placeholder="Tell HAL what you need..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button onclick="sendMessage()" id="sendBtn">Send</button>
 </div>
@@ -782,14 +791,18 @@ async function toggleRecording(){
     mediaRecorder.onstart = () => {
       isRecording = true;
       micBtn.textContent = '⏹';
-      micBtn.style.background = '#fdeaea';
+      micBtn.classList.add('recording');
+      micBtn.title = 'Recording — tap to stop';
+      micBtn.setAttribute('aria-label', 'Recording — tap to stop');
       status.style.display = 'block';
-      status.textContent = 'Listening…';
+      status.textContent = '🔴 Listening… tap the mic again to stop';
     };
     mediaRecorder.onstop = async () => {
       isRecording = false;
       micBtn.textContent = '🎙';
-      micBtn.style.background = 'var(--bg)';
+      micBtn.classList.remove('recording');
+      micBtn.title = 'Tap to speak';
+      micBtn.setAttribute('aria-label', 'Tap to speak');
       stream.getTracks().forEach(t => t.stop());
       status.textContent = 'Transcribing…';
 
