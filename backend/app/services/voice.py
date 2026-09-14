@@ -3,7 +3,7 @@ import httpx
 
 from backend.app.core.config import get_settings
 
-OPENAI_TRANSCRIBE_URL = "https://api.openai.com/v1/audio/transcriptions"
+ELEVENLABS_STT_URL = "https://api.elevenlabs.io/v1/speech-to-text"
 ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
 ALLOWED_AUDIO_CONTENT_TYPES = {
@@ -31,21 +31,21 @@ def validate_audio_upload(file_bytes: bytes, content_type: str | None) -> None:
 async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, language: str | None = None) -> str:
     validate_audio_upload(file_bytes, content_type)
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured — voice input is unavailable.")
+    if not settings.elevenlabs_api_key:
+        raise RuntimeError("ELEVENLABS_API_KEY is not configured — voice input is unavailable.")
 
     files = {"file": (filename or "audio.webm", file_bytes, content_type or "audio/webm")}
-    data = {"model": settings.openai_transcribe_model}
-    # Whisper auto-detects language purely from audio when none is given,
-    # which is unreliable on short utterances (a single word like "Greece"
-    # was coming back transcribed as Slovak "Grécko"). We only ever run in
-    # English or Greek, so pin it explicitly whenever the caller knows which.
+    data = {"model_id": settings.elevenlabs_transcribe_model}
+    # Language auto-detection on short utterances is unreliable (e.g.
+    # "Greece" came back transcribed in the wrong language entirely) — pin
+    # it explicitly whenever the caller knows which of our two supported
+    # languages is active.
     if language in {"en", "el"}:
-        data["language"] = language
-    headers = {"Authorization": f"Bearer {settings.openai_api_key}"}
+        data["language_code"] = language
+    headers = {"xi-api-key": settings.elevenlabs_api_key}
 
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(OPENAI_TRANSCRIBE_URL, headers=headers, files=files, data=data)
+        response = await client.post(ELEVENLABS_STT_URL, headers=headers, files=files, data=data)
     if not (200 <= response.status_code < 300):
         raise RuntimeError(f"Transcription failed ({response.status_code}): {(response.text or '')[:200]}")
 

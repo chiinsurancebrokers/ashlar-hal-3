@@ -17,12 +17,13 @@ plan eligible, what does it cost). Claude is only ever allowed to
 **explain** those facts in natural language — it cannot invent benefits,
 override eligibility, or state a price other than the one the engine computed.
 
-**Two AI providers, two distinct jobs — not interchangeable:**
+**Three providers, three distinct jobs — not interchangeable:**
 - **Claude (Anthropic API)** powers chat, intake understanding, plan
   explanations and the comparison conclusion — HAL's "first analysis" layer.
-- **OpenAI** is kept configured for exactly two things: speech-to-text
-  (Claude has no transcription endpoint) and the *planned* deep
-  policy-wording comparison feature — not the chat layer.
+- **ElevenLabs** powers both voice input (Scribe speech-to-text) and voice
+  output (text-to-speech).
+- **OpenAI** is reserved for the *planned* deep policy-wording comparison
+  feature — not currently used by the chat layer or voice.
 
 ## Why this exists
 
@@ -113,12 +114,16 @@ tests/             102... (run `pytest -v` for the current count)
 
 ## Voice
 
-Speech-to-text uses OpenAI's transcription API (`OPENAI_API_KEY`, same key as
-the adviser layer — no separate credential needed). Text-to-speech uses
-ElevenLabs (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`, with optional
+Both directions use ElevenLabs, on one API key (`ELEVENLABS_API_KEY`): Scribe
+for speech-to-text (`ELEVENLABS_TRANSCRIBE_MODEL`, default `scribe_v2`) and
+text-to-speech for voice output (`ELEVENLABS_VOICE_ID`, with optional
 `ELEVENLABS_VOICE_ID_EL`/`ELEVENLABS_VOICE_ID_EN` for per-language voices).
-Both are fully optional — if unconfigured, the mic button and speaker toggle
-simply report "unavailable" (503) rather than breaking the rest of HAL.
+The conversation's current language is pinned explicitly on every
+transcription request — language auto-detection on short utterances proved
+unreliable (a single word could come back transcribed in the wrong language
+entirely). Voice is fully optional — if unconfigured, the mic button and
+speaker toggle simply report "unavailable" (503) rather than breaking the
+rest of HAL.
 Recorded audio is always shown back to the applicant as editable text before
 sending, never auto-submitted.
 

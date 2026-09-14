@@ -46,12 +46,13 @@ def test_validate_audio_accepts_real_browser_codec_suffixed_types():
 
 @pytest.mark.asyncio
 async def test_transcribe_audio_pins_language_to_avoid_wrong_language_guesses(monkeypatch):
-    # Regression: without an explicit language hint, Whisper auto-detects
-    # from audio alone, which on short phrases produced wrong-language
-    # transcriptions (e.g. "Greece" came back as Slovak "Grécko").
+    # Regression: without an explicit language hint, transcription
+    # auto-detects from audio alone, which on short phrases produced
+    # wrong-language transcriptions (e.g. "Greece" came back transcribed
+    # entirely in the wrong language/script).
     from backend.app.core import config as config_module
     config_module.get_settings.cache_clear()
-    monkeypatch.setenv("OPENAI_API_KEY", "fake-key-for-test")
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "fake-key-for-test")
     config_module.get_settings.cache_clear()
 
     captured = {}
@@ -66,6 +67,7 @@ async def test_transcribe_audio_pins_language_to_avoid_wrong_language_guesses(mo
         async def __aexit__(self, *a): return False
         async def post(self, url, headers=None, files=None, data=None):
             captured["data"] = data
+            captured["url"] = url
             return FakeResponse()
 
     import backend.app.services.voice as voice_module
@@ -73,13 +75,14 @@ async def test_transcribe_audio_pins_language_to_avoid_wrong_language_guesses(mo
 
     try:
         await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "en")
-        assert captured["data"]["language"] == "en"
+        assert captured["data"]["language_code"] == "en"
+        assert captured["url"] == "https://api.elevenlabs.io/v1/speech-to-text"
 
         await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", None)
-        assert "language" not in captured["data"], "no hint given -> must not force a language"
+        assert "language_code" not in captured["data"], "no hint given -> must not force a language"
 
         await voice_module.transcribe_audio(b"fake bytes", "audio.webm", "audio/webm", "fr")
-        assert "language" not in captured["data"], "we only ever run in en/el -> an unknown hint must not be forwarded blindly"
+        assert "language_code" not in captured["data"], "we only ever run in en/el -> an unknown hint must not be forwarded blindly"
     finally:
         config_module.get_settings.cache_clear()
 

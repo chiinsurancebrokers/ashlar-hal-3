@@ -62,7 +62,7 @@ def health():
         "service": settings.app_name,
         "environment": settings.app_env,
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
-        "voice_transcription": "openai_whisper" if settings.openai_api_key else "not_configured",
+        "voice_transcription": "elevenlabs_scribe" if settings.elevenlabs_api_key else "not_configured",
         "deductible_model": "enabled" if settings.deductible_model_enabled else "disabled_default_pricing",
         "family_pricing": "active",
         "quote_validity_days": settings.quote_validity_days,
