@@ -379,6 +379,7 @@ async function sendHiddenMessage(text){
     lastQuotes = d.quotes || [];
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
+    if (d.followup_message) addMsg(d.followup_message, 'hal');
     speakText(d.reply || '');
     updateDynamicInput(d.quick_replies || []);
     history.push({role:'assistant', content: d.reply || ''});
@@ -859,6 +860,7 @@ async function sendMessage(){
     lastQuotes = d.quotes || [];
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
+    if (d.followup_message) addMsg(d.followup_message, 'hal');
     speakText(d.reply || '');
     updateDynamicInput(d.quick_replies || []);
     history.push({role:'assistant', content: d.reply || ''});

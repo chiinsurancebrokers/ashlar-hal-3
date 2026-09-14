@@ -194,6 +194,13 @@ Hard rules:
 - Never state a number, benefit or limit not present in the data above.
 - If a row says "Not confirmed" for a plan, either omit it or say explicitly that it is not confirmed for that plan — never guess a value.
 - No sales pressure, no superlatives beyond what the data supports.
+- The data above IS sourced from the insurer's loaded official Table of
+  Benefits — for rows that are NOT "Not confirmed", state the benefit as a
+  confirmed fact (e.g. "includes medical evacuation") rather than adding a
+  hedge like "should be verified against the policy wording" — that
+  wording is already the verified source, don't undercut your own
+  evidence. Reserve any "not yet confirmed" caveat strictly for rows that
+  actually say "Not confirmed".
 
 {_fairness_clause()}
 """

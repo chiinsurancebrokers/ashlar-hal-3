@@ -224,12 +224,12 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     intro = (f"Τέλεια{', ' + name if name else ''} — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
               if greek else f"Great{', ' + name if name else ''} — I now have enough information. Here is HAL's shortlist.")
     reasoning = _shortlist_reasoning(quotes, excluded, greek)
-    followup = (" Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
+    followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
                 if greek else
-                " Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
-    reply = f"{intro} {reasoning}{followup}".strip()
+                "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+    reply = f"{intro} {reasoning}".strip()
     return {
-        "reply": reply, "state": state, "quotes": quotes, "excluded_plans": excluded,
+        "reply": reply, "followup_message": followup, "state": state, "quotes": quotes, "excluded_plans": excluded,
         "ai_status": "deterministic_shortlist", "journey": journey if journey != "undetermined" else "ipmi",
         "lead_cta": {"show": True, "journey": "ipmi", "label": label},
         "open_application_form": False, "quick_replies": [],

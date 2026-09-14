@@ -55,7 +55,8 @@ async def test_shortlist_reply_invites_further_conversation_instead_of_ending_ab
     }
     r = await chat_turn("continue", state, [])
     assert r["ai_status"] == "deterministic_shortlist"
-    assert "?" in r["reply"], "must end with an inviting follow-up question, not just a flat statement"
+    assert "?" in r["followup_message"], "must offer an inviting follow-up question as its own message, not end abruptly"
+    assert "?" not in r["reply"].rstrip("."), "the follow-up question must be its own separate message, not merged into the shortlist paragraph"
 
 
 @pytest.mark.asyncio
