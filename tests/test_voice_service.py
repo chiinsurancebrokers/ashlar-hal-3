@@ -33,6 +33,17 @@ def test_validate_audio_accepts_supported_types():
     validate_audio_upload(b"some bytes", None)  # missing content-type is tolerated, not rejected
 
 
+def test_validate_audio_accepts_real_browser_codec_suffixed_types():
+    # Regression: real browsers report MediaRecorder's actual mimeType,
+    # which includes codec parameters (e.g. Chrome sends
+    # "audio/webm;codecs=opus") — every real recording was being rejected
+    # as an 'unsupported format' because this never exact-matched the
+    # allowlist. This is the live 400 error that was reported.
+    validate_audio_upload(b"some bytes", "audio/webm;codecs=opus")
+    validate_audio_upload(b"some bytes", "audio/ogg;codecs=opus")
+    validate_audio_upload(b"some bytes", "AUDIO/WEBM;codecs=opus")  # case-insensitive too
+
+
 def test_pick_voice_id_prefers_language_specific_voice(monkeypatch):
     from backend.app.core import config as config_module
     config_module.get_settings.cache_clear()

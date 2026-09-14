@@ -20,7 +20,11 @@ def validate_audio_upload(file_bytes: bytes, content_type: str | None) -> None:
     max_bytes = settings.max_audio_upload_mb * 1024 * 1024
     if len(file_bytes) > max_bytes:
         raise ValueError(f"Audio file is too large (max {settings.max_audio_upload_mb}MB).")
-    if content_type and content_type not in ALLOWED_AUDIO_CONTENT_TYPES:
+    # Real browsers report MediaRecorder's mimeType WITH codec parameters,
+    # e.g. "audio/webm;codecs=opus" on Chrome — strip that before checking,
+    # or every real recording gets rejected as an 'unsupported format'.
+    base_type = (content_type or "").split(";")[0].strip().lower()
+    if base_type and base_type not in ALLOWED_AUDIO_CONTENT_TYPES:
         raise ValueError(f"Unsupported audio format: {content_type}")
 
 
