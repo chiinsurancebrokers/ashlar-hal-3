@@ -1,0 +1,157 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import tempfile
+from typing import Literal
+from uuid import UUID
+
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
+
+from backend.app.cases.models import CaseDocument
+from backend.app.cases.store import CASE_ANALYSIS_STORE
+from backend.app.documents.brochure_tables import extract_target_plan_from_pdf
+from backend.app.documents.extraction import extract_document
+from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
+
+
+router = APIRouter(prefix="/documents", tags=["adviser-os-documents"])
+
+_MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+_ALLOWED_SUFFIXES = {".pdf", ".txt", ".html", ".htm"}
+_ROLE_TO_TYPE = {
+    "quotation": "quotation",
+    "brochure": "brochure",
+    "wording": "policy_wording",
+}
+
+
+def _clean_label(value: str, *, name: str, max_length: int) -> str:
+    cleaned = " ".join(str(value or "").split()).strip()
+    if not cleaned or len(cleaned) > max_length:
+        raise HTTPException(status_code=422, detail=f"{name} is required and must be at most {max_length} characters.")
+    return cleaned
+
+
+@router.post("/upload")
+async def upload_carrier_document(
+    case_id: UUID = Form(...),
+    case_token: str = Form(...),
+    provider_label: str = Form(...),
+    target_plan: str = Form(...),
+    role: Literal["quotation", "brochure", "wording"] = Form(...),
+    plan_key: str | None = Form(default=None),
+    file: UploadFile = File(...),
+):
+    """Extract a carrier document server-side and return only an opaque ref.
+
+    The public browser never sends extracted carrier text or model output back
+    into the evidence engine. The opaque reference is bound to the active case
+    and its access token and expires with the short-lived document store.
+    """
+
+    if not case_token or len(case_token) > 256:
+        raise HTTPException(status_code=404, detail="Active case not found.")
+    record = CASE_ANALYSIS_STORE.get(case_id, case_token)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Active case not found or expired.")
+
+    provider = _clean_label(provider_label, name="provider_label", max_length=120)
+    target = _clean_label(target_plan, name="target_plan", max_length=200)
+    resolved_plan_key = _clean_label(plan_key, name="plan_key", max_length=200) if plan_key else None
+
+    filename = Path(file.filename or "carrier-document").name
+    suffix = Path(filename).suffix.casefold()
+    if suffix not in _ALLOWED_SUFFIXES:
+        raise HTTPException(status_code=415, detail="Supported document types are PDF, TXT and HTML.")
+
+    payload = await file.read(_MAX_UPLOAD_BYTES + 1)
+    if not payload:
+        raise HTTPException(status_code=422, detail="The uploaded document is empty.")
+    if len(payload) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Carrier documents are limited to 15 MB each.")
+
+    temp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(payload)
+            temp_path = tmp.name
+
+        extraction = await run_in_threadpool(extract_document, temp_path, filename)
+        if not extraction.ok:
+            raise HTTPException(status_code=422, detail=extraction.error or "Document extraction failed.")
+
+        focused_context = ""
+        isolated_rows = 0
+        if role == "brochure" and suffix == ".pdf":
+            isolated = await run_in_threadpool(extract_target_plan_from_pdf, temp_path, target)
+            focused_context = isolated.to_prompt_context() if isolated.rows else ""
+            isolated_rows = len(isolated.rows)
+
+        case = record.case.model_copy(deep=True)
+        existing = next((
+            doc for doc in case.documents
+            if doc.sha256 == extraction.content_hash
+            and doc.plan_key == resolved_plan_key
+            and str(doc.metadata.get("role") or "") == role
+        ), None)
+        document = existing or CaseDocument(
+            filename=filename,
+            document_type=_ROLE_TO_TYPE[role],
+            provider=provider,
+            plan_key=resolved_plan_key,
+            sha256=extraction.content_hash,
+            metadata={
+                "role": role,
+                "target_plan": target,
+                "pages": extraction.pages,
+                "target_plan_isolated": bool(focused_context),
+                "isolated_table_rows": isolated_rows,
+            },
+        )
+        if existing is None:
+            case.documents.append(document)
+            case.touch()
+            if CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token) is None:
+                raise HTTPException(status_code=409, detail="The case expired while the document was being uploaded.")
+
+        stored = DOCUMENT_EVIDENCE_STORE.put(
+            case_id=case_id,
+            case_token=case_token,
+            document=document,
+            provider_label=provider,
+            target_plan=target,
+            role=role,
+            extracted_text=extraction.text,
+            focused_table_context=focused_context,
+            plan_key=resolved_plan_key,
+        )
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+        await file.close()
+
+    return JSONResponse(
+        content={
+            "case_id": str(case_id),
+            "document_ref": stored.document_ref,
+            "document_id": str(document.document_id),
+            "filename": document.filename,
+            "role": role,
+            "provider": provider,
+            "target_plan": target,
+            "plan_key": resolved_plan_key,
+            "pages": extraction.pages,
+            "target_plan_isolated": bool(focused_context),
+            "isolated_table_rows": isolated_rows,
+        },
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+__all__ = ["router"]
