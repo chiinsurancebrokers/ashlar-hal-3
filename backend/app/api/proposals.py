@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 import hmac
 import re
-import secrets
-import threading
 from typing import Any, Annotated
 from uuid import UUID
 
@@ -19,6 +15,7 @@ from backend.app.agents.proposal_writer import ProposalGenerationBlocked, get_pr
 from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
+from backend.app.proposals.artifacts import PROPOSAL_ARTIFACT_STORE
 from backend.app.proposals.report_schema import ClientReportValidationError
 
 router = APIRouter(prefix="/proposals", tags=["proposals"])
@@ -53,63 +50,6 @@ class ProposalPrepareRequest(BaseModel):
     case_token: str = Field(min_length=20, max_length=200)
     language: str | None = Field(default=None, max_length=20)
     strict_narrative: bool = False
-
-
-@dataclass(slots=True)
-class _StoredProposal:
-    case_id: str
-    client_name: str
-    report: dict[str, Any]
-    pdf_bytes: bytes
-    pptx_bytes: bytes
-    created_at: datetime
-    expires_at: datetime
-
-
-class _ProposalArtifactStore:
-    """Small process-local store for generated files."""
-
-    def __init__(self, *, ttl_minutes: int = 30, max_items: int = 32):
-        self.ttl = timedelta(minutes=ttl_minutes)
-        self.max_items = max_items
-        self._items: dict[str, _StoredProposal] = {}
-        self._lock = threading.Lock()
-
-    def _prune_locked(self, now: datetime) -> None:
-        expired = [key for key, item in self._items.items() if item.expires_at <= now]
-        for key in expired:
-            self._items.pop(key, None)
-        if len(self._items) >= self.max_items:
-            oldest = sorted(self._items.items(), key=lambda pair: pair[1].created_at)
-            for key, _ in oldest[: max(1, len(self._items) - self.max_items + 1)]:
-                self._items.pop(key, None)
-
-    def put(self, *, case: AshlarCase, report: dict, pdf_bytes: bytes, pptx_bytes: bytes) -> tuple[str, datetime]:
-        now = datetime.now(timezone.utc)
-        token = secrets.token_urlsafe(24)
-        expires = now + self.ttl
-        item = _StoredProposal(
-            case_id=str(case.case_id),
-            client_name=case.client.display_name or "Client",
-            report=report,
-            pdf_bytes=pdf_bytes,
-            pptx_bytes=pptx_bytes,
-            created_at=now,
-            expires_at=expires,
-        )
-        with self._lock:
-            self._prune_locked(now)
-            self._items[token] = item
-        return token, expires
-
-    def get(self, token: str) -> _StoredProposal | None:
-        now = datetime.now(timezone.utc)
-        with self._lock:
-            self._prune_locked(now)
-            return self._items.get(token)
-
-
-_STORE = _ProposalArtifactStore()
 
 
 def _require_broker_access(value: str | None) -> None:
@@ -164,7 +104,7 @@ async def _generate_bundle(*, case: AshlarCase, results: list[dict], language: s
 def _ready_response(*, request: Request, case: AshlarCase, bundle) -> JSONResponse:
     case.status = CaseStatus.PROPOSAL
     case.touch()
-    token, expires = _STORE.put(
+    token, expires = PROPOSAL_ARTIFACT_STORE.put(
         case=case,
         report=bundle.report,
         pdf_bytes=bundle.pdf_bytes,
@@ -230,7 +170,7 @@ async def generate_proposal(
 
 @router.get("/{proposal_id}", name="get_ashlar_proposal")
 async def get_proposal(proposal_id: str):
-    item = _STORE.get(proposal_id)
+    item = PROPOSAL_ARTIFACT_STORE.get(proposal_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Proposal not found or download window expired.")
     payload = {
@@ -245,7 +185,7 @@ async def get_proposal(proposal_id: str):
 
 @router.get("/{proposal_id}/pdf", name="download_proposal_pdf")
 async def download_pdf(proposal_id: str):
-    item = _STORE.get(proposal_id)
+    item = PROPOSAL_ARTIFACT_STORE.get(proposal_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Proposal not found or download window expired.")
     name = _safe_filename(item.client_name)
@@ -258,7 +198,7 @@ async def download_pdf(proposal_id: str):
 
 @router.get("/{proposal_id}/pptx", name="download_proposal_pptx")
 async def download_pptx(proposal_id: str):
-    item = _STORE.get(proposal_id)
+    item = PROPOSAL_ARTIFACT_STORE.get(proposal_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Proposal not found or download window expired.")
     name = _safe_filename(item.client_name)
