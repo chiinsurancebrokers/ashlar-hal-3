@@ -3,6 +3,7 @@
 
   let proposalCase = null;
   let proposalBusy = false;
+  let pendingChatProposalDownloads = null;
 
   function ensureProposalControls() {
     const modal = document.getElementById('compareModal');
@@ -74,6 +75,62 @@
         status.style.color = '#b3261e';
       }
     }
+  }
+
+  function renderProposalDownloadCard(downloads) {
+    if (!downloads || !downloads.pdf || !downloads.pptx) return;
+    const chat = document.getElementById('chat');
+    if (!chat) return;
+
+    const card = document.createElement('div');
+    card.className = 'msg hal';
+    card.innerHTML = '<div style="font-weight:700;margin-bottom:8px">Ashlar proposal files</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<a class="q-primary" style="text-decoration:none;text-align:center;display:inline-block;flex:0 0 auto;padding:9px 14px" href="' + esc(downloads.pdf) + '" target="_blank" rel="noopener">Download PDF</a>' +
+      '<a class="q-secondary" style="text-decoration:none;text-align:center;display:inline-block;padding:9px 14px" href="' + esc(downloads.pptx) + '" target="_blank" rel="noopener">Download PowerPoint</a>' +
+      '</div><div style="font-size:10px;color:var(--muted);margin-top:8px">These links are temporary and are not cached by the browser.</div>';
+    chat.appendChild(card);
+    card.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+    const ps3 = document.getElementById('ps3');
+    if (ps3) {
+      ps3.classList.add('active');
+      ps3.classList.remove('done');
+    }
+  }
+
+  // Observe only the existing HAL chat response. This lets the additive bridge
+  // render proposal artifacts without rewriting the established sendMessage()
+  // implementation in index.html.
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async function adviserOsFetch(input, init) {
+    const response = await nativeFetch(input, init);
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.includes(API + '/chat/turn')) {
+      try {
+        const data = await response.clone().json();
+        pendingChatProposalDownloads = data && data.proposal_downloads
+          ? data.proposal_downloads
+          : null;
+      } catch (_) {
+        pendingChatProposalDownloads = null;
+      }
+    }
+    return response;
+  };
+
+  const originalAddMsg = window.addMsg;
+  if (typeof originalAddMsg === 'function') {
+    window.addMsg = function adviserOsAddMsg(...args) {
+      const result = originalAddMsg.apply(this, args);
+      const who = args.length > 1 ? args[1] : 'hal';
+      if (who === 'hal' && pendingChatProposalDownloads) {
+        const downloads = pendingChatProposalDownloads;
+        pendingChatProposalDownloads = null;
+        renderProposalDownloadCard(downloads);
+      }
+      return result;
+    };
   }
 
   async function prepareProposal() {
