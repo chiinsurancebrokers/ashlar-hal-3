@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import get_settings
@@ -52,8 +52,14 @@ if FRONTEND_DIR.exists():
 
     @app.get("/", include_in_schema=False)
     def homepage():
-        return FileResponse(
-            FRONTEND_DIR / "index.html",
+        # Keep the established HAL page intact and inject the Adviser OS bridge
+        # after its existing inline script has created the public UI functions.
+        html = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+        adviser_bridge = FRONTEND_DIR / "adviser-os.js"
+        if adviser_bridge.exists():
+            html = html.replace("</body>", '<script src="/static/adviser-os.js"></script>\n</body>')
+        return HTMLResponse(
+            html,
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
         )
 
