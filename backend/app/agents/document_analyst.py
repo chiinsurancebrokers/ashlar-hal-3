@@ -11,6 +11,7 @@ from backend.app.documents.orchestrator import analyze_and_apply_document_bundle
 from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
 
 from .contracts import SpecialistName, SpecialistResponse
+from .document_synthesis import synthesize_server_documents
 
 
 class DocumentAnalyst:
@@ -21,8 +22,9 @@ class DocumentAnalyst:
     token that authorised the upload. Raw extracted carrier text and model
     output are therefore never trusted when they arrive from a browser.
 
-    The older direct structured context remains available for internal/broker
-    workflows and tests, but the public API does not expose those fields.
+    Deterministic extraction commits evidence to the Fact Ledger. A separate
+    model synthesis may explain that server-owned evidence, but its output is
+    advisory only and is never promoted to an authoritative Fact.
     """
 
     name = SpecialistName.DOCUMENT_ANALYST
@@ -114,6 +116,9 @@ class DocumentAnalyst:
                 **kwargs,
             )
             case = run.case
+            # Do not return run.envelope here. It contains the deep-analysis
+            # prompt and therefore extracted document text. Public clients only
+            # receive metadata and the separately sanitised synthesis below.
             analyses.append({
                 "document_ref": item.document_ref,
                 "document_id": str(item.document.document_id),
@@ -122,7 +127,7 @@ class DocumentAnalyst:
                 "provider": item.provider_label,
                 "target_plan": item.target_plan,
                 "plan_key": item.plan_key,
-                "envelope": run.envelope,
+                "target_plan_table_isolated": bool(item.focused_table_context),
                 "fact_count_after_document": len(case.facts),
             })
 
@@ -134,15 +139,20 @@ class DocumentAnalyst:
                 reply="The case expired while the carrier documents were being analysed. Please rebuild the comparison.",
             )
 
+        synthesis = await synthesize_server_documents(records, case=case)
+        summary = str(synthesis.get("executive_summary") or "").strip()
+        reply = summary or f"Analysed {len(records)} carrier document(s) and committed grounded evidence to the active case."
+
         return SpecialistResponse(
             specialist=self.name,
             status="completed",
-            reply=f"Analysed {len(records)} carrier document(s) and committed grounded evidence to the active case.",
+            reply=reply,
             payload={
                 "case_id": str(case.case_id),
                 "document_count": len(records),
                 "fact_count": len(case.facts),
                 "analyses": analyses,
+                "model_synthesis": synthesis,
             },
         )
 
