@@ -7,6 +7,7 @@ import re
 import secrets
 import threading
 from typing import Any, Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -15,6 +16,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from backend.app.cases.models import AshlarCase, CaseStatus
+from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.proposals.engine import ProposalGenerationBlocked, generate_case_proposal
 from backend.app.proposals.report_schema import ClientReportValidationError
@@ -31,13 +33,24 @@ class ProposalGenerateRequest(BaseModel):
     """Broker/internal proposal-generation contract.
 
     `results` must be the output of Ashlar's server-side document analysis, not
-    unverified plan facts entered by a public client. This endpoint is therefore
-    fail-closed behind the existing HAL admin password until the persistent
-    Case/Analysis registry is wired to the public client journey.
+    unverified plan facts entered by a public client.
     """
 
     case: AshlarCase
     results: list[dict[str, Any]] = Field(min_length=1, max_length=10)
+    language: str | None = Field(default=None, max_length=20)
+    strict_narrative: bool = False
+
+
+class ProposalPrepareRequest(BaseModel):
+    """Public-safe contract for a comparison already stored by HAL.
+
+    No plan facts are accepted here. The case and analysis are loaded from the
+    server-owned registry created by /quotes/compare.
+    """
+
+    case_id: UUID
+    case_token: str = Field(min_length=20, max_length=200)
     language: str | None = Field(default=None, max_length=20)
     strict_narrative: bool = False
 
@@ -54,13 +67,7 @@ class _StoredProposal:
 
 
 class _ProposalArtifactStore:
-    """Small process-local store for generated files.
-
-    This deliberately does not write client proposals to disk. Download IDs are
-    high-entropy opaque tokens, results expire quickly, and responses are marked
-    no-store. A durable authenticated object store can replace this interface
-    when account/auth infrastructure is introduced.
-    """
+    """Small process-local store for generated files."""
 
     def __init__(self, *, ttl_minutes: int = 30, max_items: int = 32):
         self.ttl = timedelta(minutes=ttl_minutes)
@@ -133,25 +140,14 @@ def _download_response(data: bytes, *, filename: str, media_type: str) -> Respon
     )
 
 
-@router.post("/generate", name="generate_ashlar_proposal")
-async def generate_proposal(
-    req: ProposalGenerateRequest,
-    request: Request,
-    x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None,
-):
-    # IMPORTANT: Until Case/Analysis persistence is server-owned, never trust a
-    # browser to self-assert verified insurer facts. This keeps the current
-    # integration broker/internal-only rather than violating HAL's evidence model.
-    _require_broker_access(x_admin_password)
-
-    case = req.case.model_copy(deep=True)
+async def _generate_bundle(*, case: AshlarCase, results: list[dict], language: str | None, strict_narrative: bool):
     try:
-        bundle = await run_in_threadpool(
+        return await run_in_threadpool(
             generate_case_proposal,
             case=case,
-            results=req.results,
-            language=req.language,
-            strict_narrative=req.strict_narrative,
+            results=results,
+            language=language,
+            strict_narrative=strict_narrative,
         )
     except ProposalGenerationBlocked as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -162,6 +158,8 @@ async def generate_proposal(
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Proposal Studio failed: {str(exc)[:240]}") from exc
 
+
+def _ready_response(*, request: Request, case: AshlarCase, bundle) -> JSONResponse:
     case.status = CaseStatus.PROPOSAL
     case.touch()
     token, expires = _STORE.put(
@@ -186,6 +184,46 @@ async def generate_proposal(
         },
     }
     return JSONResponse(content=jsonable_encoder(payload), headers=_NO_STORE)
+
+
+@router.post("/prepare", name="prepare_stored_case_proposal")
+async def prepare_stored_case_proposal(req: ProposalPrepareRequest, request: Request):
+    record = CASE_ANALYSIS_STORE.get(req.case_id, req.case_token)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Case not found, expired, or access token is invalid.")
+
+    case = record.case.model_copy(deep=True)
+    bundle = await _generate_bundle(
+        case=case,
+        results=record.results,
+        language=req.language,
+        strict_narrative=req.strict_narrative,
+    )
+    case.status = CaseStatus.PROPOSAL
+    case.touch()
+    saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=req.case_token)
+    if saved is None:
+        raise HTTPException(status_code=409, detail="The case expired while the proposal was being prepared. Please compare again.")
+    return _ready_response(request=request, case=case, bundle=bundle)
+
+
+@router.post("/generate", name="generate_ashlar_proposal")
+async def generate_proposal(
+    req: ProposalGenerateRequest,
+    request: Request,
+    x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None,
+):
+    # Internal/manual bridge retained for broker workflows and document testing.
+    _require_broker_access(x_admin_password)
+
+    case = req.case.model_copy(deep=True)
+    bundle = await _generate_bundle(
+        case=case,
+        results=req.results,
+        language=req.language,
+        strict_narrative=req.strict_narrative,
+    )
+    return _ready_response(request=request, case=case, bundle=bundle)
 
 
 @router.get("/{proposal_id}", name="get_ashlar_proposal")
