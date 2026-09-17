@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.app.agents.orchestrator import get_ashlar_orchestrator
 from backend.app.schemas.applicant import Applicant
@@ -41,6 +41,21 @@ class AdviserHandleRequest(BaseModel):
     applicant: Applicant | None = None
     benefit_key: str | None = Field(default=None, max_length=120)
     plan_key: str | None = Field(default=None, max_length=160)
+    document_refs: list[str] = Field(default_factory=list, max_length=12)
+
+    @field_validator("document_refs")
+    @classmethod
+    def validate_document_refs(cls, values: list[str]) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+        for raw in values:
+            value = str(raw or "").strip()
+            if not value or len(value) > 256:
+                raise ValueError("document_refs must contain non-empty opaque references up to 256 characters")
+            if value not in seen:
+                seen.add(value)
+                result.append(value)
+        return result
 
 
 @router.post("/handle")
@@ -63,6 +78,10 @@ async def handle(req: AdviserHandleRequest):
         context["benefit_key"] = req.benefit_key
     if req.plan_key:
         context["plan_key"] = req.plan_key
+    if req.document_refs:
+        # Only opaque references created by /documents/upload cross the public
+        # boundary. Raw carrier text/model output cannot be injected here.
+        context["document_refs"] = list(req.document_refs)
 
     try:
         result = await get_ashlar_orchestrator().handle(
