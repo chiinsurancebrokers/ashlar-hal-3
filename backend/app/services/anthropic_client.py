@@ -8,14 +8,19 @@ MESSAGES_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 
 
-def build_messages(history: list[dict] | None, message: str) -> list[dict[str, str]]:
+def build_messages(
+    history: list[dict] | None,
+    message: str,
+    *,
+    message_max_chars: int = 8000,
+) -> list[dict[str, str]]:
     messages: list[dict[str, str]] = []
     for item in (history or [])[-8:]:
         role = item.get("role")
         content = str(item.get("content") or "").strip()
         if role in {"user", "assistant"} and content:
             messages.append({"role": role, "content": content[:4000]})
-    messages.append({"role": "user", "content": (message or "")[:8000]})
+    messages.append({"role": "user", "content": (message or "")[:max(1, message_max_chars)]})
     # The Messages API requires the turn sequence to start with "user" and
     # alternate — if trimmed history left it starting on "assistant", drop
     # the leading assistant turns rather than send an invalid request.
@@ -35,7 +40,8 @@ def extract_text(payload: dict[str, Any]) -> str:
 
 
 def build_request_body(*, instructions: str, message: str, history: list[dict] | None,
-                        json_mode: bool = False, max_tokens: int | None = None) -> dict[str, Any]:
+                        json_mode: bool = False, max_tokens: int | None = None,
+                        message_max_chars: int = 8000) -> dict[str, Any]:
     settings = get_settings()
     system = instructions
     if json_mode:
@@ -43,20 +49,22 @@ def build_request_body(*, instructions: str, message: str, history: list[dict] |
     body: dict[str, Any] = {
         "model": settings.anthropic_chat_model,
         "system": system,
-        "messages": build_messages(history, message),
+        "messages": build_messages(history, message, message_max_chars=message_max_chars),
         "max_tokens": max_tokens or settings.anthropic_chat_max_tokens,
     }
     return body
 
 
 async def claude_response(*, instructions: str, message: str, history: list[dict] | None = None,
-                           json_mode: bool = False, max_tokens: int | None = None) -> str:
+                           json_mode: bool = False, max_tokens: int | None = None,
+                           message_max_chars: int = 8000) -> str:
     settings = get_settings()
     if not settings.anthropic_api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not configured.")
 
     body = build_request_body(instructions=instructions, message=message, history=history,
-                               json_mode=json_mode, max_tokens=max_tokens)
+                               json_mode=json_mode, max_tokens=max_tokens,
+                               message_max_chars=message_max_chars)
     headers = {
         "x-api-key": settings.anthropic_api_key,
         "anthropic-version": ANTHROPIC_VERSION,
