@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 
 import pytest
 
+from backend.app.agents import orchestrator as orchestrator_module
 from backend.app.api import chat as chat_api
 from backend.app.api import proposals as proposals_api
 from backend.app.proposals.engine import ProposalBundle
+
+
+FORBIDDEN_API_IMPORTS = (
+    "backend.app.agents.hal_adviser",
+    "backend.app.agents.document_analyst",
+    "backend.app.agents.proposal_writer",
+    "backend.app.agents.health_navigator",
+    "backend.app.agents.asklepios_backend",
+    "backend.app.services.anthropic_client",
+    "backend.app.services.openai_client",
+)
 
 
 def test_public_chat_api_enters_ashlar_orchestrator():
@@ -32,6 +45,29 @@ def test_public_prepare_route_enters_ashlar_orchestrator_handle():
     assert "get_ashlar_orchestrator().handle" in source
     assert "get_proposal_writer" not in source
     assert ".generate(" not in source
+
+
+def test_api_layer_cannot_import_concrete_specialists_or_model_clients_directly():
+    api_root = Path(proposals_api.__file__).resolve().parent
+    offenders: list[str] = []
+    for path in sorted(api_root.glob("*.py")):
+        source = path.read_text(encoding="utf-8")
+        for forbidden in FORBIDDEN_API_IMPORTS:
+            if forbidden in source:
+                offenders.append(f"{path.name}: {forbidden}")
+    assert offenders == []
+
+
+def test_ashlar_orchestrator_coordinates_but_never_calls_models_directly():
+    source = inspect.getsource(orchestrator_module)
+    assert "backend.app.services.anthropic_client" not in source
+    assert "backend.app.services.openai_client" not in source
+    assert "claude_response" not in source
+    assert "openai_response" not in source
+    assert "get_hal_adviser" in source
+    assert "get_document_analyst" in source
+    assert "get_proposal_writer" in source
+    assert "get_health_navigator" in source
 
 
 class _FakeOrchestrator:
