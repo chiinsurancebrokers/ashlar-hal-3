@@ -36,7 +36,7 @@ class OrchestrationDecision(StrictAgentModel):
 
 class SpecialistResponse(StrictAgentModel):
     specialist: SpecialistName
-    status: Literal["completed", "needs_input", "handoff", "unavailable"]
+    status: Literal["completed", "needs_input", "handoff", "unavailable", "blocked"]
     reply: str | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
 
