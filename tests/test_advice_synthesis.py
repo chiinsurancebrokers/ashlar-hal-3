@@ -5,6 +5,7 @@ import pytest
 from backend.app.agents.advice_synthesis import (
     deterministic_advice_fallback,
     safe_comparison_projection,
+    safe_fact_projection,
 )
 from backend.app.agents.hal_adviser import HalAdviser
 from backend.app.cases.models import AshlarCase, Fact, FactSource, FactSourceType, FactStatus
@@ -41,6 +42,45 @@ def test_safe_comparison_projection_drops_operational_and_sensitive_fields():
     assert "DO-NOT-LEAK" not in text
     assert "case_token" not in text
     assert "source_internal_id" not in text
+
+
+def test_safe_fact_projection_exposes_plan_evidence_but_not_client_or_unknown_facts():
+    case = AshlarCase()
+    case.facts.extend([
+        Fact(
+            subject="plan:carrier:silver",
+            key="benefit.cancer",
+            value="Covered",
+            plan_key="carrier:silver",
+            status=FactStatus.EXTRACTED,
+            source=FactSource(source_type=FactSourceType.POLICY_WORDING, source_ref="wording.pdf", document_id=None),
+        ),
+        Fact(
+            subject="client",
+            key="medical_note",
+            value="PRIVATE MEDICAL FREE TEXT",
+            status=FactStatus.DECLARED,
+            source=FactSource(source_type=FactSourceType.CLIENT_DECLARATION),
+        ),
+        Fact(
+            subject="plan:carrier:silver",
+            key="internal_prompt",
+            value="DO NOT EXPOSE",
+            plan_key="carrier:silver",
+            status=FactStatus.EXTRACTED,
+            source=FactSource(source_type=FactSourceType.SYSTEM),
+        ),
+    ])
+
+    projected = safe_fact_projection(case)
+    text = repr(projected)
+
+    assert projected[0]["key"] == "benefit.cancer"
+    assert projected[0]["value"] == "Covered"
+    assert "PRIVATE MEDICAL FREE TEXT" not in text
+    assert "DO NOT EXPOSE" not in text
+    assert "medical_note" not in text
+    assert "internal_prompt" not in text
 
 
 def test_deterministic_advice_fallback_refuses_to_treat_conflicted_case_as_settled():
