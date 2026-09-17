@@ -32,6 +32,17 @@
     return button;
   }
 
+  function syncCaseIntoHalState() {
+    if (typeof state !== 'object' || !state) return;
+    if (proposalCase) {
+      state._adviser_os_case_id = proposalCase.case_id;
+      state._adviser_os_case_token = proposalCase.case_token;
+    } else {
+      delete state._adviser_os_case_id;
+      delete state._adviser_os_case_token;
+    }
+  }
+
   function setProposalContext(response) {
     const button = ensureProposalControls();
     const status = document.getElementById('proposalPrepareStatus');
@@ -40,6 +51,7 @@
     proposalCase = response && response.case_id && response.case_token
       ? {case_id: response.case_id, case_token: response.case_token}
       : null;
+    syncCaseIntoHalState();
 
     if (!proposalCase) {
       button.style.display = 'none';
