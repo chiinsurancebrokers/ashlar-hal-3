@@ -2,96 +2,52 @@ from backend.app.cases.fact_ledger import FactLedger
 from backend.app.cases.models import Fact, FactSource, FactSourceType, FactStatus
 
 
-def _source(document: str, page: int) -> FactSource:
-    return FactSource(
-        source_type=FactSourceType.CARRIER_DOCUMENT,
-        source_name=document,
-        page=page,
-    )
-
-
-def test_fact_ledger_detects_conflicting_verified_facts():
-    ledger = FactLedger()
-
-    ledger.add(
-        Fact(
-            key="annual_limit",
-            value=2_000_000,
-            currency="EUR",
-            provider="Carrier A",
-            plan="Executive",
-            status=FactStatus.VERIFIED,
-            source=_source("TOB.pdf", 14),
-        )
-    )
-    result = ledger.add(
-        Fact(
-            key="annual_limit",
-            value=1_500_000,
-            currency="EUR",
-            provider="Carrier A",
-            plan="Executive",
-            status=FactStatus.VERIFIED,
-            source=_source("Issued Quote.pdf", 6),
-        )
-    )
-
-    assert result.has_conflict is True
-    assert len(result.conflicts) == 1
-    assert result.conflicts[0].key == "annual_limit"
-
-
-def test_fact_ledger_same_value_does_not_create_conflict():
-    ledger = FactLedger()
-    first = Fact(
-        key="deductible",
-        value=500,
-        currency="EUR",
-        provider="Carrier A",
-        plan="Executive",
-        status=FactStatus.VERIFIED,
-        source=_source("TOB.pdf", 2),
-    )
-    second = Fact(
-        key="deductible",
-        value=500,
-        currency="EUR",
-        provider="Carrier A",
-        plan="Executive",
-        status=FactStatus.VERIFIED,
-        source=_source("Quote.pdf", 1),
-    )
-
-    ledger.add(first)
-    result = ledger.add(second)
-
-    assert result.has_conflict is False
-    assert ledger.latest("deductible", provider="Carrier A", plan="Executive").value == 500
-
-
-def test_unverified_fact_does_not_override_verified_fact():
-    ledger = FactLedger()
-    verified = Fact(
+def _fact(value, *, status=FactStatus.VERIFIED, source_type=FactSourceType.CARRIER_TOB):
+    return Fact(
+        subject="plan:cigna:executive",
         key="annual_limit",
-        value=2_000_000,
-        provider="Carrier A",
-        plan="Executive",
-        status=FactStatus.VERIFIED,
-        source=_source("TOB.pdf", 14),
+        value=value,
+        currency="EUR",
+        provider="Cigna",
+        plan_key="cigna:executive",
+        status=status,
+        source=FactSource(source_type=source_type, source_ref="test fixture"),
     )
-    inferred = Fact(
+
+
+def test_same_fact_from_multiple_sources_is_not_a_conflict():
+    ledger = FactLedger()
+    ledger.add(_fact(2_000_000))
+    result = ledger.add(_fact(2_000_000, status=FactStatus.EXTRACTED))
+
+    assert result.conflict is False
+    assert ledger.conflicts() == []
+    assert ledger.current("annual_limit", "plan:cigna:executive").value == 2_000_000
+
+
+def test_conflicting_carrier_facts_are_never_silently_resolved():
+    ledger = FactLedger()
+    first = ledger.add(_fact(2_000_000)).fact
+    second = ledger.add(_fact(1_500_000)).fact
+
+    assert first.fact_id != second.fact_id
+    assert ledger.current("annual_limit", "plan:cigna:executive") is None
+    conflicts = ledger.conflicts()
+    assert len(conflicts) == 1
+    assert set(conflicts[0].fact_ids) == {first.fact_id, second.fact_id}
+
+
+def test_explicit_resolution_supersedes_other_active_facts():
+    ledger = FactLedger()
+    old = ledger.add(_fact(2_000_000)).fact
+    actual_quote = ledger.add(_fact(1_500_000)).fact
+
+    ledger.resolve(
+        subject="plan:cigna:executive",
         key="annual_limit",
-        value=3_000_000,
-        provider="Carrier A",
-        plan="Executive",
-        status=FactStatus.INFERRED,
-        source=FactSource(
-            source_type=FactSourceType.AI_INFERENCE,
-            source_name="LLM extraction",
-        ),
+        winning_fact_id=actual_quote.fact_id,
     )
 
-    ledger.add(verified)
-    ledger.add(inferred)
-
-    assert ledger.preferred("annual_limit", provider="Carrier A", plan="Executive").value == 2_000_000
+    assert ledger.current("annual_limit", "plan:cigna:executive").fact_id == actual_quote.fact_id
+    old_after = next(f for f in ledger.facts if f.fact_id == old.fact_id)
+    assert old_after.status == FactStatus.SUPERSEDED

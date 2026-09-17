@@ -1,19 +1,17 @@
-from backend.app.cases.models import AshlarCase, CaseClient
+from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.repository import InMemoryCaseRepository
 
 
-def test_case_repository_roundtrip():
+def test_repository_requires_explicit_save_and_returns_copies():
     repo = InMemoryCaseRepository()
-    case = AshlarCase(client=CaseClient(display_name="Repository Test"))
+    created = repo.create(AshlarCase())
 
-    saved = repo.save(case)
-    loaded = repo.get(case.case_id)
+    fetched = repo.get(created.case_id)
+    fetched.status = CaseStatus.COMPARISON
 
-    assert saved.case_id == case.case_id
-    assert loaded is not None
-    assert loaded.client.display_name == "Repository Test"
+    # Stored object is unchanged until save() is called.
+    assert repo.get(created.case_id).status == CaseStatus.DISCOVERY
 
-
-def test_case_repository_returns_none_for_unknown_case():
-    repo = InMemoryCaseRepository()
-    assert repo.get("missing-case") is None
+    saved = repo.save(fetched)
+    assert saved.status == CaseStatus.COMPARISON
+    assert repo.get(created.case_id).status == CaseStatus.COMPARISON

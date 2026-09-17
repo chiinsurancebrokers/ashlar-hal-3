@@ -1,34 +1,21 @@
 from backend.app.cases.consent import ConsentGate
-from backend.app.cases.models import ConsentRecord, ConsentStatus
 
 
-def test_health_to_insurance_is_denied_without_explicit_consent():
+def test_health_to_insurance_bridge_is_deny_by_default():
     gate = ConsentGate()
-    assert gate.can_share_health_to_insurance([]) is False
+    assert gate.allows("medical_report_summary", purpose="insurance_application") is False
 
 
-def test_health_to_insurance_requires_active_matching_consent():
+def test_consent_allows_only_explicit_fields_and_purpose():
     gate = ConsentGate()
-    records = [
-        ConsentRecord(
-            purpose="share_health_to_insurance",
-            status=ConsentStatus.GRANTED,
-            data_categories=["medical_summary"],
-        )
-    ]
+    record = gate.grant(
+        purpose="insurance_application",
+        allowed_fields=["medical_report_summary", "current_medications"],
+    )
 
-    assert gate.can_share_health_to_insurance(records, required_category="medical_summary") is True
-    assert gate.can_share_health_to_insurance(records, required_category="raw_health_history") is False
+    assert gate.allows("medical_report_summary", purpose="insurance_application") is True
+    assert gate.allows("symptom_chat_history", purpose="insurance_application") is False
+    assert gate.allows("medical_report_summary", purpose="claims") is False
 
-
-def test_revoked_consent_cannot_authorize_transfer():
-    gate = ConsentGate()
-    records = [
-        ConsentRecord(
-            purpose="share_health_to_insurance",
-            status=ConsentStatus.REVOKED,
-            data_categories=["medical_summary"],
-        )
-    ]
-
-    assert gate.can_share_health_to_insurance(records, required_category="medical_summary") is False
+    gate.revoke(record.consent_id)
+    assert gate.allows("medical_report_summary", purpose="insurance_application") is False
