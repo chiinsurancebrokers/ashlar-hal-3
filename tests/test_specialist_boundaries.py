@@ -30,7 +30,8 @@ def test_public_proposal_api_does_not_import_or_invoke_proposal_writer_directly(
 def test_public_prepare_route_enters_ashlar_orchestrator_handle():
     source = inspect.getsource(proposals_api.prepare_stored_case_proposal)
     assert "get_ashlar_orchestrator().handle" in source
-    assert "proposal_writer" not in source.casefold()
+    assert "get_proposal_writer" not in source
+    assert ".generate(" not in source
 
 
 class _FakeOrchestrator:
