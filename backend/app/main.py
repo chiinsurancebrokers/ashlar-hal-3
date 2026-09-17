@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import get_settings
 from backend.app.core.rate_limit import SimpleRateLimitMiddleware
+from backend.app.api.adviser import router as adviser_router
 from backend.app.api.chat import router as chat_router
 from backend.app.api.quotes import router as quotes_router
 from backend.app.api.leads import router as leads_router
@@ -33,13 +34,14 @@ app.add_middleware(
 
 app.add_middleware(
     SimpleRateLimitMiddleware,
-    limited_prefixes=(f"{settings.api_prefix}/chat", f"{settings.api_prefix}/leads",
-                       f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak",
-                       f"{settings.api_prefix}/proposals"),
+    limited_prefixes=(f"{settings.api_prefix}/adviser", f"{settings.api_prefix}/chat",
+                       f"{settings.api_prefix}/leads", f"{settings.api_prefix}/transcribe",
+                       f"{settings.api_prefix}/speak", f"{settings.api_prefix}/proposals"),
     max_requests=20,
     window_seconds=60,
 )
 
+app.include_router(adviser_router, prefix=settings.api_prefix)
 app.include_router(chat_router, prefix=settings.api_prefix)
 app.include_router(quotes_router, prefix=settings.api_prefix)
 app.include_router(leads_router, prefix=settings.api_prefix)
@@ -70,6 +72,7 @@ def health():
         "status": "ok",
         "service": settings.app_name,
         "environment": settings.app_env,
+        "ashlar_orchestrator": "active",
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
         "voice_transcription": {
             "primary": "elevenlabs_scribe" if settings.elevenlabs_api_key else "not_configured",
