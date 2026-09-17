@@ -41,6 +41,23 @@ _ALLOWED_ANALYSIS_KEYS = {
     "area_of_cover", "underwriting", "benefits", "waiting_periods",
     "optional_benefits", "critical_limitations", "confidence",
 }
+_ALLOWED_FACT_KEYS = {
+    "provider",
+    "plan_name",
+    "premium_amount",
+    "premium_frequency",
+    "deductible_or_excess",
+    "annual_limit",
+    "area_of_cover",
+    "underwriting_basis",
+    "pre_existing_conditions",
+}
+_ALLOWED_FACT_PREFIXES = (
+    "benefit.",
+    "waiting_period.",
+    "optional_benefit.",
+    "limitation.",
+)
 
 
 def safe_comparison_projection(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -71,6 +88,40 @@ def safe_comparison_projection(results: list[dict[str, Any]]) -> list[dict[str, 
     return projected
 
 
+def _safe_plan_fact_key(key: str) -> bool:
+    return key in _ALLOWED_FACT_KEYS or any(key.startswith(prefix) for prefix in _ALLOWED_FACT_PREFIXES)
+
+
+def safe_fact_projection(case: AshlarCase) -> list[dict[str, Any]]:
+    """Expose plan evidence to HAL without leaking unrelated case/health facts.
+
+    Only facts attached to a ``plan:`` subject and carrying known insurance-plan
+    keys are eligible. Client declarations, health-vault facts, operational
+    metadata, free-text medical notes and access credentials therefore remain
+    outside the adviser model context even if those domains are added later.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for fact in case.facts:
+        if len(rows) >= 160:
+            break
+        if not str(fact.subject or "").startswith("plan:"):
+            continue
+        if not _safe_plan_fact_key(fact.key):
+            continue
+        rows.append({
+            "plan_key": fact.plan_key,
+            "key": fact.key,
+            "value": fact.value,
+            "status": fact.status.value,
+            "confidence": round(float(fact.confidence), 3),
+            "source_type": fact.source.source_type.value,
+            "source_ref": str(fact.source.source_ref or "")[:255] or None,
+            "page": fact.source.page,
+        })
+    return rows
+
+
 def deterministic_advice_fallback(case: AshlarCase, results: list[dict[str, Any]]) -> dict[str, Any]:
     intelligence = build_case_intelligence(case)
     plans = safe_comparison_projection(results)
@@ -82,14 +133,14 @@ def deterministic_advice_fallback(case: AshlarCase, results: list[dict[str, Any]
         )
     elif names:
         answer = (
-            f"I have server-verified comparison data for {', '.join(names)}. "
+            f"I have server-owned comparison data for {', '.join(names)}. "
             "The right choice depends on the client's priorities and the material differences shown in the case evidence."
         )
     else:
-        answer = "I need verified comparison evidence before I can explain a plan recommendation reliably."
+        answer = "I need grounded comparison evidence before I can explain a plan recommendation reliably."
 
     next_actions = intelligence.get("next_actions") or []
-    next_action = str((next_actions[0] or {}).get("reason") or "Review the verified plan differences with the client.") if next_actions else "Review the verified plan differences with the client."
+    next_action = str((next_actions[0] or {}).get("reason") or "Review the grounded plan differences with the client.") if next_actions else "Review the grounded plan differences with the client."
     return {
         "answer": answer,
         "tradeoffs": [],
@@ -144,13 +195,14 @@ async def synthesize_case_advice(
         "medical_disclosure_present": bool(case.needs_profile.get("medical_disclosure_present")),
         "case_intelligence": intelligence,
         "server_comparison": safe_comparison_projection(results),
+        "document_fact_ledger": safe_fact_projection(case),
         "existing_recommendation": case.recommendation,
     }
     message = (
         "USER QUESTION:\n"
         + str(question or "")[:3000]
         + "\n\nSERVER-OWNED CASE CONTEXT:\n"
-        + json.dumps(context, ensure_ascii=False, default=str)[:45000]
+        + json.dumps(context, ensure_ascii=False, default=str)[:50000]
     )
     try:
         raw = await claude_response(
@@ -159,7 +211,7 @@ async def synthesize_case_advice(
             history=None,
             json_mode=True,
             max_tokens=1600,
-            message_max_chars=50000,
+            message_max_chars=55000,
         )
         decoded = json.loads(raw)
         if not isinstance(decoded, dict):
@@ -176,5 +228,6 @@ __all__ = [
     "ADVICE_SYNTHESIS_INSTRUCTIONS",
     "deterministic_advice_fallback",
     "safe_comparison_projection",
+    "safe_fact_projection",
     "synthesize_case_advice",
 ]
