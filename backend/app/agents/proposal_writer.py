@@ -7,6 +7,7 @@ from starlette.concurrency import run_in_threadpool
 
 from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
+from backend.app.proposals.artifacts import PROPOSAL_ARTIFACT_STORE, relative_downloads
 from backend.app.proposals.engine import (
     ProposalBundle,
     ProposalGenerationBlocked,
@@ -65,13 +66,22 @@ class ProposalWriter:
                 payload={"required": ["case_id", "case_token"]},
             )
 
-        bundle = await run_in_threadpool(
-            self.generate,
-            case=record.case.model_copy(deep=True),
-            results=record.results,
-            language=ctx.get("language"),
-            strict_narrative=bool(ctx.get("strict_narrative", False)),
-        )
+        try:
+            bundle = await run_in_threadpool(
+                self.generate,
+                case=record.case.model_copy(deep=True),
+                results=record.results,
+                language=ctx.get("language"),
+                strict_narrative=bool(ctx.get("strict_narrative", False)),
+            )
+        except ProposalGenerationBlocked as exc:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="blocked",
+                reply=str(exc),
+                payload={"case_id": str(case_id), "quality_gate": "blocked"},
+            )
+
         case = record.case.model_copy(deep=True)
         # generate_case_proposal mutates the copy it receives, so repeat on the
         # saved case only through the report metadata we actually need here.
@@ -86,14 +96,31 @@ class ProposalWriter:
             "pptx_size_bytes": len(bundle.pptx_bytes),
         }
         case.touch()
-        CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
+        saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
+        if saved is None:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="unavailable",
+                reply="The case expired while the proposal was being prepared. Please compare the plans again.",
+            )
+
+        proposal_id, expires = PROPOSAL_ARTIFACT_STORE.put(
+            case=case,
+            report=bundle.report,
+            pdf_bytes=bundle.pdf_bytes,
+            pptx_bytes=bundle.pptx_bytes,
+        )
+        downloads = relative_downloads(proposal_id)
 
         return SpecialistResponse(
             specialist=self.name,
             status="completed",
-            reply="Proposal Studio prepared the grounded client proposal.",
+            reply="Proposal Studio prepared the grounded client proposal. The PDF and PowerPoint are ready.",
             payload={
                 "case_id": str(case.case_id),
+                "proposal_id": proposal_id,
+                "expires_at": expires.isoformat(),
+                "downloads": downloads,
                 "quality": bundle.quality,
                 "report": bundle.report,
                 "pdf_size_bytes": len(bundle.pdf_bytes),
