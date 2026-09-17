@@ -21,6 +21,7 @@ from .contracts import (
 from .document_analyst import DocumentAnalyst, get_document_analyst
 from .hal_adviser import HalAdviser, get_hal_adviser
 from .health_navigator import HealthNavigator, get_health_navigator
+from .planner import plan_next_best_action
 from .proposal_writer import ProposalWriter, get_proposal_writer
 
 
@@ -151,7 +152,7 @@ def classify_orchestration_intent(message: str) -> OrchestrationDecision:
 
 
 class AshlarOrchestrator:
-    """One intelligent routing surface over deterministic engines and specialists."""
+    """One intelligent coordination surface over deterministic engines and specialists."""
 
     def __init__(
         self,
@@ -208,6 +209,36 @@ class AshlarOrchestrator:
         record = cls._stored_record(case_id=case_id, context=context)
         return record.case.applicant if record is not None else None
 
+    def _finalize(
+        self,
+        *,
+        case_id: UUID | None,
+        decision: OrchestrationDecision,
+        context: dict[str, Any],
+        responses: list[SpecialistResponse] | None = None,
+        payload: dict[str, Any] | None = None,
+    ) -> OrchestratorResult:
+        final_payload = dict(payload or {})
+        intelligence = final_payload.get("case_intelligence")
+        if intelligence is None:
+            intelligence = self._case_intelligence(case_id=case_id, context=context)
+            if intelligence is not None:
+                final_payload["case_intelligence"] = intelligence
+        final_responses = list(responses or [])
+        next_action = plan_next_best_action(
+            decision=decision,
+            responses=final_responses,
+            case_intelligence=intelligence if isinstance(intelligence, dict) else None,
+            payload=final_payload,
+        )
+        return OrchestratorResult(
+            case_id=case_id,
+            decision=decision,
+            responses=final_responses,
+            next_best_action=next_action,
+            payload=final_payload,
+        )
+
     async def handle(
         self,
         *,
@@ -218,14 +249,63 @@ class AshlarOrchestrator:
         resolved_case_id = self._uuid(case_id)
         ctx = dict(context or {})
         decision = classify_orchestration_intent(message)
+        has_document_refs = bool(ctx.get("document_refs"))
+
+        # Context-aware planning: a user can upload documents and simply ask
+        # "what do you think?". The orchestrator analyses those server-owned
+        # refs before HAL explains them, even if the message did not literally
+        # contain the word PDF/document.
+        if has_document_refs and decision.intent == OrchestrationIntent.ADVICE:
+            decision = decision.model_copy(update={
+                "specialists": [SpecialistName.DOCUMENT_ANALYST, SpecialistName.HAL_ADVISER],
+                "deterministic_engines": ["document_evidence_engine"],
+                "reason": "Server-owned carrier documents are attached, so document evidence is analysed before HAL gives advice.",
+            })
+            document_response = await self.document_analyst.handle(
+                case_id=resolved_case_id,
+                message=message,
+                context=ctx,
+            )
+            if document_response.status != "completed":
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[document_response],
+                )
+            intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+            if intelligence:
+                ctx["case_intelligence"] = intelligence
+            advice_response = await self.hal_adviser.handle(
+                case_id=resolved_case_id,
+                message=message,
+                context=ctx,
+            )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                responses=[document_response, advice_response],
+                payload={"case_intelligence": intelligence} if intelligence else {},
+            )
+
+        # Likewise, uploaded document refs imply an evidence-analysis step before
+        # a proposal even if the user simply says "prepare the proposal".
+        if has_document_refs and decision.intent == OrchestrationIntent.PROPOSAL and SpecialistName.DOCUMENT_ANALYST not in decision.specialists:
+            decision = decision.model_copy(update={
+                "specialists": [SpecialistName.DOCUMENT_ANALYST, SpecialistName.PROPOSAL_WRITER],
+                "deterministic_engines": ["document_evidence_engine"],
+                "reason": "Uploaded carrier evidence must be analysed before Proposal Studio prepares the client pack.",
+            })
 
         if decision.intent == OrchestrationIntent.QUOTE:
             applicant = self._applicant_from_context(case_id=resolved_case_id, context=ctx)
             if applicant is not None:
                 quotes = quote_shortlist(applicant, get_settings())
-                return OrchestratorResult(
+                return self._finalize(
                     case_id=resolved_case_id,
                     decision=decision,
+                    context=ctx,
                     payload={"quotes": [q.model_dump(mode="json") for q in quotes]},
                 )
             if "state" in ctx:
@@ -238,14 +318,21 @@ class AshlarOrchestrator:
                     "specialists": [SpecialistName.HAL_ADVISER],
                     "reason": decision.reason + " HAL is collecting missing quote inputs first.",
                 })
-                return OrchestratorResult(case_id=resolved_case_id, decision=decision, responses=[response])
-            return OrchestratorResult(
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[response],
+                )
+            return self._finalize(
                 case_id=resolved_case_id,
                 decision=decision,
+                context=ctx,
                 responses=[SpecialistResponse(
                     specialist=SpecialistName.HAL_ADVISER,
                     status="needs_input",
                     reply="I need the applicant details before the quote engine can price the plans.",
+                    payload={"required": ["applicant"]},
                 )],
             )
 
@@ -256,9 +343,10 @@ class AshlarOrchestrator:
                 context=ctx,
             )
             intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
-            return OrchestratorResult(
+            return self._finalize(
                 case_id=resolved_case_id,
                 decision=decision,
+                context=ctx,
                 responses=[response],
                 payload={"case_intelligence": intelligence} if intelligence else {},
             )
@@ -274,15 +362,32 @@ class AshlarOrchestrator:
                 responses.append(document_response)
                 intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
                 if document_response.status != "completed":
-                    return OrchestratorResult(
+                    return self._finalize(
                         case_id=resolved_case_id,
                         decision=decision,
+                        context=ctx,
                         responses=responses,
                         payload={
                             "case_intelligence": intelligence,
                             "proposal_step": "blocked_until_document_analysis_completes",
                         },
                     )
+
+            intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+            if intelligence and int(intelligence.get("conflict_count") or 0):
+                responses.append(SpecialistResponse(
+                    specialist=SpecialistName.PROPOSAL_WRITER,
+                    status="blocked",
+                    reply="The proposal is paused because the active case contains unresolved evidence conflicts.",
+                    payload={"required": ["resolve_evidence_conflicts"]},
+                ))
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=responses,
+                    payload={"case_intelligence": intelligence, "proposal_step": "blocked_by_evidence_conflict"},
+                )
 
             proposal_response = await self.proposal_writer.handle(
                 case_id=resolved_case_id,
@@ -291,9 +396,10 @@ class AshlarOrchestrator:
             )
             responses.append(proposal_response)
             intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
-            return OrchestratorResult(
+            return self._finalize(
                 case_id=resolved_case_id,
                 decision=decision,
+                context=ctx,
                 responses=responses,
                 payload={"case_intelligence": intelligence} if intelligence else {},
             )
@@ -304,7 +410,12 @@ class AshlarOrchestrator:
                 message=message,
                 context=ctx,
             )
-            return OrchestratorResult(case_id=resolved_case_id, decision=decision, responses=[response])
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                responses=[response],
+            )
 
         if decision.intent == OrchestrationIntent.HEALTH_POLICY:
             response = await self.health_navigator.handle(
@@ -332,9 +443,10 @@ class AshlarOrchestrator:
                     "verdict": "unknown",
                     "reason": "A clinical benefit key and an active server-owned policy case are required before coverage can be checked.",
                 }
-            return OrchestratorResult(
+            return self._finalize(
                 case_id=resolved_case_id,
                 decision=decision,
+                context=ctx,
                 responses=[response],
                 payload=payload,
             )
@@ -347,9 +459,10 @@ class AshlarOrchestrator:
             message=message,
             context=ctx,
         )
-        return OrchestratorResult(
+        return self._finalize(
             case_id=resolved_case_id,
             decision=decision,
+            context=ctx,
             responses=[response],
             payload={"case_intelligence": intelligence} if intelligence else {},
         )
