@@ -4,6 +4,7 @@ import re
 from typing import Any
 from uuid import UUID
 
+from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.policy.engine import PolicyEngine, get_policy_engine
@@ -72,13 +73,16 @@ def _contains_any(text: str, needles: tuple[str, ...]) -> bool:
 
 
 def classify_orchestration_intent(message: str) -> OrchestrationDecision:
-    """Deterministic top-level router.
+    """Deterministic top-level router and compound-plan recogniser.
 
     Routing is deliberately not an LLM task. A model must not decide which
     subsystem is allowed to own a request or whether unverified data can enter
-    an insurance workflow.
+    an insurance workflow. Compound requests may select more than one
+    specialist, but the orchestrator controls their order.
     """
     text = re.sub(r"\s+", " ", str(message or "").strip().casefold())
+    has_document = _contains_any(text, _DOCUMENT_WORDS) and _contains_any(text, _DOCUMENT_ACTIONS)
+    has_proposal = _contains_any(text, _PROPOSAL_WORDS) and _contains_any(text, _PROPOSAL_ACTIONS)
 
     if _contains_any(text, _COVERAGE_WORDS) and (
         _contains_any(text, _CLINICAL_WORDS) or "asklepios" in text or "kira" in text
@@ -90,7 +94,15 @@ def classify_orchestration_intent(message: str) -> OrchestrationDecision:
             reason="Clinical request plus insurance-coverage language requires Asklepios context and deterministic policy evidence.",
         )
 
-    if _contains_any(text, _PROPOSAL_WORDS) and _contains_any(text, _PROPOSAL_ACTIONS):
+    if has_document and has_proposal:
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.PROPOSAL,
+            specialists=[SpecialistName.DOCUMENT_ANALYST, SpecialistName.PROPOSAL_WRITER],
+            deterministic_engines=["document_evidence_engine"],
+            reason="The user asked for document analysis followed by a client proposal; evidence must be analysed before Proposal Studio writes anything.",
+        )
+
+    if has_proposal:
         return OrchestrationDecision(
             intent=OrchestrationIntent.PROPOSAL,
             specialists=[SpecialistName.PROPOSAL_WRITER],
@@ -98,7 +110,7 @@ def classify_orchestration_intent(message: str) -> OrchestrationDecision:
             reason="The user explicitly asked to create a client proposal or presentation.",
         )
 
-    if _contains_any(text, _DOCUMENT_WORDS) and _contains_any(text, _DOCUMENT_ACTIONS):
+    if has_document:
         return OrchestrationDecision(
             intent=OrchestrationIntent.DOCUMENT,
             specialists=[SpecialistName.DOCUMENT_ANALYST],
@@ -139,7 +151,7 @@ def classify_orchestration_intent(message: str) -> OrchestrationDecision:
 
 
 class AshlarOrchestrator:
-    """One routing surface over deterministic engines and specialist agents."""
+    """One intelligent routing surface over deterministic engines and specialists."""
 
     def __init__(
         self,
@@ -171,6 +183,11 @@ class AshlarOrchestrator:
         if case_id is None or not case_token:
             return None
         return CASE_ANALYSIS_STORE.get(case_id, case_token)
+
+    @classmethod
+    def _case_intelligence(cls, *, case_id: UUID | None, context: dict[str, Any]) -> dict[str, Any] | None:
+        record = cls._stored_record(case_id=case_id, context=context)
+        return build_case_intelligence(record.case) if record is not None else None
 
     @classmethod
     def _applicant_from_context(
@@ -238,15 +255,48 @@ class AshlarOrchestrator:
                 message=message,
                 context=ctx,
             )
-            return OrchestratorResult(case_id=resolved_case_id, decision=decision, responses=[response])
+            intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+            return OrchestratorResult(
+                case_id=resolved_case_id,
+                decision=decision,
+                responses=[response],
+                payload={"case_intelligence": intelligence} if intelligence else {},
+            )
 
         if decision.intent == OrchestrationIntent.PROPOSAL:
-            response = await self.proposal_writer.handle(
+            responses: list[SpecialistResponse] = []
+            if SpecialistName.DOCUMENT_ANALYST in decision.specialists:
+                document_response = await self.document_analyst.handle(
+                    case_id=resolved_case_id,
+                    message=message,
+                    context=ctx,
+                )
+                responses.append(document_response)
+                intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+                if document_response.status != "completed":
+                    return OrchestratorResult(
+                        case_id=resolved_case_id,
+                        decision=decision,
+                        responses=responses,
+                        payload={
+                            "case_intelligence": intelligence,
+                            "proposal_step": "blocked_until_document_analysis_completes",
+                        },
+                    )
+
+            proposal_response = await self.proposal_writer.handle(
                 case_id=resolved_case_id,
                 message=message,
                 context=ctx,
             )
-            return OrchestratorResult(case_id=resolved_case_id, decision=decision, responses=[response])
+            responses.append(proposal_response)
+            intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+            return OrchestratorResult(
+                case_id=resolved_case_id,
+                decision=decision,
+                responses=responses,
+                payload={"case_intelligence": intelligence} if intelligence else {},
+            )
 
         if decision.intent == OrchestrationIntent.HEALTH:
             response = await self.health_navigator.handle(
@@ -289,12 +339,20 @@ class AshlarOrchestrator:
                 payload=payload,
             )
 
+        intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
+        if intelligence:
+            ctx["case_intelligence"] = intelligence
         response = await self.hal_adviser.handle(
             case_id=resolved_case_id,
             message=message,
             context=ctx,
         )
-        return OrchestratorResult(case_id=resolved_case_id, decision=decision, responses=[response])
+        return OrchestratorResult(
+            case_id=resolved_case_id,
+            decision=decision,
+            responses=[response],
+            payload={"case_intelligence": intelligence} if intelligence else {},
+        )
 
     async def handle_legacy_chat(
         self,
