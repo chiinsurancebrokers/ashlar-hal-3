@@ -6,6 +6,7 @@ from uuid import UUID
 
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
+from backend.app.policy.engine import PolicyEngine, get_policy_engine
 from backend.app.rates.quote_engine import quote_shortlist
 from backend.app.schemas.applicant import Applicant
 
@@ -147,11 +148,13 @@ class AshlarOrchestrator:
         document_analyst: DocumentAnalyst | None = None,
         proposal_writer: ProposalWriter | None = None,
         health_navigator: HealthNavigator | None = None,
+        policy_engine: PolicyEngine | None = None,
     ):
         self.hal_adviser = hal_adviser or get_hal_adviser()
         self.document_analyst = document_analyst or get_document_analyst()
         self.proposal_writer = proposal_writer or get_proposal_writer()
         self.health_navigator = health_navigator or get_health_navigator()
+        self.policy_engine = policy_engine or get_policy_engine()
 
     @staticmethod
     def _uuid(value: UUID | str | None) -> UUID | None:
@@ -163,7 +166,15 @@ class AshlarOrchestrator:
             return None
 
     @staticmethod
+    def _stored_record(*, case_id: UUID | None, context: dict[str, Any]):
+        case_token = str(context.get("case_token") or "")
+        if case_id is None or not case_token:
+            return None
+        return CASE_ANALYSIS_STORE.get(case_id, case_token)
+
+    @classmethod
     def _applicant_from_context(
+        cls,
         *,
         case_id: UUID | None,
         context: dict[str, Any],
@@ -177,12 +188,8 @@ class AshlarOrchestrator:
             except Exception:
                 pass
 
-        case_token = str(context.get("case_token") or "")
-        if case_id is not None and case_token:
-            record = CASE_ANALYSIS_STORE.get(case_id, case_token)
-            if record is not None:
-                return record.case.applicant
-        return None
+        record = cls._stored_record(case_id=case_id, context=context)
+        return record.case.applicant if record is not None else None
 
     async def handle(
         self,
@@ -205,8 +212,6 @@ class AshlarOrchestrator:
                     payload={"quotes": [q.model_dump(mode="json") for q in quotes]},
                 )
             if "state" in ctx:
-                # Discovery still needs the adviser to collect/normalize missing
-                # applicant fields before the quote engine is called.
                 response = await self.hal_adviser.handle(
                     case_id=resolved_case_id,
                     message=message,
@@ -257,15 +262,31 @@ class AshlarOrchestrator:
                 message=message,
                 context=ctx,
             )
+            benefit_key = str(ctx.get("benefit_key") or response.payload.get("benefit_key") or "").strip()
+            payload: dict[str, Any] = {
+                "next_engine": "policy_engine",
+                "requires_verified_policy_evidence": True,
+                "health_to_insurance_consent_required": True,
+            }
+            record = self._stored_record(case_id=resolved_case_id, context=ctx)
+            if benefit_key and record is not None:
+                coverage = self.policy_engine.check_benefit(
+                    case=record.case,
+                    benefit_key=benefit_key,
+                    plan_key=str(ctx.get("plan_key") or "").strip() or None,
+                )
+                payload["policy"] = coverage.model_dump(mode="json")
+                payload["next_engine"] = None
+            else:
+                payload["policy"] = {
+                    "verdict": "unknown",
+                    "reason": "A clinical benefit key and an active server-owned policy case are required before coverage can be checked.",
+                }
             return OrchestratorResult(
                 case_id=resolved_case_id,
                 decision=decision,
                 responses=[response],
-                payload={
-                    "next_engine": "policy_engine",
-                    "requires_verified_policy_evidence": True,
-                    "health_to_insurance_consent_required": True,
-                },
+                payload=payload,
             )
 
         response = await self.hal_adviser.handle(
