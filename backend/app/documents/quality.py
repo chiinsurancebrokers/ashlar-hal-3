@@ -89,3 +89,17 @@ def assess_result_quality(result: dict) -> dict:
         "missing_fields": missing_fields,
         "warnings": warnings,
     }
+
+
+def case_quality(results: list[dict]) -> dict:
+    """Aggregate per-plan quality before Proposal Studio renders a client pack."""
+    assessments = [assess_result_quality(result) for result in results]
+    blocked = [item for item in assessments if not item.get("can_generate")]
+    reviews = [item for item in assessments if item.get("status") == "review"]
+    return {
+        "assessments": assessments,
+        "blocked_count": len(blocked),
+        "review_count": len(reviews),
+        "can_generate": not blocked,
+        "status": "blocked" if blocked else ("review" if reviews else "ready"),
+    }
