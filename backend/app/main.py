@@ -8,6 +8,7 @@ from backend.app.core.config import get_settings
 from backend.app.core.rate_limit import SimpleRateLimitMiddleware
 from backend.app.api.adviser import router as adviser_router
 from backend.app.api.chat import router as chat_router
+from backend.app.api.documents import router as documents_router
 from backend.app.api.quotes import router as quotes_router
 from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
@@ -35,14 +36,16 @@ app.add_middleware(
 app.add_middleware(
     SimpleRateLimitMiddleware,
     limited_prefixes=(f"{settings.api_prefix}/adviser", f"{settings.api_prefix}/chat",
-                       f"{settings.api_prefix}/leads", f"{settings.api_prefix}/transcribe",
-                       f"{settings.api_prefix}/speak", f"{settings.api_prefix}/proposals"),
+                       f"{settings.api_prefix}/documents", f"{settings.api_prefix}/leads",
+                       f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak",
+                       f"{settings.api_prefix}/proposals"),
     max_requests=20,
     window_seconds=60,
 )
 
 app.include_router(adviser_router, prefix=settings.api_prefix)
 app.include_router(chat_router, prefix=settings.api_prefix)
+app.include_router(documents_router, prefix=settings.api_prefix)
 app.include_router(quotes_router, prefix=settings.api_prefix)
 app.include_router(leads_router, prefix=settings.api_prefix)
 app.include_router(travel_router, prefix=settings.api_prefix)
