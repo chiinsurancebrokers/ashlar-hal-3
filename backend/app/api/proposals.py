@@ -15,10 +15,10 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
+from backend.app.agents.proposal_writer import ProposalGenerationBlocked, get_proposal_writer
 from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
-from backend.app.proposals.engine import ProposalGenerationBlocked, generate_case_proposal
 from backend.app.proposals.report_schema import ClientReportValidationError
 
 router = APIRouter(prefix="/proposals", tags=["proposals"])
@@ -142,8 +142,10 @@ def _download_response(data: bytes, *, filename: str, media_type: str) -> Respon
 
 async def _generate_bundle(*, case: AshlarCase, results: list[dict], language: str | None, strict_narrative: bool):
     try:
+        # All proposal model/narrative work enters through the specialist
+        # boundary. The public API never calls Proposal Studio directly.
         return await run_in_threadpool(
-            generate_case_proposal,
+            get_proposal_writer().generate,
             case=case,
             results=results,
             language=language,
