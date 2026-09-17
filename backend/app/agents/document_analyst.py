@@ -8,6 +8,7 @@ from starlette.concurrency import run_in_threadpool
 from backend.app.cases.models import AshlarCase, CaseDocument
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.documents.orchestrator import analyze_and_apply_document_bundle
+from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
 
 from .contracts import SpecialistName, SpecialistResponse
 
@@ -15,10 +16,13 @@ from .contracts import SpecialistName, SpecialistResponse
 class DocumentAnalyst:
     """Proposal Studio's document/evidence specialist.
 
-    Raw carrier material is normalized through the existing deterministic
-    target-plan/document pipeline. The specialist does not turn browser-entered
-    insurer facts into verified evidence; callers must supply server-owned case
-    context and the actual extracted document material.
+    Public Adviser OS flows pass only opaque ``document_refs``. Those references
+    are resolved against the server-owned document store using the same case
+    token that authorised the upload. Raw extracted carrier text and model
+    output are therefore never trusted when they arrive from a browser.
+
+    The older direct structured context remains available for internal/broker
+    workflows and tests, but the public API does not expose those fields.
     """
 
     name = SpecialistName.DOCUMENT_ANALYST
@@ -34,6 +38,114 @@ class DocumentAnalyst:
                 return None
         return None
 
+    async def _handle_server_documents(
+        self,
+        *,
+        case_id: UUID | None,
+        case_token: str,
+        document_refs: list[str],
+    ) -> SpecialistResponse:
+        if case_id is None or not case_token:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="needs_input",
+                reply="Document analysis needs an active case before carrier documents can be analysed.",
+                payload={"required": ["case_id", "case_token", "document_refs"]},
+            )
+
+        stored_record = CASE_ANALYSIS_STORE.get(case_id, case_token)
+        if stored_record is None:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="needs_input",
+                reply="The case is unavailable, expired, or the access token is invalid.",
+                payload={"required": ["active_case"]},
+            )
+
+        records = []
+        for document_ref in document_refs:
+            item = DOCUMENT_EVIDENCE_STORE.get(
+                document_ref,
+                case_id=case_id,
+                case_token=case_token,
+            )
+            if item is None:
+                # Fail closed. Silently skipping a missing document could make a
+                # comparison appear complete when material carrier evidence was
+                # actually absent or belonged to another case.
+                return SpecialistResponse(
+                    specialist=self.name,
+                    status="blocked",
+                    reply="One or more document references are invalid, expired, or belong to another case.",
+                    payload={"invalid_document_ref": document_ref},
+                )
+            records.append(item)
+
+        if not records:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="needs_input",
+                reply="Upload at least one carrier document before asking me to compare the PDFs.",
+                payload={"required": ["document_refs"]},
+            )
+
+        case = stored_record.case.model_copy(deep=True)
+        analyses: list[dict[str, Any]] = []
+
+        # Analyse each source independently so every Fact retains the real
+        # originating CaseDocument. The FactLedger can then surface genuine
+        # quote/brochure/wording conflicts instead of hiding provenance.
+        for item in records:
+            role = item.role.casefold()
+            kwargs = {
+                "quotation_text": item.extracted_text if role == "quotation" else "",
+                "brochure_text": item.extracted_text if role == "brochure" else "",
+                "wording_text": item.extracted_text if role == "wording" else "",
+                "focused_table_context": item.focused_table_context if role == "brochure" else "",
+            }
+            run = await run_in_threadpool(
+                analyze_and_apply_document_bundle,
+                case,
+                document=item.document,
+                provider_label=item.provider_label,
+                target_plan=item.target_plan,
+                model_result=None,
+                plan_key=item.plan_key,
+                **kwargs,
+            )
+            case = run.case
+            analyses.append({
+                "document_ref": item.document_ref,
+                "document_id": str(item.document.document_id),
+                "filename": item.document.filename,
+                "role": item.role,
+                "provider": item.provider_label,
+                "target_plan": item.target_plan,
+                "plan_key": item.plan_key,
+                "envelope": run.envelope,
+                "fact_count_after_document": len(case.facts),
+            })
+
+        saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
+        if saved is None:
+            return SpecialistResponse(
+                specialist=self.name,
+                status="unavailable",
+                reply="The case expired while the carrier documents were being analysed. Please rebuild the comparison.",
+            )
+
+        return SpecialistResponse(
+            specialist=self.name,
+            status="completed",
+            reply=f"Analysed {len(records)} carrier document(s) and committed grounded evidence to the active case.",
+            payload={
+                "case_id": str(case.case_id),
+                "document_count": len(records),
+                "fact_count": len(case.facts),
+                "analyses": analyses,
+            },
+        )
+
     async def handle(
         self,
         *,
@@ -42,10 +154,20 @@ class DocumentAnalyst:
         context: dict[str, Any] | None = None,
     ) -> SpecialistResponse:
         ctx = context or {}
-        case = ctx.get("case")
         case_token = str(ctx.get("case_token") or "")
-        stored_record = None
+        raw_refs = ctx.get("document_refs")
+        if isinstance(raw_refs, list):
+            document_refs = [str(value).strip() for value in raw_refs if str(value).strip()]
+            return await self._handle_server_documents(
+                case_id=case_id,
+                case_token=case_token,
+                document_refs=document_refs,
+            )
 
+        # Internal/broker compatibility path. Public Adviser OS request models do
+        # not expose these raw evidence fields.
+        case = ctx.get("case")
+        stored_record = None
         if not isinstance(case, AshlarCase) and case_id is not None and case_token:
             stored_record = CASE_ANALYSIS_STORE.get(case_id, case_token)
             if stored_record is not None:
