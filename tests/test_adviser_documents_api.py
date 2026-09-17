@@ -17,6 +17,7 @@ def _active_case():
 
 def test_server_owned_document_upload_then_orchestrator_analysis():
     record = _active_case()
+    secret_phrase = "PRIVATE-CARRIER-EVIDENCE-MARKER"
     response = client.post(
         "/api/v1/documents/upload",
         data={
@@ -30,7 +31,7 @@ def test_server_owned_document_upload_then_orchestrator_analysis():
         files={
             "file": (
                 "test-silver-quote.txt",
-                b"Test Silver applicant quotation. Annual premium EUR 1,200. Deductible EUR 500. Area of cover Europe. Annual limit EUR 1,000,000.",
+                f"Test Silver applicant quotation. Annual premium EUR 1,200. Deductible EUR 500. Area of cover Europe. Annual limit EUR 1,000,000. {secret_phrase}".encode(),
                 "text/plain",
             )
         },
@@ -42,6 +43,7 @@ def test_server_owned_document_upload_then_orchestrator_analysis():
     assert uploaded["document_ref"]
     assert "extracted_text" not in uploaded
     assert "focused_table_context" not in uploaded
+    assert secret_phrase not in response.text
 
     analysis = client.post(
         "/api/v1/adviser/handle",
@@ -56,8 +58,16 @@ def test_server_owned_document_upload_then_orchestrator_analysis():
     assert analysis.status_code == 200, analysis.text
     body = analysis.json()
     assert body["decision"]["intent"] == "document"
-    assert body["responses"][0]["specialist"] == "document_analyst"
-    assert body["responses"][0]["status"] == "completed"
+    specialist = body["responses"][0]
+    assert specialist["specialist"] == "document_analyst"
+    assert specialist["status"] == "completed"
+    assert "envelope" not in specialist["payload"]["analyses"][0]
+    assert "analysis_prompt" not in analysis.text
+    assert secret_phrase not in analysis.text
+    synthesis = specialist["payload"]["model_synthesis"]
+    assert synthesis["advisory_only"] is True
+    assert synthesis["authoritative_facts_source"] == "fact_ledger"
+
     intelligence = body["payload"]["case_intelligence"]
     assert intelligence["document_count"] == 1
     assert intelligence["fact_count"] >= 2
