@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.agents import orchestrator as orchestrator_module
+from backend.app.agents import orchestrator_admin
 from backend.app.api import chat as chat_api
 from backend.app.api import proposals as proposals_api
 from backend.app.proposals.engine import ProposalBundle
@@ -68,6 +69,13 @@ def test_ashlar_orchestrator_coordinates_but_never_calls_models_directly():
     assert "get_document_analyst" in source
     assert "get_proposal_writer" in source
     assert "get_health_navigator" in source
+
+
+def test_internal_broker_gateway_also_enters_orchestrator_handle():
+    source = inspect.getsource(orchestrator_admin)
+    assert "orchestrator.handle(" in source
+    assert ".proposal_writer" not in source
+    assert "get_proposal_writer" not in source
 
 
 class _FakeOrchestrator:
