@@ -9,14 +9,17 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
-from starlette.concurrency import run_in_threadpool
 
-from backend.app.agents.proposal_writer import ProposalGenerationBlocked, get_proposal_writer
+from backend.app.agents.contracts import SpecialistName
+from backend.app.agents.orchestrator import get_ashlar_orchestrator
+from backend.app.agents.orchestrator_admin import (
+    OrchestratorProposalError,
+    generate_admin_proposal_bundle,
+)
 from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.proposals.artifacts import PROPOSAL_ARTIFACT_STORE
-from backend.app.proposals.report_schema import ClientReportValidationError
 
 router = APIRouter(prefix="/proposals", tags=["proposals"])
 
@@ -80,28 +83,33 @@ def _download_response(data: bytes, *, filename: str, media_type: str) -> Respon
     )
 
 
-async def _generate_bundle(*, case: AshlarCase, results: list[dict], language: str | None, strict_narrative: bool):
+async def _generate_bundle(
+    *,
+    case: AshlarCase,
+    results: list[dict],
+    language: str | None,
+    strict_narrative: bool,
+):
+    """Broker-only generation through the orchestrator layer.
+
+    Even internal tooling does not import or invoke proposal_writer directly.
+    The orchestrator owns the specialist and the internal gateway performs the
+    explicit delegation.
+    """
     try:
-        # All proposal model/narrative work enters through the specialist
-        # boundary. The public API never calls Proposal Studio directly.
-        return await run_in_threadpool(
-            get_proposal_writer().generate,
+        return await generate_admin_proposal_bundle(
+            get_ashlar_orchestrator(),
             case=case,
             results=results,
             language=language,
             strict_narrative=strict_narrative,
         )
-    except ProposalGenerationBlocked as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ClientReportValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Proposal Studio failed: {str(exc)[:240]}") from exc
+    except OrchestratorProposalError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
 
 def _ready_response(*, request: Request, case: AshlarCase, bundle) -> JSONResponse:
+    """Build the response for broker-only manual generation."""
     case.status = CaseStatus.PROPOSAL
     case.touch()
     token, expires = PROPOSAL_ARTIFACT_STORE.put(
@@ -128,25 +136,87 @@ def _ready_response(*, request: Request, case: AshlarCase, bundle) -> JSONRespon
     return JSONResponse(content=jsonable_encoder(payload), headers=_NO_STORE)
 
 
+def _orchestrated_ready_response(
+    *,
+    request: Request,
+    case_id: UUID,
+    case_token: str,
+    proposal_response,
+) -> JSONResponse:
+    """Preserve the proposal API contract over AshlarOrchestrator output."""
+    payload = proposal_response.payload or {}
+    proposal_id = str(payload.get("proposal_id") or "").strip()
+    if not proposal_id:
+        raise HTTPException(status_code=502, detail="Proposal writer completed without an artifact reference.")
+
+    artifact = PROPOSAL_ARTIFACT_STORE.get(proposal_id)
+    saved = CASE_ANALYSIS_STORE.get(case_id, case_token)
+    if artifact is None or saved is None:
+        raise HTTPException(
+            status_code=409,
+            detail="The proposal or active case expired while the response was being prepared.",
+        )
+
+    case = saved.case
+    body = {
+        "status": "ready",
+        "proposal_id": proposal_id,
+        "case_id": str(case.case_id),
+        "quality": payload.get("quality") or {},
+        "report": artifact.report,
+        "recommendation": case.recommendation,
+        "proposal": case.proposal,
+        "case_status": case.status.value,
+        "expires_at": artifact.expires_at.isoformat(),
+        "downloads": {
+            "pdf": str(request.url_for("download_proposal_pdf", proposal_id=proposal_id)),
+            "pptx": str(request.url_for("download_proposal_pptx", proposal_id=proposal_id)),
+        },
+    }
+    return JSONResponse(content=jsonable_encoder(body), headers=_NO_STORE)
+
+
 @router.post("/prepare", name="prepare_stored_case_proposal")
 async def prepare_stored_case_proposal(req: ProposalPrepareRequest, request: Request):
-    record = CASE_ANALYSIS_STORE.get(req.case_id, req.case_token)
-    if record is None:
+    # Validate the opaque case/token pair before orchestration so the dedicated
+    # endpoint preserves its historical 404 contract.
+    if CASE_ANALYSIS_STORE.get(req.case_id, req.case_token) is None:
         raise HTTPException(status_code=404, detail="Case not found, expired, or access token is invalid.")
 
-    case = record.case.model_copy(deep=True)
-    bundle = await _generate_bundle(
-        case=case,
-        results=record.results,
-        language=req.language,
-        strict_narrative=req.strict_narrative,
+    result = await get_ashlar_orchestrator().handle(
+        case_id=req.case_id,
+        message="Create the proposal.",
+        context={
+            "case_token": req.case_token,
+            "language": req.language,
+            "strict_narrative": req.strict_narrative,
+        },
     )
-    case.status = CaseStatus.PROPOSAL
-    case.touch()
-    saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=req.case_token)
-    if saved is None:
-        raise HTTPException(status_code=409, detail="The case expired while the proposal was being prepared. Please compare again.")
-    return _ready_response(request=request, case=case, bundle=bundle)
+    proposal_response = next(
+        (
+            response
+            for response in reversed(result.responses)
+            if response.specialist == SpecialistName.PROPOSAL_WRITER
+        ),
+        None,
+    )
+    if proposal_response is None:
+        raise HTTPException(status_code=502, detail="Ashlar Orchestrator did not return a proposal specialist result.")
+    if proposal_response.status == "blocked":
+        raise HTTPException(status_code=422, detail=proposal_response.reply or "Proposal generation is blocked.")
+    if proposal_response.status == "needs_input":
+        raise HTTPException(status_code=422, detail=proposal_response.reply or "More case information is required.")
+    if proposal_response.status == "unavailable":
+        raise HTTPException(status_code=409, detail=proposal_response.reply or "Proposal generation is unavailable.")
+    if proposal_response.status != "completed":
+        raise HTTPException(status_code=502, detail=proposal_response.reply or "Proposal generation did not complete.")
+
+    return _orchestrated_ready_response(
+        request=request,
+        case_id=req.case_id,
+        case_token=req.case_token,
+        proposal_response=proposal_response,
+    )
 
 
 @router.post("/generate", name="generate_ashlar_proposal")
@@ -156,6 +226,7 @@ async def generate_proposal(
     x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None,
 ):
     # Internal/manual bridge retained for broker workflows and document testing.
+    # It still enters the orchestrator layer instead of importing a specialist.
     _require_broker_access(x_admin_password)
 
     case = req.case.model_copy(deep=True)
