@@ -22,8 +22,10 @@ def test_adviser_handle_is_the_public_orchestrator_front_door():
     body = response.json()
     assert body["decision"]["intent"] == "quote"
     assert body["decision"]["deterministic_engines"] == ["quote_engine"]
+    assert body["decision"]["specialists"] == ["hal_adviser"]
     assert body["responses"][0]["specialist"] == "hal_adviser"
-    assert body["responses"][0]["status"] == "needs_input"
+    assert "collecting missing quote inputs" in body["decision"]["reason"].lower()
+    assert body.get("payload", {}).get("quotes") in (None, [])
 
 
 def test_adviser_handle_rejects_privileged_browser_context_injection():
