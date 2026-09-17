@@ -41,8 +41,17 @@ class SpecialistResponse(StrictAgentModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
+class NextBestAction(StrictAgentModel):
+    action: str = Field(min_length=1, max_length=120)
+    owner: str = Field(min_length=1, max_length=120)
+    reason: str = Field(min_length=1, max_length=700)
+    blocked: bool = False
+    required: list[str] = Field(default_factory=list)
+
+
 class OrchestratorResult(StrictAgentModel):
     case_id: UUID | None = None
     decision: OrchestrationDecision
     responses: list[SpecialistResponse] = Field(default_factory=list)
+    next_best_action: NextBestAction | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
