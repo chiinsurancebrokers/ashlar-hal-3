@@ -1,5 +1,9 @@
+import asyncio
+from uuid import UUID
+
 from fastapi.testclient import TestClient
 
+from backend.app.agents.orchestrator import get_ashlar_orchestrator
 from backend.app.main import app
 
 
@@ -33,22 +37,33 @@ def test_chat_create_proposal_routes_through_orchestrator_and_returns_real_files
     state["_adviser_os_case_id"] = compare_data["case_id"]
     state["_adviser_os_case_token"] = compare_data["case_token"]
 
-    chat = client.post(
-        "/api/v1/chat/turn",
-        json={"message": "Create the proposal.", "state": state, "history": []},
+    # Exercise the orchestration core directly here. /chat/turn is separately
+    # covered by test_adviser_api; using it again in this long end-to-end test
+    # would make the test depend on process-global rate-limiter state created by
+    # earlier API tests.
+    result = asyncio.run(
+        get_ashlar_orchestrator().handle(
+            case_id=UUID(compare_data["case_id"]),
+            message="Create the proposal.",
+            context={
+                "state": state,
+                "case_token": compare_data["case_token"],
+                "language": "en",
+            },
+        )
     )
-    assert chat.status_code == 200, chat.text
-    data = chat.json()
 
-    assert data["_adviser_os"]["decision"]["intent"] == "proposal"
-    assert data["_adviser_os"]["decision"]["specialists"] == ["proposal_writer"]
-    assert data["_adviser_os"]["responses"][0]["specialist"] == "proposal_writer"
-    assert data["_adviser_os"]["responses"][0]["status"] == "completed"
-    assert data["proposal_downloads"]["pdf"].endswith("/pdf")
-    assert data["proposal_downloads"]["pptx"].endswith("/pptx")
+    assert result.decision.intent.value == "proposal"
+    assert [item.value for item in result.decision.specialists] == ["proposal_writer"]
+    primary = result.responses[0]
+    assert primary.specialist.value == "proposal_writer"
+    assert primary.status == "completed"
+    downloads = primary.payload["downloads"]
+    assert downloads["pdf"].endswith("/pdf")
+    assert downloads["pptx"].endswith("/pptx")
 
-    pdf = client.get(data["proposal_downloads"]["pdf"])
-    pptx = client.get(data["proposal_downloads"]["pptx"])
+    pdf = client.get(downloads["pdf"])
+    pptx = client.get(downloads["pptx"])
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF")
     assert pdf.headers["cache-control"].startswith("no-store")
