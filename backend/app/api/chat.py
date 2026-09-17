@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.app.services.orchestrator import chat_turn
+from backend.app.agents.orchestrator import get_ashlar_orchestrator
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -21,6 +21,10 @@ class ChatRequest(BaseModel):
 @router.post("/turn")
 async def turn(req: ChatRequest):
     try:
-        return await chat_turn(req.message, req.state, [m.model_dump() for m in req.history])
+        return await get_ashlar_orchestrator().handle_legacy_chat(
+            message=req.message,
+            state=req.state,
+            history=[m.model_dump() for m in req.history],
+        )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"HAL conversational service failed: {str(exc)[:180]}")
