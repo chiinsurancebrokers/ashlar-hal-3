@@ -48,6 +48,12 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
                 "state": dict(req.state),
                 "quick_replies": [],
             }
+            if primary.specialist == SpecialistName.PROPOSAL_WRITER:
+                downloads = primary.payload.get("downloads") if primary.payload else None
+                if isinstance(downloads, dict) and downloads:
+                    payload["proposal_downloads"] = dict(downloads)
+                    payload["proposal_id"] = primary.payload.get("proposal_id")
+                    payload["proposal_expires_at"] = primary.payload.get("expires_at")
     else:
         payload = {
             "reply": "I have processed that request through the Ashlar Orchestrator.",
