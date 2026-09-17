@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from backend.app.cases.models import (
     AshlarCase,
     CaseClient,
@@ -20,6 +22,7 @@ def _fact(value, *, status=FactStatus.VERIFIED, plan_key="carrier:plan"):
         source=FactSource(
             source_type=FactSourceType.POLICY_WORDING,
             source_ref="wording.pdf",
+            document_id=uuid4(),
             page=42,
         ),
     )
