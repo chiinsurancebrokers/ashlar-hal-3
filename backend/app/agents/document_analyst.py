@@ -11,6 +11,7 @@ from backend.app.documents.orchestrator import analyze_and_apply_document_bundle
 from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
 
 from .contracts import SpecialistName, SpecialistResponse
+from .document_extraction_model import extract_candidate_analysis
 from .document_synthesis import synthesize_server_documents
 
 
@@ -22,9 +23,11 @@ class DocumentAnalyst:
     token that authorised the upload. Raw extracted carrier text and model
     output are therefore never trusted when they arrive from a browser.
 
-    Deterministic extraction commits evidence to the Fact Ledger. A separate
-    model synthesis may explain that server-owned evidence, but its output is
-    advisory only and is never promoted to an authoritative Fact.
+    Each source is analysed independently so provenance stays attached to the
+    real CaseDocument. A constrained model may extract candidate facts from
+    difficult wording, but deterministic quote/table evidence is reapplied
+    afterwards and every committed model-derived fact remains EXTRACTED rather
+    than becoming VERIFIED merely because an LLM returned it.
     """
 
     name = SpecialistName.DOCUMENT_ANALYST
@@ -105,13 +108,15 @@ class DocumentAnalyst:
                 "wording_text": item.extracted_text if role == "wording" else "",
                 "focused_table_context": item.focused_table_context if role == "brochure" else "",
             }
+
+            candidate = await extract_candidate_analysis(item)
             run = await run_in_threadpool(
                 analyze_and_apply_document_bundle,
                 case,
                 document=item.document,
                 provider_label=item.provider_label,
                 target_plan=item.target_plan,
-                model_result=None,
+                model_result=candidate,
                 plan_key=item.plan_key,
                 **kwargs,
             )
@@ -128,6 +133,10 @@ class DocumentAnalyst:
                 "target_plan": item.target_plan,
                 "plan_key": item.plan_key,
                 "target_plan_table_isolated": bool(item.focused_table_context),
+                "candidate_model_used": candidate is not None,
+                "quality": run.bridge.quality,
+                "added_fact_count": run.bridge.added_fact_count,
+                "conflict_keys": list(run.bridge.conflict_keys),
                 "fact_count_after_document": len(case.facts),
             })
 
