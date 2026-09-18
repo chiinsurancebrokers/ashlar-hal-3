@@ -71,6 +71,33 @@ _HEALTH_WORDS = (
     "εμετ", "αιμορραγ", "ζάλη", "σύμπτωμ", "στομάχι", "στήθος",
 )
 
+_PLAN_SELECTION_WORDS = (
+    "i choose", "i select", "select this plan", "choose this plan", "go with",
+    "proceed with this plan", "take this plan", "επιλέγω", "επιλέξω",
+    "προχωράω με", "προχωρήσω με",
+)
+_APPLICATION_WORDS = (
+    "application", "apply for the plan", "start the application", "insurance application",
+    "application form", "αίτηση", "ξεκινήσουμε την αίτηση", "προχωρήσουμε στην αίτηση",
+)
+_POLICY_WALLET_WORDS = (
+    "policy wallet", "show my policy", "my policy details", "policy card",
+    "ασφαλιστήριο μου", "στοιχεία συμβολαίου", "policy summary",
+)
+_PREAUTHORISATION_WORDS = (
+    "pre-authorisation", "pre-authorization", "preauthorisation", "preauthorization",
+    "pre approval", "pre-approval", "guarantee of payment", "gop",
+    "προέγκριση", "εγγυητική πληρωμής",
+)
+_CLAIM_WORDS = (
+    "submit a claim", "open a claim", "make a claim", "claim reimbursement",
+    "insurance claim", "αίτημα αποζημίωσης", "υποβολή αποζημίωσης",
+)
+_RENEWAL_WORDS = (
+    "renewal", "renew my policy", "renew the policy", "renew insurance",
+    "ανανέωση", "ανανεώσουμε το συμβόλαιο", "ανανεώσουμε το ασφαλιστήριο",
+)
+
 
 def _contains_any(text: str, needles: tuple[str, ...]) -> bool:
     return any(needle in text for needle in needles)
