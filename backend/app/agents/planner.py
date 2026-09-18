@@ -64,7 +64,7 @@ def plan_next_best_action(
             required=required,
         )
 
-    if decision.intent == OrchestrationIntent.HEALTH_POLICY:
+    if decision.intent in {OrchestrationIntent.HEALTH_POLICY, OrchestrationIntent.PREAUTHORISATION}:
         policy = result_payload.get("policy") if isinstance(result_payload.get("policy"), dict) else {}
         verdict = str(policy.get("verdict") or "unknown").casefold()
         if verdict == "conflict":
@@ -90,6 +90,67 @@ def plan_next_best_action(
             owner=SpecialistName.DOCUMENT_ANALYST.value,
             reason=f"The active case contains {conflict_count} unresolved evidence conflict(s).",
             blocked=True,
+        )
+
+    workflow = result_payload.get("workflow") if isinstance(result_payload.get("workflow"), dict) else {}
+
+    if decision.intent == OrchestrationIntent.PLAN_SELECTION:
+        return NextBestAction(
+            action="prepare_application",
+            owner=SpecialistName.HAL_ADVISER.value,
+            reason="The client has chosen a plan; HAL can now guide the application workflow without changing that human decision.",
+        )
+
+    if decision.intent == OrchestrationIntent.APPLICATION:
+        workflow_action = str(workflow.get("action") or "complete_application")
+        owner = "broker_workflow" if workflow_action == "await_policy_issue" else SpecialistName.HAL_ADVISER.value
+        return NextBestAction(
+            action=workflow_action,
+            owner=owner,
+            reason=str(workflow.get("message") or "Continue the application workflow on the same AshlarCase."),
+            blocked=False,
+        )
+
+    if decision.intent == OrchestrationIntent.POLICY_WALLET:
+        return NextBestAction(
+            action="continue_policy_support",
+            owner=SpecialistName.HAL_ADVISER.value,
+            reason="The Policy Wallet is available; HAL can explain verified policy facts and route coverage questions to the Policy Engine.",
+        )
+
+    if decision.intent == OrchestrationIntent.PREAUTHORISATION:
+        policy = result_payload.get("policy") if isinstance(result_payload.get("policy"), dict) else {}
+        verdict = str(policy.get("verdict") or "unknown").casefold()
+        if verdict == "not_covered":
+            return NextBestAction(
+                action="broker_review_preauthorisation",
+                owner=SpecialistName.HAL_ADVISER.value,
+                reason="Verified policy evidence records this benefit as not covered; the request should be reviewed before submission.",
+                blocked=True,
+            )
+        return NextBestAction(
+            action="submit_preauthorisation",
+            owner="preauthorisation_workflow",
+            reason="The pre-authorisation case is open and can proceed using the verified policy evidence already attached to it.",
+        )
+
+    if decision.intent == OrchestrationIntent.CLAIM:
+        return NextBestAction(
+            action="collect_claim_evidence",
+            owner=SpecialistName.DOCUMENT_ANALYST.value,
+            reason="The claim is open; collect invoices, medical reports and insurer correspondence as server-owned evidence.",
+        )
+
+    if decision.intent == OrchestrationIntent.RENEWAL:
+        quotes = result_payload.get("quotes") if isinstance(result_payload.get("quotes"), list) else []
+        return NextBestAction(
+            action="compare_renewal_options" if quotes else "collect_renewal_quote_inputs",
+            owner=SpecialistName.HAL_ADVISER.value,
+            reason=(
+                "The renewal market review is active on the same AshlarCase."
+                if quotes
+                else "The renewal workflow needs current applicant/rating inputs before the Quote Engine can refresh the market."
+            ),
         )
 
     if intelligence.get("ready_for_proposal") and decision.intent != OrchestrationIntent.PROPOSAL:
