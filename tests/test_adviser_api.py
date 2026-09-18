@@ -4,7 +4,15 @@ import inspect
 
 from fastapi.testclient import TestClient
 
+from backend.app.agents.contracts import (
+    OrchestrationDecision,
+    OrchestrationIntent,
+    OrchestratorResult,
+    SpecialistName,
+    SpecialistResponse,
+)
 from backend.app.api import chat as chat_api
+from backend.app.api.chat import ChatRequest, _legacy_chat_payload
 from backend.app.main import app
 
 
@@ -60,3 +68,57 @@ def test_legacy_chat_endpoint_now_enters_ashlar_orchestrator_handle():
 
     assert "get_ashlar_orchestrator().handle(" in source
     assert "handle_legacy_chat" not in source
+
+
+
+def test_legacy_chat_compound_workflow_exposes_final_specialist_and_downloads():
+    req = ChatRequest(
+        message="Compare these PDFs and prepare the proposal.",
+        state={
+            "_adviser_os_case_id": "11111111-1111-1111-1111-111111111111",
+            "_adviser_os_case_token": "token",
+            "_adviser_os_document_refs": ["doc-ref-1"],
+        },
+    )
+    result = OrchestratorResult(
+        decision=OrchestrationDecision(
+            intent=OrchestrationIntent.PROPOSAL,
+            specialists=[SpecialistName.DOCUMENT_ANALYST, SpecialistName.PROPOSAL_WRITER],
+            deterministic_engines=["document_evidence_engine"],
+            reason="Document evidence first, proposal second.",
+        ),
+        responses=[
+            SpecialistResponse(
+                specialist=SpecialistName.DOCUMENT_ANALYST,
+                status="completed",
+                reply="Documents analysed.",
+            ),
+            SpecialistResponse(
+                specialist=SpecialistName.PROPOSAL_WRITER,
+                status="completed",
+                reply="Proposal ready.",
+                payload={
+                    "proposal_id": "proposal-1",
+                    "expires_at": "2026-09-18T12:00:00+00:00",
+                    "downloads": {
+                        "pdf": "/api/v1/proposals/proposal-1/pdf",
+                        "pptx": "/api/v1/proposals/proposal-1/pptx",
+                    },
+                },
+            ),
+        ],
+    )
+
+    payload = _legacy_chat_payload(req=req, result=result)
+
+    assert payload["reply"] == "Proposal ready."
+    assert payload["proposal_downloads"]["pdf"].endswith("/pdf")
+    assert payload["state"]["_adviser_os_document_refs"] == ["doc-ref-1"]
+
+
+def test_chat_state_document_refs_are_sanitised_and_bounded():
+    refs = chat_api._document_refs_from_state({
+        "_adviser_os_document_refs": ["abc", "abc", "", "def"],
+    })
+
+    assert refs == ["abc", "def"]
