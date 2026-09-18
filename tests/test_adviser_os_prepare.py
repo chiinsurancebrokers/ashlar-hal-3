@@ -81,7 +81,7 @@ def test_server_owned_case_can_prepare_and_download_real_proposal():
     )
     assert analysed.status_code == 200, analysed.text
     analysed_data = analysed.json()
-    assert analysed_data["next_best_action"]["action"] == "prepare_proposal"
+    assert analysed_data["next_best_action"]["action"] == "prepare_proposal", analysed_data.get("payload", {}).get("case_intelligence", {}).get("conflicts")
 
     prepared = client.post(
         "/api/v1/proposals/prepare",
