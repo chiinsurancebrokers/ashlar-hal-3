@@ -633,9 +633,16 @@
         reason:'The evidence-grounded Ashlar proposal is ready for client review.'
       };
       renderCaseWorkspace();
+      const assessment = data.report && data.report.ashlar_assessment
+        ? data.report.ashlar_assessment
+        : null;
+      const assessmentHeadline = assessment && assessment.headline
+        ? String(assessment.headline)
+        : 'Your evidence-grounded Ashlar proposal is ready.';
       if (typeof addMsg === 'function') {
-        addMsg('Your evidence-grounded Ashlar proposal is ready. I can also walk you through the Ashlar Assessment and the plan trade-offs.', 'hal');
+        addMsg(assessmentHeadline + ' I can walk you through the reasoning and trade-offs in the same conversation.', 'hal');
       }
+      renderProposalDownloadCard(data.downloads);
     } catch (error) {
       if (status) {
         status.textContent = error.message || 'Could not prepare the proposal.';
