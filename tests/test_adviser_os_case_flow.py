@@ -69,3 +69,17 @@ def test_prepare_endpoint_rejects_invalid_case_token_without_accepting_plan_fact
         json={"case_id": data["case_id"], "case_token": "x" * 32, "language": "en"},
     )
     assert response.status_code == 404
+
+
+
+def test_adviser_os_frontend_exposes_case_bound_document_attachment_flow():
+    response = client.get("/static/adviser-os.js")
+
+    assert response.status_code == 200
+    source = response.text
+    assert "attachCarrierDocumentBtn" in source
+    assert "/documents/upload" in source
+    assert "_adviser_os_document_refs" in source
+    assert "provider_label" in source
+    assert "target_plan" in source
+    assert "plan_key" in source
