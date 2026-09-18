@@ -11,6 +11,8 @@
   let documentBusy = false;
   let lastCaseIntelligence = null;
   let lastNextBestAction = null;
+  let applicationState = null;
+  let lifecycleBusy = false;
 
   function ensureAdviserOsStyles() {
     if (document.getElementById('adviserOsWorkspaceStyles')) return;
@@ -51,6 +53,14 @@
       .adviser-proposal-card{background:linear-gradient(135deg,#0c1727,#1c2a3c);color:#fff;border:none!important}
       .adviser-proposal-card .q-primary{background:#fff;color:var(--navy)}
       .adviser-proposal-card .q-secondary{background:transparent;color:#fff;border-color:#59677b}
+      .adviser-plan-choice{display:block;border:1px solid var(--border);border-radius:12px;padding:10px 11px;margin:7px 0;cursor:pointer;background:#fff}
+      .adviser-plan-choice:hover{border-color:var(--accent)}
+      .adviser-plan-choice input{margin-right:8px}
+      .adviser-plan-choice strong{font-size:12px}
+      .adviser-plan-choice small{display:block;color:var(--muted);font-size:10px;margin:3px 0 0 24px}
+      .adviser-application-card{background:#fff;border:1px solid var(--border)!important}
+      .adviser-checklist{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+      .adviser-checkitem{font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 8px;color:var(--muted)}
       @media(max-width:720px){
         .adviser-case-workspace{margin:0 10px 10px}
         .adviser-journey{overflow-x:auto;grid-template-columns:repeat(6,minmax(74px,1fr));padding-bottom:8px}
@@ -109,7 +119,13 @@
       prepare_proposal: ['Prepare the client proposal', 'Prepare proposal', prepareProposal],
       explain_document_findings: ['Explain the evidence', 'Ask HAL to explain', () => askHal('Explain the document findings and the important differences between these plans.')],
       explain_shortlist: ['Understand the shortlist', 'Explain shortlist', () => askHal('Explain why these plans made the shortlist and what the trade-offs are.')],
-      present_proposal_to_client: ['Review the proposal with HAL', 'Explain proposal', () => askHal('Walk me through the proposal and the Ashlar Assessment.')],
+      present_proposal_to_client: ['Review the proposal and choose', 'Choose plan', openPlanSelection],
+      prepare_application: ['Prepare the application', 'Start application', prepareApplication],
+      complete_application: ['Complete the application', 'View checklist', renderApplicationCard],
+      await_policy_issue: ['Application submitted', 'View application', renderApplicationCard],
+      use_policy_wallet: ['Open Policy Wallet', 'Policy Wallet', () => askHal('Show me my Policy Wallet and explain the verified cover.')],
+      collect_claim_evidence: ['Complete the claim file', 'Add claim evidence', () => askHal('Help me complete the claim file and tell me which documents are still needed.')],
+      compare_renewal_options: ['Review renewal options', 'Compare renewal', () => askHal('Explain my renewal options and what changed versus the current policy.')],
       obtain_verified_policy_evidence: ['Add policy evidence', 'Attach policy wording', openDocumentUpload],
       continue_adviser_conversation: ['Continue with HAL', 'Continue', () => document.getElementById('input')?.focus()]
     };
