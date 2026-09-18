@@ -710,9 +710,12 @@
       '<a class="q-primary" style="text-decoration:none;text-align:center;display:inline-block;flex:0 0 auto;padding:9px 14px" href="' + esc(downloads.pdf) + '" target="_blank" rel="noopener">PDF proposal</a>' +
       '<a class="q-secondary" style="text-decoration:none;text-align:center;display:inline-block;padding:9px 14px" href="' + esc(downloads.pptx) + '" target="_blank" rel="noopener">PowerPoint</a>' +
       '<button class="q-secondary explain-proposal-btn" style="padding:9px 14px">Ask HAL to explain</button>' +
+      '<button class="q-secondary choose-final-plan-btn" style="padding:9px 14px">Choose plan</button>' +
       '</div><div style="font-size:10px;color:#aeb9c9;margin-top:8px">Temporary, no-store download links.</div>';
     const explainButton = card.querySelector('.explain-proposal-btn');
     if (explainButton) explainButton.onclick = () => askHal('Walk me through the Ashlar Assessment and explain the trade-offs in this proposal.');
+    const chooseButton = card.querySelector('.choose-final-plan-btn');
+    if (chooseButton) chooseButton.onclick = openPlanSelection;
     chat.appendChild(card);
     card.scrollIntoView({behavior: 'smooth', block: 'start'});
 
