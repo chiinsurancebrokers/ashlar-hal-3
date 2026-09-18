@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.app.cases.models import AshlarCase, CaseClient, CaseStatus
+from backend.app.cases.models import (\n    AshlarCase,\n    CaseClient,\n    CaseStatus,\n    Fact,\n    FactSource,\n    FactSourceType,\n    FactStatus,\n)
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.documents.quality import case_quality
@@ -138,6 +138,58 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
     return results
 
 
+def _quote_engine_facts(selected) -> list[Fact]:
+    """Persist deterministic quote facts into the shared Case Brain.
+
+    This lets later carrier-document evidence be checked against the same facts
+    that produced HAL's shortlist rather than against a disconnected snapshot.
+    """
+    facts: list[Fact] = []
+    for quote in selected:
+        plan_key = quote.plan_key or ""
+        if not plan_key:
+            continue
+        subject = f"plan:{plan_key}"
+        source = FactSource(
+            source_type=FactSourceType.QUOTE_ENGINE,
+            source_ref=quote.rate_version or "server_quote_engine",
+        )
+        base = {
+            "subject": subject,
+            "provider": quote.insurer,
+            "plan_key": plan_key,
+            "status": FactStatus.VERIFIED,
+            "confidence": 1.0,
+            "source": source,
+        }
+        facts.extend([
+            Fact(key="provider", value=quote.insurer, **base),
+            Fact(key="plan_name", value=quote.product_name, **base),
+            Fact(
+                key="premium_amount",
+                value=quote.premium,
+                currency=quote.currency,
+                **base,
+            ),
+            Fact(key="premium_frequency", value="Annual", **base),
+            Fact(
+                key="area_of_cover",
+                value=quote.coverage_area_label or "Not specified",
+                **base,
+            ),
+        ])
+        if quote.card_annual_limit:
+            facts.append(Fact(key="annual_limit", value=quote.card_annual_limit, **base))
+        deductible = quote.card_deductible or (
+            f"{quote.currency} {quote.deductible:g}"
+            if quote.deductible is not None
+            else None
+        )
+        if deductible:
+            facts.append(Fact(key="deductible_or_excess", value=deductible, **base))
+    return facts
+
+
 def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarCase:
     # Medical free text is intentionally excluded from the proposal case store.
     sanitized_applicant = applicant.model_copy(update={"chronic_conditions_note": None}, deep=True)
@@ -152,6 +204,7 @@ def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarC
             "medical_disclosure_present": bool(applicant.chronic_conditions_disclosed),
         },
         selected_plan_keys=[q.plan_key for q in selected if q.plan_key],
+        facts=_quote_engine_facts(selected),
         metadata={"created_from": "server_quote_comparison"},
     )
 
