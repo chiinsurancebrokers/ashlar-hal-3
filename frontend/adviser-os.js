@@ -9,6 +9,214 @@
   let pendingDocumentRefs = [];
   let uploadedDocuments = [];
   let documentBusy = false;
+  let lastCaseIntelligence = null;
+  let lastNextBestAction = null;
+
+  function ensureAdviserOsStyles() {
+    if (document.getElementById('adviserOsWorkspaceStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'adviserOsWorkspaceStyles';
+    style.textContent = `
+      .adviser-case-workspace{display:none;margin:0 16px 12px;border:1px solid var(--border);border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 8px 26px rgba(12,23,39,.05)}
+      .adviser-case-workspace.show{display:block}
+      .adviser-case-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+      .adviser-case-title{font-size:12px;font-weight:800;letter-spacing:.02em}
+      .adviser-case-ref{font-size:10px;color:var(--muted);margin-top:2px}
+      .adviser-case-badge{margin-left:auto;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;background:var(--accent-soft);color:var(--accent)}
+      .adviser-journey{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:10px 14px 5px}
+      .adviser-phase{font-size:9.5px;text-align:center;color:var(--muted);padding:6px 3px;border-bottom:3px solid var(--border);white-space:nowrap}
+      .adviser-phase.completed{color:var(--good);border-color:var(--good)}
+      .adviser-phase.current{color:var(--navy);font-weight:800;border-color:var(--accent)}
+      .adviser-case-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:9px 14px}
+      .adviser-metric{background:var(--bg);border-radius:10px;padding:8px 9px;min-width:0}
+      .adviser-metric strong{display:block;font-size:14px}
+      .adviser-metric span{display:block;font-size:9.5px;color:var(--muted);margin-top:1px}
+      .adviser-evidence{padding:2px 14px 10px}
+      .adviser-evidence-title{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:5px 0 7px}
+      .adviser-plan-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--border)}
+      .adviser-plan-name{min-width:125px;max-width:190px;font-size:11px;font-weight:700;line-height:1.25}
+      .adviser-plan-evidence{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+      .evidence-pill{font-size:9.5px;padding:4px 7px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+      .evidence-pill.ok{background:#eaf7ef;color:var(--good);border-color:#cfe9d9}
+      .evidence-pill.pending{background:#fff6e8;color:#9a5b00;border-color:#f1dfbd}
+      .evidence-pill.conflict{background:#fdecec;color:#b3261e;border-color:#f3c9c9}
+      .adviser-next-action{margin:0 14px 13px;padding:11px 12px;border-radius:12px;background:var(--navy);color:#fff;display:flex;gap:10px;align-items:center}
+      .adviser-next-copy{flex:1;min-width:0}
+      .adviser-next-label{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#aeb9c9;font-weight:800}
+      .adviser-next-title{font-size:12px;font-weight:800;margin-top:2px}
+      .adviser-next-reason{font-size:10.5px;color:#d3dae5;margin-top:2px;line-height:1.35}
+      .adviser-next-action button{border:none;border-radius:9px;background:#fff;color:var(--navy);padding:8px 10px;font-size:10.5px;font-weight:800;cursor:pointer;white-space:nowrap}
+      .adviser-doc-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:4px 8px;font-size:10px;color:var(--muted);margin:2px 4px 2px 0}
+      .adviser-doc-chip.done{background:#eaf7ef;color:var(--good);border-color:#cfe9d9}
+      .adviser-proposal-card{background:linear-gradient(135deg,#0c1727,#1c2a3c);color:#fff;border:none!important}
+      .adviser-proposal-card .q-primary{background:#fff;color:var(--navy)}
+      .adviser-proposal-card .q-secondary{background:transparent;color:#fff;border-color:#59677b}
+      @media(max-width:720px){
+        .adviser-case-workspace{margin:0 10px 10px}
+        .adviser-journey{overflow-x:auto;grid-template-columns:repeat(6,minmax(74px,1fr));padding-bottom:8px}
+        .adviser-case-metrics{grid-template-columns:repeat(2,1fr)}
+        .adviser-plan-row{align-items:flex-start;flex-direction:column;gap:5px}
+        .adviser-plan-name{max-width:none}
+        .adviser-next-action{align-items:flex-start;flex-direction:column}
+        .adviser-next-action button{width:100%}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureCaseWorkspace() {
+    ensureAdviserOsStyles();
+    let workspace = document.getElementById('adviserCaseWorkspace');
+    if (workspace) return workspace;
+    const progress = document.querySelector('.chat-card .progress-bar');
+    if (!progress) return null;
+    workspace = document.createElement('section');
+    workspace.id = 'adviserCaseWorkspace';
+    workspace.className = 'adviser-case-workspace';
+    workspace.setAttribute('aria-live', 'polite');
+    progress.insertAdjacentElement('afterend', workspace);
+    return workspace;
+  }
+
+  function casePlanLabel(planKey) {
+    const plan = comparisonPlans.find(item => item.plan_key === planKey)
+      || ((typeof lastQuotes !== 'undefined' && Array.isArray(lastQuotes))
+        ? lastQuotes.find(item => item.plan_key === planKey)
+        : null);
+    return plan
+      ? ((plan.product_name || planKey) + (plan.insurer ? ' · ' + plan.insurer : ''))
+      : planKey;
+  }
+
+  function phaseLabel(key) {
+    return {
+      discover:'Discover', compare:'Compare', decide:'Decide',
+      policy:'Policy', care:'Care', renew:'Renew'
+    }[key] || key;
+  }
+
+  function actionUi(action) {
+    const key = action && action.action ? action.action : '';
+    const map = {
+      upload_carrier_documents: ['Attach carrier evidence', 'Attach documents', openDocumentUpload],
+      complete_plan_evidence: ['Complete plan evidence', 'Attach missing evidence', openDocumentUpload],
+      verify_material_plan_facts: ['Strengthen evidence', 'Attach evidence', openDocumentUpload],
+      resolve_evidence_conflicts: ['Resolve evidence conflicts', 'Review conflicts', () => askHal('Show me the evidence conflicts and tell me exactly what needs to be checked.')],
+      prepare_proposal: ['Prepare the client proposal', 'Prepare proposal', prepareProposal],
+      explain_document_findings: ['Explain the evidence', 'Ask HAL to explain', () => askHal('Explain the document findings and the important differences between these plans.')],
+      explain_shortlist: ['Understand the shortlist', 'Explain shortlist', () => askHal('Explain why these plans made the shortlist and what the trade-offs are.')],
+      present_proposal_to_client: ['Review the proposal with HAL', 'Explain proposal', () => askHal('Walk me through the proposal and the Ashlar Assessment.')],
+      obtain_verified_policy_evidence: ['Add policy evidence', 'Attach policy wording', openDocumentUpload],
+      continue_adviser_conversation: ['Continue with HAL', 'Continue', () => document.getElementById('input')?.focus()]
+    };
+    const selected = map[key] || ['Continue the case', 'Continue', () => document.getElementById('input')?.focus()];
+    return {title:selected[0], label:selected[1], handler:selected[2]};
+  }
+
+  function askHal(message) {
+    const input = document.getElementById('input');
+    if (!input || typeof sendMessage !== 'function') return;
+    input.value = message;
+    sendMessage();
+  }
+
+  function renderCaseWorkspace() {
+    const workspace = ensureCaseWorkspace();
+    const legacyProgress = document.querySelector('.chat-card .progress-bar');
+    const activeCaseId = proposalCase && proposalCase.case_id
+      ? proposalCase.case_id
+      : (typeof state === 'object' && state ? state._adviser_os_case_id : null);
+
+    if (!workspace || !activeCaseId) {
+      if (workspace) workspace.classList.remove('show');
+      if (legacyProgress) legacyProgress.style.display = 'flex';
+      return;
+    }
+
+    workspace.classList.add('show');
+    if (legacyProgress) legacyProgress.style.display = 'none';
+
+    const intel = lastCaseIntelligence || {};
+    const journey = intel.journey || {};
+    const phases = Array.isArray(journey.phases) && journey.phases.length
+      ? journey.phases
+      : [
+          {key:'discover',state:'completed'}, {key:'compare',state:'current'},
+          {key:'decide',state:'upcoming'}, {key:'policy',state:'upcoming'},
+          {key:'care',state:'upcoming'}, {key:'renew',state:'upcoming'}
+        ];
+    const completeness = Math.round(Number(intel.material_completeness || 0) * 100);
+    const docs = Number(intel.document_count || uploadedDocuments.length || 0);
+    const conflicts = Number(intel.conflict_count || 0);
+    const confidence = String(intel.evidence_confidence || (docs ? 'building' : 'quote only'));
+    const currentPhase = journey.current_phase || (comparisonPlans.length ? 'compare' : 'discover');
+
+    let action = lastNextBestAction;
+    if (pendingDocumentRefs.length) {
+      action = {
+        action:'explain_document_findings',
+        reason:'New carrier evidence is attached and waiting for analysis.',
+        blocked:false
+      };
+    } else if (!action && Array.isArray(intel.next_actions) && intel.next_actions.length) {
+      action = intel.next_actions[0];
+    }
+    const actionView = actionUi(action || {action:'continue_adviser_conversation'});
+
+    const plans = Array.isArray(intel.plans) && intel.plans.length
+      ? intel.plans
+      : comparisonPlans.map(plan => ({
+          plan_key:plan.plan_key, fact_count:0, document_roles:[],
+          missing_material_keys:[], conflicting_material_keys:[]
+        }));
+
+    const evidenceRows = plans.map(plan => {
+      const roles = new Set(plan.document_roles || []);
+      const quotation = plan.has_quotation || roles.has('quotation') || roles.has('quote') || roles.has('carrier_quote');
+      const benefits = plan.has_brochure_or_tob || roles.has('brochure') || roles.has('tob') || roles.has('carrier_tob');
+      const wording = plan.has_wording || roles.has('wording') || roles.has('policy_wording') || roles.has('member_guide');
+      const pending = uploadedDocuments.filter(item => item.plan_key === plan.plan_key && !item.analysed).length;
+      const conflictCount = (plan.conflicting_material_keys || []).length;
+      const missingCount = (plan.missing_material_keys || []).length;
+      return '<div class="adviser-plan-row">' +
+        '<div class="adviser-plan-name">' + esc(casePlanLabel(plan.plan_key)) + '</div>' +
+        '<div class="adviser-plan-evidence">' +
+          '<span class="evidence-pill ' + (quotation?'ok':'pending') + '">' + (quotation?'✓':'○') + ' Quote</span>' +
+          '<span class="evidence-pill ' + (benefits?'ok':'pending') + '">' + (benefits?'✓':'○') + ' Benefits</span>' +
+          '<span class="evidence-pill ' + (wording?'ok':'pending') + '">' + (wording?'✓':'○') + ' Wording</span>' +
+          (pending ? '<span class="evidence-pill pending">↻ ' + pending + ' awaiting analysis</span>' : '') +
+          (conflictCount ? '<span class="evidence-pill conflict">! ' + conflictCount + ' conflict' + (conflictCount===1?'':'s') + '</span>' : '') +
+          (!conflictCount && missingCount ? '<span class="evidence-pill pending">' + missingCount + ' fact' + (missingCount===1?'':'s') + ' to verify</span>' : '') +
+        '</div></div>';
+    }).join('');
+
+    const phaseHtml = phases.map(phase =>
+      '<div class="adviser-phase ' + esc(phase.state || 'upcoming') + '">' + esc(phase.label || phaseLabel(phase.key)) + '</div>'
+    ).join('');
+
+    workspace.innerHTML =
+      '<div class="adviser-case-head">' +
+        '<div><div class="adviser-case-title">Ashlar Case</div><div class="adviser-case-ref">#' + esc(String(activeCaseId).slice(0,8).toUpperCase()) + ' · one case across the full journey</div></div>' +
+        '<span class="adviser-case-badge">' + esc(phaseLabel(currentPhase)) + '</span>' +
+      '</div>' +
+      '<div class="adviser-journey">' + phaseHtml + '</div>' +
+      '<div class="adviser-case-metrics">' +
+        '<div class="adviser-metric"><strong>' + completeness + '%</strong><span>evidence completeness</span></div>' +
+        '<div class="adviser-metric"><strong>' + docs + '</strong><span>carrier documents</span></div>' +
+        '<div class="adviser-metric"><strong>' + conflicts + '</strong><span>evidence conflicts</span></div>' +
+        '<div class="adviser-metric"><strong>' + esc(confidence) + '</strong><span>evidence confidence</span></div>' +
+      '</div>' +
+      (evidenceRows ? '<div class="adviser-evidence"><div class="adviser-evidence-title">Evidence by plan</div>' + evidenceRows + '</div>' : '') +
+      '<div class="adviser-next-action">' +
+        '<div class="adviser-next-copy"><div class="adviser-next-label">HAL · next best action</div>' +
+        '<div class="adviser-next-title">' + esc(actionView.title) + '</div>' +
+        '<div class="adviser-next-reason">' + esc((action && action.reason) || 'HAL is ready to continue this case.') + '</div></div>' +
+        '<button type="button" id="adviserNextActionBtn">' + esc(actionView.label) + '</button>' +
+      '</div>';
+
+    const actionButton = document.getElementById('adviserNextActionBtn');
+    if (actionButton) actionButton.onclick = actionView.handler;
+  }
 
   function ensureProposalControls() {
     const modal = document.getElementById('compareModal');
@@ -98,7 +306,7 @@
   function renderDocumentStatus() {
     const status = document.getElementById('adviserDocumentStatus');
     const button = ensureDocumentControls();
-    if (button) button.style.display = proposalCase ? '' : 'none';
+    if (button) button.style.display = (proposalCase && comparisonPlans.length) ? '' : 'none';
     if (!status) return;
 
     if (!proposalCase || !uploadedDocuments.length) {
@@ -182,6 +390,7 @@
       }
       syncCaseIntoHalState();
       renderDocumentStatus();
+      renderCaseWorkspace();
       document.getElementById('carrierDocumentModal').classList.remove('open');
       if (typeof addMsg === 'function') {
         addMsg(uploaded + ' carrier document' + (uploaded === 1 ? ' is' : 's are') + ' attached to this case. You can ask me to compare them, explain what matters, or prepare the proposal.', 'hal');
@@ -197,6 +406,16 @@
 
   function applyOrchestratorUi(result) {
     if (!result || !Array.isArray(result.responses)) return;
+    if (result.case_id && typeof state === 'object' && state && state._adviser_os_case_token) {
+      proposalCase = {
+        case_id: result.case_id,
+        case_token: state._adviser_os_case_token
+      };
+    }
+    if (result.payload && result.payload.case_intelligence) {
+      lastCaseIntelligence = result.payload.case_intelligence;
+    }
+    lastNextBestAction = result.next_best_action || lastNextBestAction;
     const documentCompleted = result.responses.some(
       item => item.specialist === 'document_analyst' && item.status === 'completed'
     );
@@ -209,6 +428,7 @@
       syncCaseIntoHalState();
       renderDocumentStatus();
     }
+    renderCaseWorkspace();
 
     const action = result.next_best_action && result.next_best_action.action;
     const proposalButton = ensureProposalControls();
@@ -256,8 +476,16 @@
       uploadedDocuments = [];
     }
     syncCaseIntoHalState();
+    if (response && response.case_intelligence) {
+      lastCaseIntelligence = response.case_intelligence;
+      const firstAction = Array.isArray(response.case_intelligence.next_actions)
+        ? response.case_intelligence.next_actions[0]
+        : null;
+      if (firstAction) lastNextBestAction = firstAction;
+    }
     ensureDocumentControls();
     renderDocumentStatus();
+    renderCaseWorkspace();
 
     if (!proposalCase) {
       button.style.display = 'none';
@@ -388,8 +616,13 @@
         ps3.classList.add('active');
         ps3.classList.remove('done');
       }
+      lastNextBestAction = {
+        action:'present_proposal_to_client',
+        reason:'The evidence-grounded Ashlar proposal is ready for client review.'
+      };
+      renderCaseWorkspace();
       if (typeof addMsg === 'function') {
-        addMsg('Your evidence-grounded Ashlar proposal is ready. You can download the PDF or PowerPoint from the comparison window.', 'hal');
+        addMsg('Your evidence-grounded Ashlar proposal is ready. I can also walk you through the Ashlar Assessment and the plan trade-offs.', 'hal');
       }
     } catch (error) {
       if (status) {
@@ -437,5 +670,7 @@
 
   ensureProposalControls();
   ensureDocumentControls();
+  ensureCaseWorkspace();
   renderDocumentStatus();
+  renderCaseWorkspace();
 })();
