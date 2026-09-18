@@ -61,6 +61,24 @@ async def upload_carrier_document(
     provider = _clean_label(provider_label, name="provider_label", max_length=120)
     target = _clean_label(target_plan, name="target_plan", max_length=200)
     resolved_plan_key = _clean_label(plan_key, name="plan_key", max_length=200) if plan_key else None
+    selected_plan_keys = [str(value) for value in record.case.selected_plan_keys if str(value)]
+    if resolved_plan_key is None:
+        if len(selected_plan_keys) == 1:
+            resolved_plan_key = selected_plan_keys[0]
+        elif selected_plan_keys:
+            raise HTTPException(status_code=422, detail="plan_key is required when the case contains multiple selected plans.")
+    if resolved_plan_key and selected_plan_keys and resolved_plan_key not in selected_plan_keys:
+        raise HTTPException(status_code=422, detail="The document plan_key is not selected in the active case.")
+
+    # When the case already has a server-built comparison, plan identity comes
+    # from that record rather than browser labels.
+    matching_result = next((
+        item for item in record.results
+        if str(item.get("plan_key") or "") == str(resolved_plan_key or "")
+    ), None)
+    if matching_result is not None:
+        provider = _clean_label(matching_result.get("provider"), name="provider_label", max_length=120)
+        target = _clean_label(matching_result.get("target_plan"), name="target_plan", max_length=200)
 
     filename = Path(file.filename or "carrier-document").name
     suffix = Path(filename).suffix.casefold()
