@@ -352,6 +352,23 @@ class AshlarOrchestrator:
             raise WorkflowError("The AshlarCase expired while the workflow was being saved.", code="case_expired")
         return saved
 
+    @staticmethod
+    def _workflow_error_response(exc: WorkflowError) -> SpecialistResponse:
+        status = "needs_input" if exc.code in {
+            "active_case_required",
+            "plan_selection_required",
+            "application_not_prepared",
+            "application_incomplete",
+            "policy_required",
+            "active_policy_required",
+        } else "blocked"
+        return SpecialistResponse(
+            specialist=SpecialistName.HAL_ADVISER,
+            status=status,
+            reply=str(exc),
+            payload={"workflow_error": exc.code},
+        )
+
     def select_final_plan(
         self,
         *,
@@ -646,6 +663,179 @@ class AshlarOrchestrator:
                 "deterministic_engines": ["document_evidence_engine"],
                 "reason": "Uploaded carrier evidence must be analysed before Proposal Studio prepares the client pack.",
             })
+
+        if decision.intent == OrchestrationIntent.PLAN_SELECTION:
+            plan_key = str(ctx.get("plan_key") or "").strip()
+            if not plan_key:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[SpecialistResponse(
+                        specialist=SpecialistName.HAL_ADVISER,
+                        status="needs_input",
+                        reply="Tell me which plan you want to proceed with.",
+                        payload={"required": ["plan_key"]},
+                    )],
+                )
+            try:
+                workflow = self.select_final_plan(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                    plan_key=plan_key,
+                    selected_by=str(ctx.get("selected_by") or "client"),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
+
+        if decision.intent == OrchestrationIntent.APPLICATION:
+            try:
+                workflow = self.prepare_application_workflow(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
+
+        if decision.intent == OrchestrationIntent.POLICY_WALLET:
+            try:
+                workflow = self.policy_wallet(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
+
+        if decision.intent == OrchestrationIntent.PREAUTHORISATION:
+            service_key = str(ctx.get("benefit_key") or ctx.get("service_key") or "").strip()
+            if not service_key:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[SpecialistResponse(
+                        specialist=SpecialistName.HAL_ADVISER,
+                        status="needs_input",
+                        reply="Tell me which treatment, examination or service needs pre-authorisation.",
+                        payload={"required": ["benefit_key"]},
+                    )],
+                )
+            try:
+                workflow = self.open_preauthorisation(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                    service_key=service_key,
+                    provider_name=str(ctx.get("provider_name") or "").strip() or None,
+                    facility_name=str(ctx.get("facility_name") or "").strip() or None,
+                    document_refs=list(ctx.get("document_refs") or []),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "policy": workflow.get("policy_evidence"),
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
+
+        if decision.intent == OrchestrationIntent.CLAIM:
+            try:
+                workflow = self.open_claim(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                    document_refs=list(ctx.get("document_refs") or []),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
+
+        if decision.intent == OrchestrationIntent.RENEWAL:
+            try:
+                workflow = self.start_renewal_workflow(
+                    case_id=resolved_case_id,
+                    case_token=str(ctx.get("case_token") or ""),
+                )
+            except WorkflowError as exc:
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=[self._workflow_error_response(exc)],
+                )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                payload={
+                    "workflow": workflow,
+                    "quotes": workflow.get("quotes") or [],
+                    "case_intelligence": workflow.get("case_intelligence"),
+                },
+            )
 
         if decision.intent == OrchestrationIntent.QUOTE:
             applicant = self._applicant_from_context(case_id=resolved_case_id, context=ctx)
