@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 from backend.app.cases.models import (\n    AshlarCase,\n    CaseClient,\n    CaseStatus,\n    Fact,\n    FactSource,\n    FactSourceType,\n    FactStatus,\n)
 from backend.app.cases.store import CASE_ANALYSIS_STORE
+from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.core.config import get_settings
 from backend.app.documents.quality import case_quality
 from backend.app.schemas.applicant import Applicant
@@ -245,6 +246,7 @@ async def compare(req: CompareRequest):
     case = _server_case(req, applicant, selected)
     record = CASE_ANALYSIS_STORE.put(case=case, results=results)
     quality = case_quality(results)
+    intelligence = build_case_intelligence(record.case)
 
     return {
         "plans": [q.model_dump(mode="json") for q in selected],
@@ -260,4 +262,5 @@ async def compare(req: CompareRequest):
         "case_expires_at": record.expires_at.isoformat(),
         "proposal_available": bool(quality.get("can_generate")),
         "proposal_quality": quality,
+        "case_intelligence": intelligence,
     }
