@@ -159,49 +159,60 @@ def _quote_engine_facts(selected) -> list[Fact]:
     """
     facts: list[Fact] = []
     for quote in selected:
-        plan_key = quote.plan_key or ""
+        plan_key = str(getattr(quote, "plan_key", "") or "")
         if not plan_key:
             continue
+
+        provider = str(getattr(quote, "insurer", "") or "") or None
+        product_name = str(getattr(quote, "product_name", "") or "") or None
+        rate_version = str(getattr(quote, "rate_version", "") or "") or "server_quote_engine"
         subject = f"plan:{plan_key}"
         source = FactSource(
             source_type=FactSourceType.QUOTE_ENGINE,
-            source_ref=quote.rate_version or "server_quote_engine",
+            source_ref=rate_version,
         )
         base = {
             "subject": subject,
-            "provider": quote.insurer,
+            "provider": provider,
             "plan_key": plan_key,
             "status": FactStatus.VERIFIED,
             "confidence": 1.0,
             "source": source,
         }
-        facts.extend([
-            Fact(key="provider", value=quote.insurer, **base),
-            Fact(key="plan_name", value=quote.product_name, **base),
-            Fact(
-                key="premium_amount",
-                value=quote.premium,
-                currency=quote.currency,
-                **base,
-            ),
-            Fact(key="premium_frequency", value="Annual", **base),
-            Fact(
-                key="area_of_cover",
-                value=quote.coverage_area_label or "Not specified",
-                **base,
-            ),
-        ])
-        if quote.card_annual_limit:
-            facts.append(Fact(key="annual_limit", value=quote.card_annual_limit, **base))
-        deductible = quote.card_deductible or (
-            f"{quote.currency} {quote.deductible:g}"
-            if quote.deductible is not None
-            else None
-        )
+
+        if provider:
+            facts.append(Fact(key="provider", value=provider, **base))
+        if product_name:
+            facts.append(Fact(key="plan_name", value=product_name, **base))
+
+        premium = getattr(quote, "premium", None)
+        currency = getattr(quote, "currency", None)
+        if premium is not None:
+            facts.append(
+                Fact(
+                    key="premium_amount",
+                    value=premium,
+                    currency=currency,
+                    **base,
+                )
+            )
+            facts.append(Fact(key="premium_frequency", value="Annual", **base))
+
+        area = getattr(quote, "coverage_area_label", None)
+        if area:
+            facts.append(Fact(key="area_of_cover", value=area, **base))
+
+        annual_limit = getattr(quote, "card_annual_limit", None)
+        if annual_limit:
+            facts.append(Fact(key="annual_limit", value=annual_limit, **base))
+
+        deductible = getattr(quote, "card_deductible", None)
+        raw_deductible = getattr(quote, "deductible", None)
+        if not deductible and raw_deductible is not None:
+            deductible = f"{currency or 'EUR'} {raw_deductible:g}"
         if deductible:
             facts.append(Fact(key="deductible_or_excess", value=deductible, **base))
     return facts
-
 
 def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarCase:
     # Medical free text is intentionally excluded from the proposal case store.
