@@ -446,6 +446,25 @@ class AshlarOrchestrator:
                     payload={"case_intelligence": intelligence, "proposal_step": "blocked_by_evidence_conflict"},
                 )
 
+            manual_authorised = bool(ctx.get("_authorised_manual_proposal"))
+            if intelligence and not intelligence.get("ready_for_proposal") and not manual_authorised:
+                responses.append(SpecialistResponse(
+                    specialist=SpecialistName.PROPOSAL_WRITER,
+                    status="blocked",
+                    reply="Before I prepare the client proposal, upload and analyse the applicant-specific carrier quotation for each selected plan.",
+                    payload={"required": ["carrier_quotation_evidence"]},
+                ))
+                return self._finalize(
+                    case_id=resolved_case_id,
+                    decision=decision,
+                    context=ctx,
+                    responses=responses,
+                    payload={
+                        "case_intelligence": intelligence,
+                        "proposal_step": "blocked_until_carrier_quotations_are_analysed",
+                    },
+                )
+
             proposal_response = await self.proposal_writer.handle(
                 case_id=resolved_case_id,
                 message=message,
