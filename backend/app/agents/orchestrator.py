@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -575,6 +575,31 @@ class AshlarOrchestrator:
             "case_intelligence": build_case_intelligence(saved.case),
         }
 
+    def _record_health_navigation(
+        self,
+        *,
+        case_id: UUID | None,
+        context: dict[str, Any],
+        response: SpecialistResponse,
+    ) -> None:
+        """Advance stage 17 without copying health narrative into insurance state."""
+        if response.status != "completed":
+            return
+        record = self._stored_record(case_id=case_id, context=context)
+        if record is None:
+            return
+        case = record.case.model_copy(deep=True)
+        case.metadata["health_navigation"] = {
+            "status": "completed",
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "provider": "asklepios",
+        }
+        case.touch()
+        CASE_ANALYSIS_STORE.save_case(
+            case=case,
+            access_token=str(context.get("case_token") or ""),
+        )
+
     def _finalize(
         self,
         *,
@@ -979,6 +1004,11 @@ class AshlarOrchestrator:
                 message=message,
                 context=ctx,
             )
+            self._record_health_navigation(
+                case_id=resolved_case_id,
+                context=ctx,
+                response=response,
+            )
             return self._finalize(
                 case_id=resolved_case_id,
                 decision=decision,
@@ -991,6 +1021,11 @@ class AshlarOrchestrator:
                 case_id=resolved_case_id,
                 message=message,
                 context=ctx,
+            )
+            self._record_health_navigation(
+                case_id=resolved_case_id,
+                context=ctx,
+                response=response,
             )
             benefit_key = str(ctx.get("benefit_key") or response.payload.get("benefit_key") or "").strip()
             payload: dict[str, Any] = {
