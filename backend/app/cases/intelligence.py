@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any
 
 from backend.app.cases.fact_ledger import FactLedger
+from backend.app.cases.journey import build_journey_snapshot
 from backend.app.cases.models import AshlarCase, FactStatus
 
 
@@ -136,10 +137,11 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
             })
 
     ready_for_proposal = bool(plans) and not conflicts and all(
-        len(plan["missing_material_keys"]) <= 1 for plan in plans
+        plan["has_quotation"] and len(plan["missing_material_keys"]) <= 1
+        for plan in plans
     )
 
-    return {
+    snapshot = {
         "case_id": str(case.case_id),
         "case_status": case.status.value,
         "document_count": len(case.documents),
@@ -154,6 +156,8 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
         "ready_for_proposal": ready_for_proposal,
         "next_actions": next_actions[:10],
     }
+    snapshot["journey"] = build_journey_snapshot(case, intelligence=snapshot)
+    return snapshot
 
 
 __all__ = ["MATERIAL_KEYS", "build_case_intelligence"]
