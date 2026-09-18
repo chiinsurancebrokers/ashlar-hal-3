@@ -128,6 +128,7 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
             },
         }
         results.append({
+            "plan_key": plan_key,
             "provider": quote.insurer,
             "target_plan": quote.product_name,
             "focused_rows": focused_rows,
