@@ -61,7 +61,7 @@ def _current_step(case: AshlarCase, intelligence: dict[str, Any]) -> int:
         return 20
     if case.claims or case.status == CaseStatus.CLAIM:
         return 19
-    if case.metadata.get("pre_authorisation"):
+    if case.preauthorisations:
         return 18
     if case.metadata.get("health_navigation"):
         return 17
@@ -71,7 +71,7 @@ def _current_step(case: AshlarCase, intelligence: dict[str, Any]) -> int:
         return 15
     if case.application or case.status == CaseStatus.APPLICATION:
         return 14
-    if case.metadata.get("selected_plan_key"):
+    if case.selected_plan_key:
         return 13
     if case.proposal or case.status == CaseStatus.PROPOSAL:
         return 12
