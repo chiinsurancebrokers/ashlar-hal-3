@@ -506,7 +506,7 @@
 
     button.style.display = '';
     button.disabled = !response.proposal_available;
-    button.textContent = response.proposal_available ? 'Prepare proposal' : 'Proposal needs broker review';
+    button.textContent = response.proposal_available ? 'Prepare proposal' : 'Carrier quotations required';
     if (status) {
       if (response.proposal_available) {
         const review = response.proposal_quality && response.proposal_quality.status === 'review';
@@ -515,8 +515,8 @@
           : 'Verified server-side comparison saved. Proposal Studio is ready.';
         status.style.color = review ? '#a15c00' : 'var(--good)';
       } else {
-        status.textContent = 'The evidence quality gate is blocking automatic proposal generation. A broker review is required.';
-        status.style.color = '#b3261e';
+        status.textContent = 'Attach the applicant-specific carrier quotation for each selected plan. HAL will analyse them, check conflicts and then unlock the proposal.';
+        status.style.color = '#a15c00';
       }
     }
   }
