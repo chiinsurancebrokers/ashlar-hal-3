@@ -31,16 +31,41 @@ def _case_id_from_state(state: dict[str, Any]) -> UUID | None:
         return None
 
 
-def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
-    """Preserve the established HAL browser contract over Adviser OS.
+def _document_refs_from_state(state: dict[str, Any]) -> list[str]:
+    raw = state.get("_adviser_os_document_refs")
+    if not isinstance(raw, list):
+        return []
+    refs: list[str] = []
+    seen: set[str] = set()
+    for value in raw[:12]:
+        ref = str(value or "").strip()
+        if not ref or len(ref) > 256 or ref in seen:
+            continue
+        seen.add(ref)
+        refs.append(ref)
+    return refs
 
-    Normal discovery/advice still returns the exact legacy payload produced by
-    ``hal_adviser``. Specialist routes return a minimal compatible chat payload
-    so the current UI can display them without knowing specialist internals yet.
-    """
+
+def _preserve_adviser_os_state(payload: dict[str, Any], request_state: dict[str, Any]) -> None:
+    state = payload.get("state")
+    if not isinstance(state, dict):
+        state = dict(request_state)
+        payload["state"] = state
+    for key, value in request_state.items():
+        if str(key).startswith("_adviser_os_"):
+            state[key] = value
+
+
+def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
+    """Preserve the established HAL browser contract over Adviser OS."""
     if result.responses:
-        primary = result.responses[0]
-        if primary.specialist == SpecialistName.HAL_ADVISER and primary.payload:
+        primary = result.responses[-1]
+        is_legacy_hal_payload = (
+            primary.specialist == SpecialistName.HAL_ADVISER
+            and isinstance(primary.payload, dict)
+            and ("state" in primary.payload or "reply" in primary.payload)
+        )
+        if is_legacy_hal_payload:
             payload = dict(primary.payload)
         else:
             payload = {
@@ -48,12 +73,21 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
                 "state": dict(req.state),
                 "quick_replies": [],
             }
-            if primary.specialist == SpecialistName.PROPOSAL_WRITER:
-                downloads = primary.payload.get("downloads") if primary.payload else None
-                if isinstance(downloads, dict) and downloads:
-                    payload["proposal_downloads"] = dict(downloads)
-                    payload["proposal_id"] = primary.payload.get("proposal_id")
-                    payload["proposal_expires_at"] = primary.payload.get("expires_at")
+
+        proposal_response = next(
+            (
+                response
+                for response in reversed(result.responses)
+                if response.specialist == SpecialistName.PROPOSAL_WRITER
+            ),
+            None,
+        )
+        if proposal_response is not None:
+            downloads = proposal_response.payload.get("downloads") if proposal_response.payload else None
+            if isinstance(downloads, dict) and downloads:
+                payload["proposal_downloads"] = dict(downloads)
+                payload["proposal_id"] = proposal_response.payload.get("proposal_id")
+                payload["proposal_expires_at"] = proposal_response.payload.get("expires_at")
     else:
         payload = {
             "reply": "I have processed that request through the Ashlar Orchestrator.",
@@ -61,6 +95,7 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
             "quick_replies": [],
         }
 
+    _preserve_adviser_os_state(payload, req.state)
     payload["_adviser_os"] = result.model_dump(mode="json")
     return payload
 
@@ -78,6 +113,9 @@ async def turn(req: ChatRequest):
     }
     if case_token:
         context["case_token"] = case_token
+    document_refs = _document_refs_from_state(state)
+    if document_refs:
+        context["document_refs"] = document_refs
 
     try:
         result = await get_ashlar_orchestrator().handle(
