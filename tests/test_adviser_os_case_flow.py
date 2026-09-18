@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
+from backend.app.cases.models import AshlarCase, CaseStatus, FactSourceType, FactStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.main import app
 
@@ -83,3 +84,52 @@ def test_adviser_os_frontend_exposes_case_bound_document_attachment_flow():
     assert "provider_label" in source
     assert "target_plan" in source
     assert "plan_key" in source
+
+
+
+def test_compare_reuses_discovery_case_and_seeds_verified_quote_facts():
+    applicant, plan_keys = _comparison_payload()
+    market = CASE_ANALYSIS_STORE.put(
+        case=AshlarCase(status=CaseStatus.MARKET_REVIEW),
+        results=[],
+    )
+
+    response = client.post(
+        "/api/v1/quotes/compare",
+        json={
+            "applicant_state": applicant,
+            "plan_keys": plan_keys,
+            "language": "en",
+            "case_id": str(market.case.case_id),
+            "case_token": market.access_token,
+        },
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+
+    assert data["case_id"] == str(market.case.case_id)
+    assert data["case_token"] == market.access_token
+    assert data["case_intelligence"]["journey"]["current_phase"] == "compare"
+    assert data["case_intelligence"]["ready_for_proposal"] is False
+
+    record = CASE_ANALYSIS_STORE.get(market.case.case_id, market.access_token)
+    assert record is not None
+    quote_facts = [
+        fact for fact in record.case.facts
+        if fact.source.source_type == FactSourceType.QUOTE_ENGINE
+    ]
+    assert quote_facts
+    assert all(fact.status == FactStatus.VERIFIED for fact in quote_facts)
+    assert {fact.plan_key for fact in quote_facts if fact.plan_key} == set(plan_keys)
+
+
+def test_case_workspace_surfaces_journey_evidence_and_next_best_action():
+    response = client.get("/static/adviser-os.js")
+
+    assert response.status_code == 200
+    source = response.text
+    assert "adviserCaseWorkspace" in source
+    assert "Evidence by plan" in source
+    assert "HAL · next best action" in source
+    assert "Discover" in source
+    assert "Renew" in source
