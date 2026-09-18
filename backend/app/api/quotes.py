@@ -1,7 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.app.cases.models import (\n    AshlarCase,\n    CaseClient,\n    CaseStatus,\n    Fact,\n    FactSource,\n    FactSourceType,\n    FactStatus,\n)
+from backend.app.cases.models import (
+    AshlarCase,
+    CaseClient,
+    CaseStatus,
+    Fact,
+    FactSource,
+    FactSourceType,
+    FactStatus,
+)
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.core.config import get_settings
