@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -11,6 +12,7 @@ from backend.app.core.config import get_settings
 from backend.app.policy.engine import PolicyEngine, get_policy_engine
 from backend.app.rates.quote_engine import quote_shortlist
 from backend.app.schemas.applicant import Applicant
+from backend.app.workflows.service import JourneyWorkflowService, WorkflowError, get_journey_workflow
 
 from .contracts import (
     OrchestrationDecision,
@@ -163,12 +165,14 @@ class AshlarOrchestrator:
         proposal_writer: ProposalWriter | None = None,
         health_navigator: HealthNavigator | None = None,
         policy_engine: PolicyEngine | None = None,
+        journey_workflow: JourneyWorkflowService | None = None,
     ):
         self.hal_adviser = hal_adviser or get_hal_adviser()
         self.document_analyst = document_analyst or get_document_analyst()
         self.proposal_writer = proposal_writer or get_proposal_writer()
         self.health_navigator = health_navigator or get_health_navigator()
         self.policy_engine = policy_engine or get_policy_engine()
+        self.journey_workflow = journey_workflow or get_journey_workflow()
 
     @staticmethod
     def _uuid(value: UUID | str | None) -> UUID | None:
@@ -254,6 +258,230 @@ class AshlarOrchestrator:
             metadata={"created_from": "hal_completed_discovery"},
         )
         return CASE_ANALYSIS_STORE.put(case=case, results=[])
+
+    @staticmethod
+    def _workflow_record(*, case_id: UUID | str, case_token: str):
+        resolved = AshlarOrchestrator._uuid(case_id)
+        token = str(case_token or "").strip()
+        if resolved is None or not token:
+            raise WorkflowError("An active case_id and case_token are required.", code="active_case_required")
+        record = CASE_ANALYSIS_STORE.get(resolved, token)
+        if record is None:
+            raise WorkflowError("The AshlarCase is unavailable, expired, or unauthorised.", code="case_unavailable")
+        return record, token
+
+    @staticmethod
+    def _save_workflow_case(*, case: AshlarCase, case_token: str):
+        saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
+        if saved is None:
+            raise WorkflowError("The AshlarCase expired while the workflow was being saved.", code="case_expired")
+        return saved
+
+    def select_final_plan(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+        plan_key: str,
+        selected_by: str = "client",
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.select_plan(
+            case,
+            plan_key=plan_key,
+            selected_by=selected_by,
+            note=note,
+        )
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def prepare_application_workflow(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.prepare_application(case)
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def complete_application_section_workflow(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+        section: str,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.complete_application_section(case, section=section)
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def submit_application_workflow(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.submit_application(case)
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def record_policy_issue(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+        policy_number: str,
+        provider: str,
+        start_date: date,
+        renewal_date: date,
+        document_refs: list[str] | None = None,
+        broker_authorized: bool = False,
+    ) -> dict[str, Any]:
+        if not broker_authorized:
+            raise WorkflowError("Policy issue can only be recorded by an authorised broker workflow.", code="broker_authorisation_required")
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.issue_policy(
+            case,
+            policy_number=policy_number,
+            provider=provider,
+            start_date=start_date,
+            renewal_date=renewal_date,
+            document_refs=document_refs,
+        )
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def policy_wallet(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.build_policy_wallet(case)
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def open_preauthorisation(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+        service_key: str,
+        provider_name: str | None = None,
+        facility_name: str | None = None,
+        planned_date: date | None = None,
+        document_refs: list[str] | None = None,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        plan_key = case.selected_plan_key
+        coverage = self.policy_engine.check_benefit(
+            case=case,
+            benefit_key=service_key,
+            plan_key=plan_key,
+        )
+        result = self.journey_workflow.create_preauthorisation(
+            case,
+            service_key=service_key,
+            provider_name=provider_name,
+            facility_name=facility_name,
+            planned_date=planned_date,
+            document_refs=document_refs,
+        )
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "policy_evidence": coverage.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def open_claim(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+        service_date: date | None = None,
+        amount: float | None = None,
+        currency: str | None = None,
+        document_refs: list[str] | None = None,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.create_claim(
+            case,
+            service_date=service_date,
+            amount=amount,
+            currency=currency,
+            document_refs=document_refs,
+            note=note,
+        )
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
+
+    def start_renewal_workflow(
+        self,
+        *,
+        case_id: UUID | str,
+        case_token: str,
+    ) -> dict[str, Any]:
+        record, token = self._workflow_record(case_id=case_id, case_token=case_token)
+        case = record.case.model_copy(deep=True)
+        result = self.journey_workflow.start_renewal(case)
+        quotes = []
+        if case.applicant is not None:
+            quotes = [
+                quote.model_dump(mode="json")
+                for quote in quote_shortlist(case.applicant, get_settings())
+            ]
+        saved = self._save_workflow_case(case=case, case_token=token)
+        return {
+            **result.model_dump(mode="json"),
+            "quotes": quotes,
+            "case_id": str(saved.case.case_id),
+            "case_intelligence": build_case_intelligence(saved.case),
+        }
 
     def _finalize(
         self,
