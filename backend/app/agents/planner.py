@@ -92,6 +92,13 @@ def plan_next_best_action(
             blocked=True,
         )
 
+    if intelligence.get("ready_for_proposal") and decision.intent != OrchestrationIntent.PROPOSAL:
+        return NextBestAction(
+            action="prepare_proposal",
+            owner=SpecialistName.PROPOSAL_WRITER.value,
+            reason="Applicant-specific carrier quotations have been analysed and the material evidence is conflict-free.",
+        )
+
     next_actions = intelligence.get("next_actions") or []
     if next_actions:
         first = next_actions[0] if isinstance(next_actions[0], dict) else {}
@@ -128,13 +135,6 @@ def plan_next_best_action(
                 owner=SpecialistName.HAL_ADVISER.value,
                 reason="The proposal is generated; HAL can explain it and answer client questions using the same case evidence.",
             )
-
-    if intelligence.get("ready_for_proposal") and decision.intent != OrchestrationIntent.PROPOSAL:
-        return NextBestAction(
-            action="prepare_proposal",
-            owner=SpecialistName.PROPOSAL_WRITER.value,
-            reason="The case evidence is sufficiently complete and conflict-free for Proposal Studio to prepare the client pack.",
-        )
 
     if decision.intent == OrchestrationIntent.DOCUMENT:
         return NextBestAction(
