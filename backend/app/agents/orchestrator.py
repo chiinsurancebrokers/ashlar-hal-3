@@ -364,6 +364,17 @@ class AshlarOrchestrator:
                     "specialists": [SpecialistName.HAL_ADVISER],
                     "reason": decision.reason + " HAL is collecting missing quote inputs first.",
                 })
+                if resolved_case_id is None:
+                    market_record = self._market_case_from_discovery(response)
+                    if market_record is not None:
+                        resolved_case_id = market_record.case.case_id
+                        state_payload = response.payload.get("state")
+                        if isinstance(state_payload, dict):
+                            state_payload["_adviser_os_case_id"] = str(market_record.case.case_id)
+                            state_payload["_adviser_os_case_token"] = market_record.access_token
+                        response.payload["case_id"] = str(market_record.case.case_id)
+                        response.payload["case_token"] = market_record.access_token
+                        ctx["case_token"] = market_record.access_token
                 return self._finalize(
                     case_id=resolved_case_id,
                     decision=decision,
