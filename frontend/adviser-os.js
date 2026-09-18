@@ -211,7 +211,7 @@
       '</div>' +
       '<div class="adviser-journey">' + phaseHtml + '</div>' +
       '<div class="adviser-case-metrics">' +
-        '<div class="adviser-metric"><strong>' + completeness + '%</strong><span>evidence completeness</span></div>' +
+        '<div class="adviser-metric"><strong>' + completeness + '%</strong><span>material facts ready</span></div>' +
         '<div class="adviser-metric"><strong>' + docs + '</strong><span>carrier documents</span></div>' +
         '<div class="adviser-metric"><strong>' + conflicts + '</strong><span>evidence conflicts</span></div>' +
         '<div class="adviser-metric"><strong>' + esc(confidence) + '</strong><span>evidence confidence</span></div>' +
