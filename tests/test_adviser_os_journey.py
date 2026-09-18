@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.cases.journey import ADVISER_OS_JOURNEY, PHASES, build_journey_snapshot
 from backend.app.cases.models import AshlarCase, CaseStatus
 
@@ -37,3 +38,19 @@ def test_journey_snapshot_maps_case_status_to_six_phase_client_experience():
     assert states["discover"] == "completed"
     assert states["compare"] == "current"
     assert states["decide"] == "upcoming"
+
+
+
+def test_next_action_respects_a_to_z_order_before_documents():
+    market = AshlarCase(status=CaseStatus.MARKET_REVIEW)
+    market_intelligence = build_case_intelligence(market)
+
+    assert market_intelligence["next_actions"][0]["action"] == "select_shortlist_plans"
+
+    comparison = AshlarCase(
+        status=CaseStatus.COMPARISON,
+        selected_plan_keys=["carrier:a", "carrier:b"],
+    )
+    comparison_intelligence = build_case_intelligence(comparison)
+
+    assert comparison_intelligence["next_actions"][0]["action"] == "upload_carrier_documents"
