@@ -22,9 +22,16 @@ def missing(value) -> bool:
     return False
 
 
+def _clean_amount_token(raw: str) -> str:
+    # Quote prose often ends a monetary amount with sentence punctuation.
+    # The extraction regex deliberately accepts "." and "," inside numbers,
+    # so trim punctuation that is only trailing prose before numeric parsing.
+    return str(raw or "").strip().rstrip(".,")
+
+
 def _number(raw: str) -> float:
     try:
-        return float(raw.replace(",", ""))
+        return float(_clean_amount_token(raw).replace(",", ""))
     except Exception:
         return -1.0
 
@@ -73,7 +80,8 @@ def _premium_from_anchored_patterns(text: str) -> dict | None:
     if not candidates:
         return None
     _, cur, amt = max(candidates, key=lambda x: x[0])
-    return {"amount": amt.replace(",", ""), "currency": _currency_code(cur), "frequency": "Annual"}
+    clean_amount = _clean_amount_token(amt)
+    return {"amount": clean_amount.replace(",", ""), "currency": _currency_code(cur), "frequency": "Annual"}
 
 
 def _generic_area(text: str) -> str | None:
