@@ -140,6 +140,165 @@
     sendMessage();
   }
 
+  function ensurePlanSelectionModal() {
+    let modal = document.getElementById('adviserPlanSelectionModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.id = 'adviserPlanSelectionModal';
+    modal.innerHTML = '<div class="modal" style="max-width:560px">' +
+      '<h3>Which plan do you want to proceed with?</h3>' +
+      '<p style="font-size:12px;color:var(--muted);line-height:1.5">This is your decision. HAL will record the plan you choose and continue the same AshlarCase into application.</p>' +
+      '<div id="adviserPlanChoices"></div>' +
+      '<div id="adviserPlanSelectionStatus" style="font-size:12px;margin-top:8px"></div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-secondary" type="button" id="adviserPlanSelectionCancel">Cancel</button>' +
+        '<button class="btn-primary" type="button" id="adviserPlanSelectionConfirm">Use this plan</button>' +
+      '</div></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', event => {
+      if (event.target === modal) modal.classList.remove('open');
+    });
+    document.getElementById('adviserPlanSelectionCancel').onclick = () => modal.classList.remove('open');
+    document.getElementById('adviserPlanSelectionConfirm').onclick = confirmPlanSelection;
+    return modal;
+  }
+
+  function openPlanSelection() {
+    if (!proposalCase || !comparisonPlans.length) {
+      if (typeof addMsg === 'function') addMsg('I need the active comparison before I can record your final plan choice.', 'hal');
+      return;
+    }
+    const modal = ensurePlanSelectionModal();
+    const choices = document.getElementById('adviserPlanChoices');
+    choices.innerHTML = comparisonPlans.map((plan, index) =>
+      '<label class="adviser-plan-choice">' +
+        '<input type="radio" name="adviserFinalPlan" value="' + esc(plan.plan_key || '') + '"' + (index === 0 ? ' checked' : '') + '>' +
+        '<strong>' + esc(plan.product_name || plan.plan_key || 'Plan') + '</strong>' +
+        '<small>' + esc(plan.insurer || '') + (plan.premium != null ? ' · ' + esc((plan.currency || 'EUR') + ' ' + Number(plan.premium).toLocaleString()) + '/year' : '') + '</small>' +
+      '</label>'
+    ).join('');
+    const status = document.getElementById('adviserPlanSelectionStatus');
+    status.textContent = '';
+    modal.classList.add('open');
+  }
+
+  async function confirmPlanSelection() {
+    if (!proposalCase || lifecycleBusy) return;
+    const selected = document.querySelector('input[name="adviserFinalPlan"]:checked');
+    const status = document.getElementById('adviserPlanSelectionStatus');
+    if (!selected || !selected.value) {
+      status.textContent = 'Choose one plan to continue.';
+      status.style.color = '#b3261e';
+      return;
+    }
+    lifecycleBusy = true;
+    const button = document.getElementById('adviserPlanSelectionConfirm');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Recording…';
+    }
+    try {
+      const response = await fetch(
+        API + '/journey/' + encodeURIComponent(proposalCase.case_id) + '/select-plan',
+        {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            case_token:proposalCase.case_token,
+            plan_key:selected.value,
+            selected_by:'client'
+          })
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not record the selected plan.');
+      lastCaseIntelligence = data.case_intelligence || lastCaseIntelligence;
+      lastNextBestAction = {
+        action:data.action || 'prepare_application',
+        reason:data.message || 'Your plan choice is recorded. The application can now be prepared.'
+      };
+      document.getElementById('adviserPlanSelectionModal').classList.remove('open');
+      renderCaseWorkspace();
+      const plan = comparisonPlans.find(item => item.plan_key === selected.value);
+      if (typeof addMsg === 'function') {
+        addMsg('I have recorded your choice of ' + (plan ? (plan.product_name + ' by ' + plan.insurer) : selected.value) + '. Your decision is now part of this AshlarCase. Next we can prepare the application.', 'hal');
+      }
+    } catch (error) {
+      status.textContent = error.message || 'Could not record the selected plan.';
+      status.style.color = '#b3261e';
+    } finally {
+      lifecycleBusy = false;
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Use this plan';
+      }
+    }
+  }
+
+  async function prepareApplication() {
+    if (!proposalCase || lifecycleBusy) return;
+    lifecycleBusy = true;
+    try {
+      const response = await fetch(
+        API + '/journey/' + encodeURIComponent(proposalCase.case_id) + '/application/prepare',
+        {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({case_token:proposalCase.case_token})
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not prepare the application workspace.');
+      applicationState = data.payload && data.payload.application ? data.payload.application : null;
+      lastCaseIntelligence = data.case_intelligence || lastCaseIntelligence;
+      lastNextBestAction = {
+        action:data.action || 'complete_application',
+        reason:data.message || 'The application workspace is ready.'
+      };
+      renderCaseWorkspace();
+      renderApplicationCard();
+    } catch (error) {
+      if (typeof addMsg === 'function') addMsg(error.message || 'I could not prepare the application workspace.', 'hal');
+    } finally {
+      lifecycleBusy = false;
+    }
+  }
+
+  function renderApplicationCard() {
+    if (!applicationState) {
+      prepareApplication();
+      return;
+    }
+    const chat = document.getElementById('chat');
+    if (!chat) return;
+    const required = Array.isArray(applicationState.required_sections) ? applicationState.required_sections : [];
+    const completed = new Set(Array.isArray(applicationState.completed_sections) ? applicationState.completed_sections : []);
+    const labels = {
+      applicant_identity:'Identity',
+      contact_and_residency:'Contact & residency',
+      coverage_selection:'Coverage selection',
+      declarations:'Declarations',
+      medical_underwriting_questionnaire:'Medical underwriting',
+      signature:'Signature'
+    };
+    const checklist = required.map(section =>
+      '<span class="adviser-checkitem">' + (completed.has(section) ? '✓ ' : '○ ') + esc(labels[section] || section.replaceAll('_',' ')) + '</span>'
+    ).join('');
+    const card = document.createElement('div');
+    card.className = 'msg hal adviser-application-card';
+    card.innerHTML =
+      '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:800">Application workspace</div>' +
+      '<div style="font-weight:800;font-size:14px;margin-top:3px">Your selected plan is moving into application</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">HAL will keep the checklist on this AshlarCase. Carrier-specific answers and signatures must be collected explicitly; they are not inferred from the conversation.</div>' +
+      '<div class="adviser-checklist">' + checklist + '</div>' +
+      '<div style="margin-top:10px"><button class="q-primary adviser-application-help" style="padding:8px 12px">Continue application with HAL</button></div>';
+    const help = card.querySelector('.adviser-application-help');
+    if (help) help.onclick = () => askHal('Help me complete the application checklist for the plan I selected.');
+    chat.appendChild(card);
+    card.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
   function renderCaseWorkspace() {
     const workspace = ensureCaseWorkspace();
     const legacyProgress = document.querySelector('.chat-card .progress-bar');
