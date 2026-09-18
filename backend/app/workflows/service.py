@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import date
 from typing import Any
 
+from backend.app.applications.adapters import ApplicationAdapterRegistry, get_application_adapters
 from backend.app.cases.fact_ledger import FactLedger
 from backend.app.cases.models import AshlarCase, CaseStatus, FactStatus
 
@@ -33,6 +34,9 @@ class JourneyWorkflowService:
     orchestrator. They never call an LLM and never bypass FactLedger/Policy
     Engine authority.
     """
+
+    def __init__(self, application_adapters: ApplicationAdapterRegistry | None = None):
+        self.application_adapters = application_adapters or get_application_adapters()
 
     @staticmethod
     def _require_selected_plan(case: AshlarCase) -> str:
@@ -81,20 +85,30 @@ class JourneyWorkflowService:
         if case.application:
             current = ApplicationRecord.model_validate(case.application)
         else:
-            required = [
-                "applicant_identity",
-                "contact_and_residency",
-                "coverage_selection",
-                "declarations",
-                "signature",
-            ]
-            if bool(case.needs_profile.get("medical_disclosure_present")):
-                required.insert(4, "medical_underwriting_questionnaire")
+            adapter = self.application_adapters.for_plan(plan_key)
+            blueprint = adapter.blueprint(case, plan_key)
             current = ApplicationRecord(
                 plan_key=plan_key,
-                required_sections=required,
+                required_sections=blueprint.required_sections,
             )
             case.application = current.model_dump(mode="json")
+            case.metadata["application_blueprint"] = {
+                "carrier": blueprint.carrier,
+                "source_status": blueprint.source_status,
+                "note": blueprint.note,
+                "requirements": [
+                    {
+                        "key": item.key,
+                        "label": item.label,
+                        "owner": item.owner,
+                        "required": item.required,
+                        "sensitive": item.sensitive,
+                        "requires_signature": item.requires_signature,
+                        "help_text": item.help_text,
+                    }
+                    for item in blueprint.requirements
+                ],
+            }
 
         case.status = CaseStatus.APPLICATION
         case.touch()
@@ -104,6 +118,7 @@ class JourneyWorkflowService:
             payload={
                 "application": current.model_dump(mode="json"),
                 "missing_sections": current.missing_sections,
+                "blueprint": deepcopy(case.metadata.get("application_blueprint") or {}),
             },
         )
 
