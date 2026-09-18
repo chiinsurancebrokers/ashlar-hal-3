@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hmac
@@ -54,7 +55,7 @@ class ServerCaseAnalysisStore:
         stored_case = case.model_copy(deep=True)
         record = CaseAnalysisRecord(
             case=stored_case,
-            results=[dict(item) for item in results],
+            results=deepcopy(results),
             access_token=secrets.token_urlsafe(32),
             created_at=now,
             updated_at=now,
@@ -86,11 +87,37 @@ class ServerCaseAnalysisStore:
             record.expires_at = now + self.ttl
             return self._copy(record)
 
+    def save_analysis(
+        self,
+        *,
+        case: AshlarCase,
+        results: list[dict[str, Any]],
+        access_token: str,
+    ) -> CaseAnalysisRecord | None:
+        """Atomically persist the Case Brain and its proposal-ready analysis.
+
+        Document analysis changes both the FactLedger and the normalized plan
+        analysis consumed by Proposal Studio. Saving them together prevents a
+        proposal from seeing a newer case with an older analysis snapshot.
+        """
+
+        now = _utcnow()
+        with self._lock:
+            self._prune_locked(now)
+            record = self._records.get(case.case_id)
+            if record is None or not access_token or not hmac.compare_digest(record.access_token, access_token):
+                return None
+            record.case = case.model_copy(deep=True)
+            record.results = deepcopy(results)
+            record.updated_at = now
+            record.expires_at = now + self.ttl
+            return self._copy(record)
+
     @staticmethod
     def _copy(record: CaseAnalysisRecord) -> CaseAnalysisRecord:
         return CaseAnalysisRecord(
             case=record.case.model_copy(deep=True),
-            results=[dict(item) for item in record.results],
+            results=deepcopy(record.results),
             access_token=record.access_token,
             created_at=record.created_at,
             updated_at=record.updated_at,
