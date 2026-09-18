@@ -5,6 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from backend.app.cases.intelligence import build_case_intelligence
+from backend.app.cases.models import AshlarCase, CaseClient, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.policy.engine import PolicyEngine, get_policy_engine
@@ -208,6 +209,51 @@ class AshlarOrchestrator:
 
         record = cls._stored_record(case_id=case_id, context=context)
         return record.case.applicant if record is not None else None
+
+    @staticmethod
+    def _market_case_from_discovery(response: SpecialistResponse):
+        """Create the shared case as soon as HAL completes the applicant interview.
+
+        This keeps the A-to-Z journey case-centred before the client chooses the
+        2–4 plans that will move into detailed comparison.
+        """
+        payload = response.payload if isinstance(response.payload, dict) else {}
+        state = payload.get("state") if isinstance(payload.get("state"), dict) else {}
+        quotes = payload.get("quotes") if isinstance(payload.get("quotes"), list) else []
+        if not state.get("discovery_complete") or not quotes:
+            return None
+
+        fields = {
+            key: value
+            for key, value in state.items()
+            if key in Applicant.model_fields
+        }
+        try:
+            applicant = Applicant(**fields)
+        except Exception:
+            return None
+
+        sanitized = applicant.model_copy(
+            update={"chronic_conditions_note": None},
+            deep=True,
+        )
+        priorities = list(applicant.must_have_keys())
+        name = str(state.get("applicant_name") or "Client").strip()[:200] or "Client"
+        language = str(state.get("language") or "en")
+        if language not in {"en", "el"}:
+            language = "en"
+
+        case = AshlarCase(
+            status=CaseStatus.MARKET_REVIEW,
+            client=CaseClient(display_name=name, preferred_language=language),
+            applicant=sanitized,
+            needs_profile={
+                "priorities": priorities,
+                "medical_disclosure_present": bool(applicant.chronic_conditions_disclosed),
+            },
+            metadata={"created_from": "hal_completed_discovery"},
+        )
+        return CASE_ANALYSIS_STORE.put(case=case, results=[])
 
     def _finalize(
         self,
@@ -459,6 +505,20 @@ class AshlarOrchestrator:
             message=message,
             context=ctx,
         )
+
+        if resolved_case_id is None:
+            market_record = self._market_case_from_discovery(response)
+            if market_record is not None:
+                resolved_case_id = market_record.case.case_id
+                state_payload = response.payload.get("state")
+                if isinstance(state_payload, dict):
+                    state_payload["_adviser_os_case_id"] = str(market_record.case.case_id)
+                    state_payload["_adviser_os_case_token"] = market_record.access_token
+                response.payload["case_id"] = str(market_record.case.case_id)
+                response.payload["case_token"] = market_record.access_token
+                ctx["case_token"] = market_record.access_token
+                intelligence = build_case_intelligence(market_record.case)
+
         return self._finalize(
             case_id=resolved_case_id,
             decision=decision,
