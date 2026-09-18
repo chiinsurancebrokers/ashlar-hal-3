@@ -58,8 +58,7 @@ class AdviserHandleRequest(BaseModel):
         return result
 
 
-@router.post("/handle")
-async def handle(req: AdviserHandleRequest):
+def build_adviser_context(req: AdviserHandleRequest) -> dict[str, Any]:
     history = [item.model_dump() for item in req.history]
     context: dict[str, Any] = {
         "state": dict(req.state),
@@ -82,12 +81,15 @@ async def handle(req: AdviserHandleRequest):
         # Only opaque references created by /documents/upload cross the public
         # boundary. Raw carrier text/model output cannot be injected here.
         context["document_refs"] = list(req.document_refs)
+    return context
 
+
+async def dispatch_adviser_request(req: AdviserHandleRequest):
     try:
-        result = await get_ashlar_orchestrator().handle(
+        return await get_ashlar_orchestrator().handle(
             case_id=req.case_id,
             message=req.message,
-            context=context,
+            context=build_adviser_context(req),
         )
     except Exception as exc:
         raise HTTPException(
@@ -95,6 +97,10 @@ async def handle(req: AdviserHandleRequest):
             detail=f"Ashlar Orchestrator failed: {str(exc)[:180]}",
         ) from exc
 
+
+@router.post("/handle")
+async def handle(req: AdviserHandleRequest):
+    result = await dispatch_adviser_request(req)
     return JSONResponse(
         content=result.model_dump(mode="json"),
         headers={"Cache-Control": "no-store"},
