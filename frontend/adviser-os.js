@@ -98,6 +98,10 @@
   function actionUi(action) {
     const key = action && action.action ? action.action : '';
     const map = {
+      select_shortlist_plans: ['Choose the plans to compare', 'Select 2–4 plans', () => {
+        const quotes = document.querySelector('.quotes-row');
+        if (quotes) quotes.scrollIntoView({behavior:'smooth', block:'center'});
+      }],
       upload_carrier_documents: ['Attach carrier evidence', 'Attach documents', openDocumentUpload],
       complete_plan_evidence: ['Complete plan evidence', 'Attach missing evidence', openDocumentUpload],
       verify_material_plan_facts: ['Strengthen evidence', 'Attach evidence', openDocumentUpload],
