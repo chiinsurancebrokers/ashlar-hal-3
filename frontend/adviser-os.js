@@ -4,6 +4,11 @@
   let proposalCase = null;
   let proposalBusy = false;
   let pendingChatProposalDownloads = null;
+  let pendingOrchestratorUi = null;
+  let comparisonPlans = [];
+  let pendingDocumentRefs = [];
+  let uploadedDocuments = [];
+  let documentBusy = false;
 
   function ensureProposalControls() {
     const modal = document.getElementById('compareModal');
@@ -33,14 +38,206 @@
     return button;
   }
 
+  function ensureDocumentControls() {
+    const composer = document.querySelector('.composer');
+    if (!composer) return null;
+
+    let button = document.getElementById('attachCarrierDocumentBtn');
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'attachCarrierDocumentBtn';
+      button.className = 'mic-btn';
+      button.type = 'button';
+      button.textContent = '📎';
+      button.title = 'Attach carrier quotation, brochure or policy wording';
+      button.setAttribute('aria-label', button.title);
+      button.style.display = 'none';
+      button.onclick = openDocumentUpload;
+      composer.insertBefore(button, composer.firstChild);
+    }
+
+    let status = document.getElementById('adviserDocumentStatus');
+    if (!status) {
+      status = document.createElement('div');
+      status.id = 'adviserDocumentStatus';
+      status.style.cssText = 'display:none;font-size:11px;color:var(--muted);margin:7px 0 2px;line-height:1.45;';
+      const row = document.getElementById('dynamicInputRow');
+      if (row) row.insertBefore(status, composer);
+    }
+
+    let modal = document.getElementById('carrierDocumentModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'modal-backdrop';
+      modal.id = 'carrierDocumentModal';
+      modal.innerHTML = '<div class="modal" style="max-width:520px">' +
+        '<h3>Attach carrier evidence</h3>' +
+        '<p style="font-size:12px;color:var(--muted);line-height:1.5">Documents are extracted on the server and bound to this case. HAL receives only an opaque reference.</p>' +
+        '<label>Plan</label><select id="carrierDocumentPlan"></select>' +
+        '<label>Document type</label><select id="carrierDocumentRole">' +
+          '<option value="quotation">Applicant quotation / certificate</option>' +
+          '<option value="brochure">Brochure / Table of Benefits</option>' +
+          '<option value="wording">Policy wording / member guide</option>' +
+        '</select>' +
+        '<label>File</label><input id="carrierDocumentFile" type="file" multiple accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">' +
+        '<div id="carrierDocumentUploadStatus" style="font-size:12px;margin-top:8px"></div>' +
+        '<div class="modal-actions">' +
+          '<button class="btn-secondary" type="button" id="carrierDocumentCancel">Cancel</button>' +
+          '<button class="btn-primary" type="button" id="carrierDocumentUpload">Attach to HAL</button>' +
+        '</div></div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', event => {
+        if (event.target === modal) modal.classList.remove('open');
+      });
+      document.getElementById('carrierDocumentCancel').onclick = () => modal.classList.remove('open');
+      document.getElementById('carrierDocumentUpload').onclick = uploadCarrierDocuments;
+    }
+    return button;
+  }
+
+  function renderDocumentStatus() {
+    const status = document.getElementById('adviserDocumentStatus');
+    const button = ensureDocumentControls();
+    if (button) button.style.display = proposalCase ? '' : 'none';
+    if (!status) return;
+
+    if (!proposalCase || !uploadedDocuments.length) {
+      status.style.display = 'none';
+      status.textContent = '';
+      return;
+    }
+    status.style.display = 'block';
+    const waiting = uploadedDocuments.filter(item => !item.analysed).length;
+    const labels = uploadedDocuments.slice(-4).map(item =>
+      item.filename + ' · ' + item.role + (item.analysed ? ' ✓' : '')
+    );
+    status.textContent = labels.join('   |   ') + (waiting ? '   — ask HAL to compare/analyse them.' : '');
+  }
+
+  function openDocumentUpload() {
+    if (!proposalCase) {
+      if (typeof addMsg === 'function') addMsg('Compare at least two plans first so I can bind carrier documents to the correct case.', 'hal');
+      return;
+    }
+    ensureDocumentControls();
+    const select = document.getElementById('carrierDocumentPlan');
+    select.innerHTML = '';
+    comparisonPlans.forEach(plan => {
+      const option = document.createElement('option');
+      option.value = plan.plan_key || '';
+      option.textContent = (plan.product_name || plan.plan_key || 'Plan') + ' — ' + (plan.insurer || '');
+      select.appendChild(option);
+    });
+    const fileInput = document.getElementById('carrierDocumentFile');
+    fileInput.value = '';
+    document.getElementById('carrierDocumentUploadStatus').textContent = '';
+    document.getElementById('carrierDocumentModal').classList.add('open');
+  }
+
+  async function uploadCarrierDocuments() {
+    if (!proposalCase || documentBusy) return;
+    const planKey = document.getElementById('carrierDocumentPlan').value;
+    const plan = comparisonPlans.find(item => item.plan_key === planKey);
+    const role = document.getElementById('carrierDocumentRole').value;
+    const files = [...document.getElementById('carrierDocumentFile').files];
+    const status = document.getElementById('carrierDocumentUploadStatus');
+    if (!plan || !planKey) {
+      status.textContent = 'Choose a plan first.';
+      status.style.color = '#b3261e';
+      return;
+    }
+    if (!files.length) {
+      status.textContent = 'Choose at least one PDF, TXT or HTML document.';
+      status.style.color = '#b3261e';
+      return;
+    }
+
+    documentBusy = true;
+    document.getElementById('carrierDocumentUpload').disabled = true;
+    try {
+      let uploaded = 0;
+      for (const file of files) {
+        status.textContent = 'Uploading and extracting ' + file.name + '…';
+        status.style.color = 'var(--muted)';
+        const form = new FormData();
+        form.append('case_id', proposalCase.case_id);
+        form.append('case_token', proposalCase.case_token);
+        form.append('provider_label', plan.insurer || 'Carrier');
+        form.append('target_plan', plan.product_name || planKey);
+        form.append('plan_key', planKey);
+        form.append('role', role);
+        form.append('file', file, file.name);
+        const response = await fetch(API + '/documents/upload', {method:'POST', body:form});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || ('Could not attach ' + file.name + '.'));
+        if (!pendingDocumentRefs.includes(data.document_ref)) pendingDocumentRefs.push(data.document_ref);
+        uploadedDocuments.push({
+          document_ref: data.document_ref,
+          filename: data.filename || file.name,
+          role: data.role || role,
+          plan_key: data.plan_key || planKey,
+          analysed: false
+        });
+        uploaded += 1;
+      }
+      syncCaseIntoHalState();
+      renderDocumentStatus();
+      document.getElementById('carrierDocumentModal').classList.remove('open');
+      if (typeof addMsg === 'function') {
+        addMsg(uploaded + ' carrier document' + (uploaded === 1 ? ' is' : 's are') + ' attached to this case. You can ask me to compare them, explain what matters, or prepare the proposal.', 'hal');
+      }
+    } catch (error) {
+      status.textContent = error.message || 'Could not attach the document.';
+      status.style.color = '#b3261e';
+    } finally {
+      documentBusy = false;
+      document.getElementById('carrierDocumentUpload').disabled = false;
+    }
+  }
+
+  function applyOrchestratorUi(result) {
+    if (!result || !Array.isArray(result.responses)) return;
+    const documentCompleted = result.responses.some(
+      item => item.specialist === 'document_analyst' && item.status === 'completed'
+    );
+    if (documentCompleted) {
+      const analysedRefs = new Set(pendingDocumentRefs);
+      uploadedDocuments = uploadedDocuments.map(item => (
+        analysedRefs.has(item.document_ref) ? {...item, analysed:true} : item
+      ));
+      pendingDocumentRefs = [];
+      syncCaseIntoHalState();
+      renderDocumentStatus();
+    }
+
+    const action = result.next_best_action && result.next_best_action.action;
+    const proposalButton = ensureProposalControls();
+    const proposalStatus = document.getElementById('proposalPrepareStatus');
+    if (action === 'prepare_proposal' && proposalButton) {
+      proposalButton.style.display = '';
+      proposalButton.disabled = false;
+      proposalButton.textContent = 'Prepare proposal';
+      if (proposalStatus) {
+        proposalStatus.textContent = 'Carrier evidence analysed. Proposal Studio is ready when you are.';
+        proposalStatus.style.color = 'var(--good)';
+      }
+    } else if (result.next_best_action && result.next_best_action.blocked && proposalStatus) {
+      proposalStatus.textContent = result.next_best_action.reason || 'More evidence is needed before the proposal can be prepared.';
+      proposalStatus.style.color = '#a15c00';
+    }
+  }
+
   function syncCaseIntoHalState() {
     if (typeof state !== 'object' || !state) return;
     if (proposalCase) {
       state._adviser_os_case_id = proposalCase.case_id;
       state._adviser_os_case_token = proposalCase.case_token;
+      if (pendingDocumentRefs.length) state._adviser_os_document_refs = [...pendingDocumentRefs];
+      else delete state._adviser_os_document_refs;
     } else {
       delete state._adviser_os_case_id;
       delete state._adviser_os_case_token;
+      delete state._adviser_os_document_refs;
     }
   }
 
@@ -49,10 +246,18 @@
     const status = document.getElementById('proposalPrepareStatus');
     if (!button) return;
 
+    const previousCaseId = proposalCase && proposalCase.case_id;
     proposalCase = response && response.case_id && response.case_token
       ? {case_id: response.case_id, case_token: response.case_token}
       : null;
+    comparisonPlans = response && Array.isArray(response.plans) ? response.plans : [];
+    if (!proposalCase || proposalCase.case_id !== previousCaseId) {
+      pendingDocumentRefs = [];
+      uploadedDocuments = [];
+    }
     syncCaseIntoHalState();
+    ensureDocumentControls();
+    renderDocumentStatus();
 
     if (!proposalCase) {
       button.style.display = 'none';
@@ -112,8 +317,10 @@
         pendingChatProposalDownloads = data && data.proposal_downloads
           ? data.proposal_downloads
           : null;
+        pendingOrchestratorUi = data && data._adviser_os ? data._adviser_os : null;
       } catch (_) {
         pendingChatProposalDownloads = null;
+        pendingOrchestratorUi = null;
       }
     }
     return response;
@@ -124,6 +331,11 @@
     window.addMsg = function adviserOsAddMsg(...args) {
       const result = originalAddMsg.apply(this, args);
       const who = args.length > 1 ? args[1] : 'hal';
+      if (who === 'hal' && pendingOrchestratorUi) {
+        const orchestratorResult = pendingOrchestratorUi;
+        pendingOrchestratorUi = null;
+        applyOrchestratorUi(orchestratorResult);
+      }
       if (who === 'hal' && pendingChatProposalDownloads) {
         const downloads = pendingChatProposalDownloads;
         pendingChatProposalDownloads = null;
@@ -222,4 +434,6 @@
   };
 
   ensureProposalControls();
+  ensureDocumentControls();
+  renderDocumentStatus();
 })();
