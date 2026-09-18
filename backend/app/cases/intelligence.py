@@ -99,6 +99,8 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
         confidence = "none"
     elif conflicts:
         confidence = "low"
+    elif plans and not all(plan["has_quotation"] for plan in plans):
+        confidence = "quote-only"
     elif completeness >= 0.8:
         confidence = "high"
     elif completeness >= 0.4:
