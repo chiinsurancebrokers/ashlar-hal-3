@@ -420,7 +420,9 @@
         body: JSON.stringify({
           applicant_state: state,
           plan_keys: [...compareSelected],
-          language: (state && state.language) || 'en'
+          language: (state && state.language) || 'en',
+          case_id: state && state._adviser_os_case_id ? state._adviser_os_case_id : null,
+          case_token: state && state._adviser_os_case_token ? state._adviser_os_case_token : null
         })
       });
       const data = await response.json();
