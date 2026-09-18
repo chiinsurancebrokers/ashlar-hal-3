@@ -16,6 +16,7 @@ from backend.app.agents.orchestrator_admin import (
     OrchestratorProposalError,
     generate_admin_proposal_bundle,
 )
+from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.cases.models import AshlarCase, CaseStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
@@ -167,6 +168,7 @@ def _orchestrated_ready_response(
         "recommendation": case.recommendation,
         "proposal": case.proposal,
         "case_status": case.status.value,
+        "case_intelligence": build_case_intelligence(case),
         "expires_at": artifact.expires_at.isoformat(),
         "downloads": {
             "pdf": str(request.url_for("download_proposal_pdf", proposal_id=proposal_id)),
