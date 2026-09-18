@@ -214,7 +214,41 @@ def _quote_engine_facts(selected) -> list[Fact]:
             facts.append(Fact(key="deductible_or_excess", value=deductible, **base))
     return facts
 
-def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarCase:
+def _comparison_evidence_facts(results: list[dict] | None) -> list[Fact]:
+    """Project server-held benefit-library evidence into the shared FactLedger.
+
+    Only results backed by the structured library are promoted. This is what
+    allows uploaded carrier documents to surface a real database-vs-document
+    conflict instead of comparing documents only with each other.
+    """
+    facts: list[Fact] = []
+    for result in results or []:
+        if not result.get("library_source"):
+            continue
+        plan_key = str(result.get("plan_key") or "")
+        analysis = result.get("analysis") if isinstance(result.get("analysis"), dict) else {}
+        provider = str(analysis.get("provider") or result.get("provider") or "") or None
+        if not plan_key:
+            continue
+        source = FactSource(
+            source_type=FactSourceType.CARRIER_TOB,
+            source_ref="server_benefit_library",
+        )
+        base = {
+            "subject": f"plan:{plan_key}",
+            "provider": provider,
+            "plan_key": plan_key,
+            "status": FactStatus.VERIFIED,
+            "confidence": 1.0,
+            "source": source,
+        }
+        for benefit, value in (analysis.get("benefits") or {}).items():
+            if value and str(value).strip().casefold() not in {"not confirmed", "not specified", "unknown"}:
+                facts.append(Fact(key=f"benefit.{benefit}", value=value, **base))
+    return facts
+
+
+def _server_case(req: CompareRequest, applicant: Applicant, selected, results: list[dict] | None = None) -> AshlarCase:
     # Medical free text is intentionally excluded from the proposal case store.
     sanitized_applicant = applicant.model_copy(update={"chronic_conditions_note": None}, deep=True)
     priorities = [field for field in applicant.must_have_keys()]
@@ -228,7 +262,7 @@ def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarC
             "medical_disclosure_present": bool(applicant.chronic_conditions_disclosed),
         },
         selected_plan_keys=[q.plan_key for q in selected if q.plan_key],
-        facts=_quote_engine_facts(selected),
+        facts=[*_quote_engine_facts(selected), *_comparison_evidence_facts(results)],
         metadata={"created_from": "server_quote_comparison"},
     )
 
@@ -238,6 +272,7 @@ def _reuse_market_case(
     *,
     applicant: Applicant,
     selected,
+    results: list[dict] | None = None,
 ) -> tuple[AshlarCase, str] | None:
     if req.case_id is None and not req.case_token:
         return None
@@ -272,7 +307,11 @@ def _reuse_market_case(
         if fact.source.source_type != FactSourceType.QUOTE_ENGINE
         and (not fact.plan_key or fact.plan_key in selected_keys)
     ]
-    case.facts = [*retained, *_quote_engine_facts(selected)]
+    case.facts = [
+        *retained,
+        *_quote_engine_facts(selected),
+        *_comparison_evidence_facts(results),
+    ]
     case.documents = [
         document
         for document in case.documents
@@ -316,9 +355,14 @@ async def compare(req: CompareRequest):
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 
     results = _server_results(selected, matrix_dict)
-    reused = _reuse_market_case(req, applicant=applicant, selected=selected)
+    reused = _reuse_market_case(
+        req,
+        applicant=applicant,
+        selected=selected,
+        results=results,
+    )
     if reused is None:
-        case = _server_case(req, applicant, selected)
+        case = _server_case(req, applicant, selected, results)
         record = CASE_ANALYSIS_STORE.put(case=case, results=results)
     else:
         case, access_token = reused
