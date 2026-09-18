@@ -668,7 +668,16 @@
     const content = document.getElementById('compareContent');
     content.innerHTML = '<p style="color:var(--muted)">Building your detailed comparison…</p>';
     document.getElementById('compareModal').classList.add('open');
-    setProposalContext(null);
+    const proposalButton = ensureProposalControls();
+    const proposalStatus = document.getElementById('proposalPrepareStatus');
+    if (proposalButton) {
+      proposalButton.style.display = 'none';
+      proposalButton.disabled = true;
+    }
+    if (proposalStatus) {
+      proposalStatus.textContent = 'Building the server-owned comparison…';
+      proposalStatus.style.color = 'var(--muted)';
+    }
 
     try {
       const response = await fetch(API + '/quotes/compare', {
@@ -688,7 +697,11 @@
       setProposalContext(data);
     } catch (error) {
       content.innerHTML = '<p style="color:#b3261e">' + esc(error.message) + '</p>';
-      setProposalContext(null);
+      if (proposalStatus) {
+        proposalStatus.textContent = 'The comparison could not be completed. Your active AshlarCase has been kept.';
+        proposalStatus.style.color = '#b3261e';
+      }
+      renderCaseWorkspace();
     }
   };
 
