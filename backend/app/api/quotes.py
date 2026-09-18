@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -42,6 +44,8 @@ class CompareRequest(BaseModel):
     applicant_state: dict = Field(default_factory=dict)
     plan_keys: list[str] = Field(min_length=2, max_length=4)
     language: str = Field(default="en", pattern="^(en|el)$")
+    case_id: UUID | None = None
+    case_token: str | None = Field(default=None, max_length=256)
 
 
 def _benefit_field(code: str, label: str) -> str | None:
@@ -218,6 +222,56 @@ def _server_case(req: CompareRequest, applicant: Applicant, selected) -> AshlarC
     )
 
 
+def _reuse_market_case(
+    req: CompareRequest,
+    *,
+    applicant: Applicant,
+    selected,
+) -> tuple[AshlarCase, str] | None:
+    if req.case_id is None and not req.case_token:
+        return None
+    if req.case_id is None or not req.case_token:
+        raise HTTPException(status_code=422, detail="case_id and case_token must be supplied together.")
+
+    record = CASE_ANALYSIS_STORE.get(req.case_id, req.case_token)
+    if record is None:
+        raise HTTPException(status_code=404, detail="The active AshlarCase is unavailable or expired.")
+
+    case = record.case.model_copy(deep=True)
+    selected_keys = [q.plan_key for q in selected if q.plan_key]
+    sanitized_applicant = applicant.model_copy(update={"chronic_conditions_note": None}, deep=True)
+    case.status = CaseStatus.COMPARISON
+    case.applicant = sanitized_applicant
+    case.client.display_name = (
+        str(req.applicant_state.get("applicant_name") or case.client.display_name or "Client").strip()[:200]
+        or "Client"
+    )
+    case.client.preferred_language = req.language
+    case.needs_profile = {
+        "priorities": list(applicant.must_have_keys()),
+        "medical_disclosure_present": bool(applicant.chronic_conditions_disclosed),
+    }
+    case.selected_plan_keys = selected_keys
+
+    # Preserve non-quote evidence only for plans that remain selected. The
+    # deterministic quote facts are rebuilt from the current rate engine.
+    retained = [
+        fact
+        for fact in case.facts
+        if fact.source.source_type != FactSourceType.QUOTE_ENGINE
+        and (not fact.plan_key or fact.plan_key in selected_keys)
+    ]
+    case.facts = [*retained, *_quote_engine_facts(selected)]
+    case.documents = [
+        document
+        for document in case.documents
+        if not document.plan_key or document.plan_key in selected_keys
+    ]
+    case.metadata["comparison_updated_from"] = "server_quote_comparison"
+    case.touch()
+    return case, req.case_token
+
+
 @router.post("/compare")
 async def compare(req: CompareRequest):
     """Detailed benefit-by-benefit comparison.
@@ -251,8 +305,19 @@ async def compare(req: CompareRequest):
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 
     results = _server_results(selected, matrix_dict)
-    case = _server_case(req, applicant, selected)
-    record = CASE_ANALYSIS_STORE.put(case=case, results=results)
+    reused = _reuse_market_case(req, applicant=applicant, selected=selected)
+    if reused is None:
+        case = _server_case(req, applicant, selected)
+        record = CASE_ANALYSIS_STORE.put(case=case, results=results)
+    else:
+        case, access_token = reused
+        record = CASE_ANALYSIS_STORE.save_analysis(
+            case=case,
+            results=results,
+            access_token=access_token,
+        )
+        if record is None:
+            raise HTTPException(status_code=409, detail="The AshlarCase expired while the comparison was being saved.")
     quality = case_quality(results)
     intelligence = build_case_intelligence(record.case)
 
