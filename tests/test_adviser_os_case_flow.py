@@ -133,3 +133,16 @@ def test_case_workspace_surfaces_journey_evidence_and_next_best_action():
     assert "HAL · next best action" in source
     assert "Discover" in source
     assert "Renew" in source
+
+
+
+def test_adviser_os_frontend_exposes_final_plan_choice_and_application_workspace():
+    response = client.get("/static/adviser-os.js")
+
+    assert response.status_code == 200
+    source = response.text
+    assert "choose-final-plan-btn" in source
+    assert "/select-plan" in source
+    assert "prepareApplication" in source
+    assert "/application/prepare" in source
+    assert "Application workspace" in source
