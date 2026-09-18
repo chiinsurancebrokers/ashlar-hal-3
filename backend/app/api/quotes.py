@@ -388,7 +388,7 @@ async def compare(req: CompareRequest):
         "case_id": str(record.case.case_id),
         "case_token": record.access_token,
         "case_expires_at": record.expires_at.isoformat(),
-        "proposal_available": bool(quality.get("can_generate")),
+        "proposal_available": bool(intelligence.get("ready_for_proposal")),
         "proposal_quality": quality,
         "case_intelligence": intelligence,
     }
