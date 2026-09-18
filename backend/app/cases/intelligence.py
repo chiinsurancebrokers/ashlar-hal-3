@@ -107,10 +107,15 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
         confidence = "low"
 
     next_actions: list[dict[str, str]] = []
-    if not case.documents:
+    if not case.selected_plan_keys:
+        next_actions.append({
+            "action": "select_shortlist_plans",
+            "reason": "Choose 2–4 eligible plans before requesting carrier evidence.",
+        })
+    elif not case.documents:
         next_actions.append({
             "action": "upload_carrier_documents",
-            "reason": "No carrier documents are attached to the active case.",
+            "reason": "No carrier documents are attached to the selected plans.",
         })
     if conflicts:
         next_actions.append({
