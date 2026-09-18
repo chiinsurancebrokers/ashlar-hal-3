@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from backend.app.api.adviser import AdviserHandleRequest, dispatch_adviser_request
+from backend.app.api.journey import router as journey_router
 from backend.app.core.config import get_settings
 from backend.app.core.rate_limit import SimpleRateLimitMiddleware
 
@@ -21,10 +22,12 @@ app = FastAPI(
 
 app.add_middleware(
     SimpleRateLimitMiddleware,
-    limited_prefixes=("/v1/handle",),
+    limited_prefixes=("/v1/handle", "/v1/journey"),
     max_requests=30,
     window_seconds=60,
 )
+
+app.include_router(journey_router, prefix="/v1")
 
 
 @app.get("/health")
