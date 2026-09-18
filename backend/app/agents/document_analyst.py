@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 from uuid import UUID
 
@@ -14,6 +15,132 @@ from .contracts import SpecialistName, SpecialistResponse
 from .document_extraction_model import extract_candidate_analysis
 from .document_synthesis import synthesize_server_documents
 
+
+
+_MISSING = {
+    "",
+    "not specified",
+    "not mentioned",
+    "unknown",
+    "not confirmed",
+    "n/a",
+    "none",
+    "null",
+}
+
+
+def _missing(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.strip().casefold() in _MISSING
+    return False
+
+
+def _merge_unique(base: list[Any] | None, extra: list[Any] | None) -> list[Any]:
+    merged: list[Any] = []
+    signatures: set[str] = set()
+    for item in list(base or []) + list(extra or []):
+        signature = repr(item)
+        if signature in signatures:
+            continue
+        signatures.add(signature)
+        merged.append(deepcopy(item))
+    return merged
+
+
+def _merge_document_analysis(
+    results: list[dict[str, Any]],
+    *,
+    plan_key: str | None,
+    envelope: dict[str, Any],
+    role: str,
+) -> list[dict[str, Any]]:
+    """Merge document findings without weakening deterministic quote authority."""
+    merged_results = deepcopy(results)
+    if not plan_key:
+        return merged_results
+
+    document_analysis = deepcopy(envelope.get("analysis") or {})
+    focused_rows = deepcopy(envelope.get("focused_rows") or [])
+    target_index = next(
+        (
+            index
+            for index, item in enumerate(merged_results)
+            if str(item.get("plan_key") or "") == str(plan_key)
+        ),
+        None,
+    )
+
+    if target_index is None:
+        merged_results.append({
+            "plan_key": plan_key,
+            "provider": document_analysis.get("provider") or envelope.get("provider"),
+            "target_plan": document_analysis.get("plan_name") or envelope.get("target_plan"),
+            "focused_rows": focused_rows,
+            "analysis": document_analysis,
+            "library_source": bool(focused_rows),
+            "document_evidence_present": True,
+        })
+        return merged_results
+
+    target = deepcopy(merged_results[target_index])
+    base_analysis = deepcopy(target.get("analysis") or {})
+    combined = deepcopy(base_analysis)
+
+    for key, value in document_analysis.items():
+        if key in {"provider", "plan_name", "premium", "benefits", "source_evidence"}:
+            continue
+        if key in {"waiting_periods", "optional_benefits", "critical_limitations"}:
+            combined[key] = _merge_unique(
+                base_analysis.get(key),
+                value if isinstance(value, list) else [],
+            )
+            continue
+        if key == "underwriting" and isinstance(value, dict):
+            underwriting = deepcopy(base_analysis.get("underwriting") or {})
+            for subkey, subvalue in value.items():
+                if not _missing(subvalue):
+                    underwriting[subkey] = deepcopy(subvalue)
+            combined["underwriting"] = underwriting
+            continue
+        if _missing(combined.get(key)) and not _missing(value):
+            combined[key] = deepcopy(value)
+
+    for protected in (
+        "provider",
+        "plan_name",
+        "premium",
+        "deductible_or_excess",
+        "annual_limit",
+        "area_of_cover",
+    ):
+        base_value = base_analysis.get(protected)
+        doc_value = document_analysis.get(protected)
+        combined[protected] = deepcopy(
+            base_value if not _missing(base_value) else doc_value
+        )
+
+    benefits = deepcopy(base_analysis.get("benefits") or {})
+    for benefit, value in (document_analysis.get("benefits") or {}).items():
+        if _missing(value):
+            continue
+        if role.casefold() in {"quotation", "quote", "carrier_quote"} or _missing(benefits.get(benefit)):
+            benefits[benefit] = deepcopy(value)
+    combined["benefits"] = benefits
+    combined["source_evidence"] = _merge_unique(
+        base_analysis.get("source_evidence"),
+        document_analysis.get("source_evidence")
+        if isinstance(document_analysis.get("source_evidence"), list)
+        else [],
+    )
+
+    target["analysis"] = combined
+    target["focused_rows"] = _merge_unique(target.get("focused_rows"), focused_rows)
+    target["library_source"] = bool(target.get("library_source") or focused_rows)
+    target["document_evidence_present"] = True
+    merged_results[target_index] = target
+    return merged_results
 
 class DocumentAnalyst:
     """Proposal Studio's document/evidence specialist.
@@ -95,6 +222,7 @@ class DocumentAnalyst:
             )
 
         case = stored_record.case.model_copy(deep=True)
+        proposal_results = deepcopy(stored_record.results)
         analyses: list[dict[str, Any]] = []
 
         # Analyse each source independently so every Fact retains the real
@@ -121,6 +249,12 @@ class DocumentAnalyst:
                 **kwargs,
             )
             case = run.case
+            proposal_results = _merge_document_analysis(
+                proposal_results,
+                plan_key=item.plan_key,
+                envelope=run.envelope,
+                role=item.role,
+            )
             # Do not return run.envelope here. It contains the deep-analysis
             # prompt and therefore extracted document text. Public clients only
             # receive metadata and the separately sanitised synthesis below.
@@ -140,7 +274,11 @@ class DocumentAnalyst:
                 "fact_count_after_document": len(case.facts),
             })
 
-        saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
+        saved = CASE_ANALYSIS_STORE.save_analysis(
+            case=case,
+            results=proposal_results,
+            access_token=case_token,
+        )
         if saved is None:
             return SpecialistResponse(
                 specialist=self.name,
@@ -160,6 +298,7 @@ class DocumentAnalyst:
                 "case_id": str(case.case_id),
                 "document_count": len(records),
                 "fact_count": len(case.facts),
+                "analysis_result_count": len(proposal_results),
                 "analyses": analyses,
                 "model_synthesis": synthesis,
             },
@@ -222,7 +361,17 @@ class DocumentAnalyst:
         )
 
         if stored_record is not None and case_token:
-            CASE_ANALYSIS_STORE.save_case(case=run.case, access_token=case_token)
+            proposal_results = _merge_document_analysis(
+                stored_record.results,
+                plan_key=str(ctx.get("plan_key") or "") or document.plan_key,
+                envelope=run.envelope,
+                role=document.document_type,
+            )
+            CASE_ANALYSIS_STORE.save_analysis(
+                case=run.case,
+                results=proposal_results,
+                access_token=case_token,
+            )
 
         return SpecialistResponse(
             specialist=self.name,
