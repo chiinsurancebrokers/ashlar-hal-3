@@ -170,6 +170,12 @@
           missing_material_keys:[], conflicting_material_keys:[]
         }));
 
+    const documentChips = uploadedDocuments.map(item =>
+      '<span class="adviser-doc-chip ' + (item.analysed ? 'done' : '') + '">' +
+      (item.analysed ? '✓ ' : '↻ ') + esc(item.filename) + ' · ' + esc(item.role) +
+      '</span>'
+    ).join('');
+
     const evidenceRows = plans.map(plan => {
       const roles = new Set(plan.document_roles || []);
       const quotation = plan.has_quotation || roles.has('quotation') || roles.has('quote') || roles.has('carrier_quote');
@@ -206,6 +212,7 @@
         '<div class="adviser-metric"><strong>' + conflicts + '</strong><span>evidence conflicts</span></div>' +
         '<div class="adviser-metric"><strong>' + esc(confidence) + '</strong><span>evidence confidence</span></div>' +
       '</div>' +
+      (documentChips ? '<div class="adviser-evidence"><div class="adviser-evidence-title">Case documents</div>' + documentChips + '</div>' : '') +
       (evidenceRows ? '<div class="adviser-evidence"><div class="adviser-evidence-title">Evidence by plan</div>' + evidenceRows + '</div>' : '') +
       '<div class="adviser-next-action">' +
         '<div class="adviser-next-copy"><div class="adviser-next-label">HAL · next best action</div>' +
@@ -516,12 +523,17 @@
     if (!chat) return;
 
     const card = document.createElement('div');
-    card.className = 'msg hal';
-    card.innerHTML = '<div style="font-weight:700;margin-bottom:8px">Ashlar proposal files</div>' +
+    card.className = 'msg hal adviser-proposal-card';
+    card.innerHTML = '<div style="font-size:10px;color:#aeb9c9;text-transform:uppercase;letter-spacing:.06em;font-weight:800">Ashlar Assessment</div>' +
+      '<div style="font-weight:800;font-size:15px;margin:3px 0 6px">Your client proposal is ready</div>' +
+      '<div style="font-size:12px;color:#d3dae5;margin-bottom:10px">The PDF and PowerPoint use the same server-owned case evidence HAL has been discussing with you.</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-      '<a class="q-primary" style="text-decoration:none;text-align:center;display:inline-block;flex:0 0 auto;padding:9px 14px" href="' + esc(downloads.pdf) + '" target="_blank" rel="noopener">Download PDF</a>' +
-      '<a class="q-secondary" style="text-decoration:none;text-align:center;display:inline-block;padding:9px 14px" href="' + esc(downloads.pptx) + '" target="_blank" rel="noopener">Download PowerPoint</a>' +
-      '</div><div style="font-size:10px;color:var(--muted);margin-top:8px">These links are temporary and are not cached by the browser.</div>';
+      '<a class="q-primary" style="text-decoration:none;text-align:center;display:inline-block;flex:0 0 auto;padding:9px 14px" href="' + esc(downloads.pdf) + '" target="_blank" rel="noopener">PDF proposal</a>' +
+      '<a class="q-secondary" style="text-decoration:none;text-align:center;display:inline-block;padding:9px 14px" href="' + esc(downloads.pptx) + '" target="_blank" rel="noopener">PowerPoint</a>' +
+      '<button class="q-secondary explain-proposal-btn" style="padding:9px 14px">Ask HAL to explain</button>' +
+      '</div><div style="font-size:10px;color:#aeb9c9;margin-top:8px">Temporary, no-store download links.</div>';
+    const explainButton = card.querySelector('.explain-proposal-btn');
+    if (explainButton) explainButton.onclick = () => askHal('Walk me through the Ashlar Assessment and explain the trade-offs in this proposal.');
     chat.appendChild(card);
     card.scrollIntoView({behavior: 'smooth', block: 'start'});
 
