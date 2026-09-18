@@ -21,6 +21,12 @@ class OrchestrationIntent(str, Enum):
     PROPOSAL = "proposal"
     HEALTH = "health"
     HEALTH_POLICY = "health_policy"
+    PLAN_SELECTION = "plan_selection"
+    APPLICATION = "application"
+    POLICY_WALLET = "policy_wallet"
+    PREAUTHORISATION = "preauthorisation"
+    CLAIM = "claim"
+    RENEWAL = "renewal"
 
 
 class StrictAgentModel(BaseModel):
