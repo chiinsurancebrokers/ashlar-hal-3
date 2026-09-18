@@ -632,6 +632,7 @@
         ps3.classList.add('active');
         ps3.classList.remove('done');
       }
+      if (data.case_intelligence) lastCaseIntelligence = data.case_intelligence;
       lastNextBestAction = {
         action:'present_proposal_to_client',
         reason:'The evidence-grounded Ashlar proposal is ready for client review.'
