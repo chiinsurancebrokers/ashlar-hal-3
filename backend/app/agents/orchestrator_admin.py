@@ -55,6 +55,7 @@ async def generate_admin_proposal_bundle(
             "case_token": record.access_token,
             "language": language,
             "strict_narrative": strict_narrative,
+            "_authorised_manual_proposal": True,
         },
     )
     response = next(
