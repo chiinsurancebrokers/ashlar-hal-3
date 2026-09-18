@@ -176,6 +176,9 @@ class AshlarCase(StrictModel):
     needs_profile: dict[str, Any] = Field(default_factory=dict)
     existing_policy: dict[str, Any] | None = None
     selected_plan_keys: list[str] = Field(default_factory=list)
+    # Stage 13: the single plan explicitly chosen by the client/broker after
+    # comparison. This is deliberately separate from the comparison shortlist.
+    selected_plan_key: str | None = Field(default=None, max_length=200)
 
     documents: list[CaseDocument] = Field(default_factory=list)
     facts: list[Fact] = Field(default_factory=list)
@@ -187,6 +190,7 @@ class AshlarCase(StrictModel):
     proposal: dict[str, Any] | None = None
     application: dict[str, Any] | None = None
     policy: dict[str, Any] | None = None
+    preauthorisations: list[dict[str, Any]] = Field(default_factory=list)
     claims: list[dict[str, Any]] = Field(default_factory=list)
     renewal: dict[str, Any] | None = None
 
