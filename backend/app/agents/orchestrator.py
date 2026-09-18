@@ -115,6 +115,54 @@ def classify_orchestration_intent(message: str) -> OrchestrationDecision:
     has_document = _contains_any(text, _DOCUMENT_WORDS) and _contains_any(text, _DOCUMENT_ACTIONS)
     has_proposal = _contains_any(text, _PROPOSAL_WORDS) and _contains_any(text, _PROPOSAL_ACTIONS)
 
+    if _contains_any(text, _PREAUTHORISATION_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.PREAUTHORISATION,
+            specialists=[],
+            deterministic_engines=["policy_engine", "preauthorisation_workflow"],
+            reason="Pre-authorisation is an active-policy workflow governed by policy evidence and case state.",
+        )
+
+    if _contains_any(text, _CLAIM_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.CLAIM,
+            specialists=[],
+            deterministic_engines=["claim_workflow"],
+            reason="Claims are recorded as deterministic lifecycle workflows; document specialists are added only when evidence is attached.",
+        )
+
+    if _contains_any(text, _RENEWAL_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.RENEWAL,
+            specialists=[],
+            deterministic_engines=["renewal_workflow", "quote_engine"],
+            reason="Renewal restarts market review on the same AshlarCase using the deterministic quote engine.",
+        )
+
+    if _contains_any(text, _POLICY_WALLET_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.POLICY_WALLET,
+            specialists=[],
+            deterministic_engines=["policy_engine", "policy_wallet"],
+            reason="Policy Wallet is built only from issued-policy state and verified policy facts.",
+        )
+
+    if _contains_any(text, _PLAN_SELECTION_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.PLAN_SELECTION,
+            specialists=[],
+            deterministic_engines=["plan_selection_workflow"],
+            reason="The client is making the human plan choice; the orchestrator records it without asking an LLM to choose.",
+        )
+
+    if _contains_any(text, _APPLICATION_WORDS):
+        return OrchestrationDecision(
+            intent=OrchestrationIntent.APPLICATION,
+            specialists=[],
+            deterministic_engines=["application_workflow"],
+            reason="Application preparation is a deterministic lifecycle workflow; HAL may later explain missing sections.",
+        )
+
     if _contains_any(text, _COVERAGE_WORDS) and (
         _contains_any(text, _CLINICAL_WORDS) or "asklepios" in text or "kira" in text
     ):
