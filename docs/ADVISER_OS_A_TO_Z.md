@@ -45,14 +45,14 @@ The client or broker makes the final insurance choice. HAL explains evidence and
 | 10 | HAL explains differences | `hal_adviser` | Live |
 | 11 | Ashlar Assessment produced | `proposal_writer` / Proposal Studio | Live |
 | 12 | PDF/PPTX proposal produced | `proposal_writer` | Live |
-| 13 | Client selects plan | Human decision recorded by AshlarOrchestrator | Next |
-| 14 | Application preparation | workflow service + `hal_adviser` for guided collection | Foundation in AshlarCase |
-| 15 | Policy issued | policy workflow under AshlarOrchestrator | Foundation in AshlarCase |
-| 16 | Policy Wallet | deterministic policy service | Next |
-| 17 | Asklepios health navigation | `health_navigator` → Asklepios service | Adapter ready |
-| 18 | Pre-authorisation | `health_navigator` + Policy Engine + workflow service | Future integration |
-| 19 | Claims | AshlarOrchestrator + document/policy specialists as needed | Foundation in AshlarCase |
-| 20 | Renewal comparison | AshlarOrchestrator → Quote Engine + document analysis + HAL | Foundation in AshlarCase |
+| 13 | Client selects plan | Human decision recorded by AshlarOrchestrator | Live workflow + HAL UI |
+| 14 | Application preparation | deterministic application workflow + HAL guidance | Live checklist foundation; carrier-specific forms next |
+| 15 | Policy issued | broker-authorised policy workflow under AshlarOrchestrator | Live backend workflow |
+| 16 | Policy Wallet | deterministic issued-policy + FactLedger projection | Live backend workflow |
+| 17 | Asklepios health navigation | `health_navigator` → Asklepios service | Adapter live; external Asklepios endpoint still required |
+| 18 | Pre-authorisation | Policy Engine + deterministic pre-authorisation workflow | Live backend foundation |
+| 19 | Claims | deterministic claim workflow; document analysis added when evidence exists | Live backend foundation |
+| 20 | Renewal comparison | AshlarOrchestrator → renewal workflow + Quote Engine | Live backend foundation |
 
 ## Case continuity rule
 
@@ -135,3 +135,43 @@ Renewal
 ```
 
 This keeps HAL feeling like one adviser while preserving clear factual authority and auditability.
+
+
+## Dedicated AshlarOrchestrator FastAPI
+
+The orchestrator now has its own ASGI application:
+
+```bash
+uvicorn backend.app.orchestrator_main:app --host 0.0.0.0 --port 8000
+```
+
+Primary endpoints:
+
+```text
+GET  /health
+POST /v1/handle
+
+POST /v1/journey/{case_id}/select-plan
+POST /v1/journey/{case_id}/application/prepare
+POST /v1/journey/{case_id}/application/sections/complete
+POST /v1/journey/{case_id}/application/submit
+POST /v1/journey/{case_id}/policy/issue
+GET  /v1/journey/{case_id}/policy/wallet
+POST /v1/journey/{case_id}/preauthorisations
+POST /v1/journey/{case_id}/claims
+POST /v1/journey/{case_id}/renewal/start
+```
+
+Every lifecycle endpoint delegates to `AshlarOrchestrator`; no API route owns a
+specialist or workflow service directly.
+
+### Deployment constraint
+
+The FastAPI boundary is standalone, but the current Case/Analysis registry is
+still process-local. Therefore HAL and AshlarOrchestrator should **not** be run
+as separate production processes until the case store is moved to shared
+durable persistence (for example Postgres/Supabase).
+
+Until that migration, the dedicated app is the clean service boundary and test
+target, while the HAL application mounts the same orchestrator-owned lifecycle
+routes in-process so one AshlarCase remains authoritative.
