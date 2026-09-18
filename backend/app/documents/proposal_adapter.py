@@ -21,6 +21,19 @@ def _plan_key(provider: str, plan_name: str, override: str | None = None) -> str
     return f"{_slug(provider) or 'provider'}:{_slug(plan_name) or 'plan'}"
 
 
+def _numeric_amount(value: Any) -> Any:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        raw = value.strip().replace(",", "")
+        if re.fullmatch(r"-?\d+(?:\.\d+)?", raw):
+            try:
+                return float(raw)
+            except ValueError:
+                pass
+    return value
+
+
 def _source_type(document_type: str) -> FactSourceType:
     key = str(document_type or "").strip().casefold().replace("-", "_").replace(" ", "_")
     if key in {"quote", "quotation", "certificate", "carrier_quote"}:
@@ -127,7 +140,7 @@ def analysis_to_facts(
     add("plan_name", plan_name)
 
     premium = analysis.get("premium") or {}
-    add("premium_amount", premium.get("amount"), currency=premium.get("currency"), evidence_key="premium")
+    add("premium_amount", _numeric_amount(premium.get("amount")), currency=premium.get("currency"), evidence_key="premium")
     add("premium_frequency", premium.get("frequency"), evidence_key="premium")
     add("deductible_or_excess", analysis.get("deductible_or_excess"))
     add("annual_limit", analysis.get("annual_limit"))
