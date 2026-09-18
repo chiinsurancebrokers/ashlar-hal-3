@@ -106,7 +106,11 @@ def plan_next_best_action(
             action=action,
             owner=owner,
             reason=reason,
-            blocked=action in {"upload_carrier_documents", "complete_plan_evidence"},
+            blocked=action in {
+                "select_shortlist_plans",
+                "upload_carrier_documents",
+                "complete_plan_evidence",
+            },
         )
 
     if decision.intent == OrchestrationIntent.QUOTE and result_payload.get("quotes"):
