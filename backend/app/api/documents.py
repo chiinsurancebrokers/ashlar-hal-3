@@ -25,6 +25,7 @@ _ROLE_TO_TYPE = {
     "quotation": "quotation",
     "brochure": "brochure",
     "wording": "policy_wording",
+    "existing_policy": "existing_policy",
 }
 
 
@@ -41,7 +42,7 @@ async def upload_carrier_document(
     case_token: str = Form(...),
     provider_label: str = Form(...),
     target_plan: str = Form(...),
-    role: Literal["quotation", "brochure", "wording"] = Form(...),
+    role: Literal["quotation", "brochure", "wording", "existing_policy"] = Form(...),
     plan_key: str | None = Form(default=None),
     file: UploadFile = File(...),
 ):
@@ -62,13 +63,18 @@ async def upload_carrier_document(
     target = _clean_label(target_plan, name="target_plan", max_length=200)
     resolved_plan_key = _clean_label(plan_key, name="plan_key", max_length=200) if plan_key else None
     selected_plan_keys = [str(value) for value in record.case.selected_plan_keys if str(value)]
-    if resolved_plan_key is None:
-        if len(selected_plan_keys) == 1:
-            resolved_plan_key = selected_plan_keys[0]
-        elif selected_plan_keys:
-            raise HTTPException(status_code=422, detail="plan_key is required when the case contains multiple selected plans.")
-    if resolved_plan_key and selected_plan_keys and resolved_plan_key not in selected_plan_keys:
-        raise HTTPException(status_code=422, detail="The document plan_key is not selected in the active case.")
+    if role == "existing_policy":
+        # A client's current policy is a baseline for comparison, not one of
+        # the shortlisted replacement plans.
+        resolved_plan_key = "existing_policy"
+    else:
+        if resolved_plan_key is None:
+            if len(selected_plan_keys) == 1:
+                resolved_plan_key = selected_plan_keys[0]
+            elif selected_plan_keys:
+                raise HTTPException(status_code=422, detail="plan_key is required when the case contains multiple selected plans.")
+        if resolved_plan_key and selected_plan_keys and resolved_plan_key not in selected_plan_keys:
+            raise HTTPException(status_code=422, detail="The document plan_key is not selected in the active case.")
 
     # When the case already has a server-built comparison, plan identity comes
     # from that record rather than browser labels.
@@ -164,6 +170,7 @@ async def upload_carrier_document(
             "provider": provider,
             "target_plan": target,
             "plan_key": resolved_plan_key,
+            "comparison_role": "current_policy" if role == "existing_policy" else "candidate_plan",
             "pages": extraction.pages,
             "target_plan_isolated": bool(focused_context),
             "isolated_table_rows": isolated_rows,
