@@ -425,11 +425,10 @@
       '</div>' +
       '<div class="adviser-journey">' + phaseHtml + '</div>' +
       '<div class="adviser-toolchain">' +
-        '<span class="adviser-toolstep ' + (currentPhase==='discover'?'active':'') + '">Quote Engine</span>' +
-        '<span class="adviser-toolstep ' + (currentPhase==='compare'?'active':'') + '">Document Analysis</span>' +
-        '<span class="adviser-toolstep ' + (conflicts?'active':'') + '">Conflict Check</span>' +
+        '<span class="adviser-toolstep ' + (currentPhase==='discover'?'active':'') + '">Find plans</span>' +
+        '<span class="adviser-toolstep ' + (currentPhase==='compare'?'active':'') + '">Compare</span>' +
         '<span class="adviser-toolstep ' + (intel.ready_for_proposal?'active':'') + '">Ashlar Assessment</span>' +
-        '<span class="adviser-toolstep">PDF / PPTX</span>' +
+        '<span class="adviser-toolstep">Proposal</span>' +
         '<span class="adviser-toolstep ' + (currentPhase==='decide'?'active':'') + '">Application</span>' +
       '</div>' +
       '<div class="adviser-case-metrics">' +
@@ -462,8 +461,8 @@
       evidenceButton = document.createElement('button');
       evidenceButton.id = 'attachEvidenceFromCompareBtn';
       evidenceButton.className = 'btn-secondary';
-      evidenceButton.textContent = 'Attach carrier evidence';
-      evidenceButton.style.display = 'none';
+      evidenceButton.textContent = 'Broker evidence review';
+      evidenceButton.style.display = 'none'; // internal broker workflow; never request carrier files from the retail user
       evidenceButton.onclick = () => {
         document.getElementById('compareModal')?.classList.remove('open');
         openDocumentUpload();
@@ -553,7 +552,7 @@
   function renderDocumentStatus() {
     const status = document.getElementById('adviserDocumentStatus');
     const button = ensureDocumentControls();
-    if (button) button.style.display = (proposalCase && comparisonPlans.length) ? '' : 'none';
+    if (button) button.style.display = 'none'; // carrier evidence is a broker/internal responsibility
     if (!status) return;
 
     if (!proposalCase || !uploadedDocuments.length) {
@@ -742,10 +741,10 @@
       return;
     }
 
-    if (evidenceButton) evidenceButton.style.display = '';
-    button.style.display = '';
-    button.disabled = !response.proposal_available;
-    button.textContent = response.proposal_available ? 'Prepare proposal' : 'Carrier quotations required';
+    if (evidenceButton) evidenceButton.style.display = 'none';
+    button.style.display = response.proposal_available ? '' : 'none';
+    button.disabled = false;
+    button.textContent = 'Prepare proposal';
     if (status) {
       if (response.proposal_available) {
         const review = response.proposal_quality && response.proposal_quality.status === 'review';
@@ -754,8 +753,8 @@
           : 'Verified server-side comparison saved. Proposal Studio is ready.';
         status.style.color = review ? '#a15c00' : 'var(--good)';
       } else {
-        status.textContent = 'Attach the applicant-specific carrier quotation for each selected plan. HAL will analyse them, check conflicts and then unlock the proposal.';
-        status.style.color = '#a15c00';
+        status.textContent = 'Shortlist comparison ready. Ashlar will verify any insurer-specific quotation and final terms internally before the client proposal is issued.';
+        status.style.color = 'var(--muted)';
       }
     }
   }
