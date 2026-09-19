@@ -31,6 +31,7 @@
       .adviser-phase.completed{color:var(--good);border-color:var(--good)}
       .adviser-phase.current{color:var(--navy);font-weight:800;border-color:var(--accent)}
       .adviser-case-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:9px 14px}
+      .adviser-toolchain{display:flex;gap:5px;overflow-x:auto;padding:8px 14px 2px}.adviser-toolstep{white-space:nowrap;font-size:9px;font-weight:800;padding:5px 7px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--muted)}.adviser-toolstep.active{background:var(--accent-soft);border-color:#d9d3ff;color:var(--accent)}
       .adviser-metric{background:var(--bg);border-radius:10px;padding:8px 9px;min-width:0}
       .adviser-metric strong{display:block;font-size:14px}
       .adviser-metric span{display:block;font-size:9.5px;color:var(--muted);margin-top:1px}
@@ -423,6 +424,14 @@
         '<span class="adviser-case-badge">' + esc(phaseLabel(currentPhase)) + '</span>' +
       '</div>' +
       '<div class="adviser-journey">' + phaseHtml + '</div>' +
+      '<div class="adviser-toolchain">' +
+        '<span class="adviser-toolstep ' + (currentPhase==='discover'?'active':'') + '">Quote Engine</span>' +
+        '<span class="adviser-toolstep ' + (currentPhase==='compare'?'active':'') + '">Document Analysis</span>' +
+        '<span class="adviser-toolstep ' + (conflicts?'active':'') + '">Conflict Check</span>' +
+        '<span class="adviser-toolstep ' + (intel.ready_for_proposal?'active':'') + '">Ashlar Assessment</span>' +
+        '<span class="adviser-toolstep">PDF / PPTX</span>' +
+        '<span class="adviser-toolstep ' + (currentPhase==='decide'?'active':'') + '">Application</span>' +
+      '</div>' +
       '<div class="adviser-case-metrics">' +
         '<div class="adviser-metric"><strong>' + completeness + '%</strong><span>material facts ready</span></div>' +
         '<div class="adviser-metric"><strong>' + docs + '</strong><span>carrier documents</span></div>' +
@@ -447,6 +456,20 @@
     if (!modal) return null;
     const actions = modal.querySelector('.modal-actions');
     if (!actions) return null;
+
+    let evidenceButton = document.getElementById('attachEvidenceFromCompareBtn');
+    if (!evidenceButton) {
+      evidenceButton = document.createElement('button');
+      evidenceButton.id = 'attachEvidenceFromCompareBtn';
+      evidenceButton.className = 'btn-secondary';
+      evidenceButton.textContent = 'Attach carrier evidence';
+      evidenceButton.style.display = 'none';
+      evidenceButton.onclick = () => {
+        document.getElementById('compareModal')?.classList.remove('open');
+        openDocumentUpload();
+      };
+      actions.appendChild(evidenceButton);
+    }
 
     let button = document.getElementById('prepareProposalBtn');
     if (!button) {
@@ -687,6 +710,7 @@
 
   function setProposalContext(response) {
     const button = ensureProposalControls();
+    const evidenceButton = document.getElementById('attachEvidenceFromCompareBtn');
     const status = document.getElementById('proposalPrepareStatus');
     if (!button) return;
 
@@ -713,10 +737,12 @@
 
     if (!proposalCase) {
       button.style.display = 'none';
+      if (evidenceButton) evidenceButton.style.display = 'none';
       if (status) status.textContent = '';
       return;
     }
 
+    if (evidenceButton) evidenceButton.style.display = '';
     button.style.display = '';
     button.disabled = !response.proposal_available;
     button.textContent = response.proposal_available ? 'Prepare proposal' : 'Carrier quotations required';
