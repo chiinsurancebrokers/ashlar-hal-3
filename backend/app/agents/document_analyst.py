@@ -233,7 +233,7 @@ class DocumentAnalyst:
             kwargs = {
                 "quotation_text": item.extracted_text if role == "quotation" else "",
                 "brochure_text": item.extracted_text if role == "brochure" else "",
-                "wording_text": item.extracted_text if role == "wording" else "",
+                "wording_text": item.extracted_text if role in {"wording", "existing_policy"} else "",
                 "focused_table_context": item.focused_table_context if role == "brochure" else "",
             }
 
@@ -255,6 +255,11 @@ class DocumentAnalyst:
                 envelope=run.envelope,
                 role=item.role,
             )
+            if role == "existing_policy":
+                for result in proposal_results:
+                    if str(result.get("plan_key") or "") == "existing_policy":
+                        result["comparison_role"] = "current_policy"
+                        result["client_supplied_baseline"] = True
             # Do not return run.envelope here. It contains the deep-analysis
             # prompt and therefore extracted document text. Public clients only
             # receive metadata and the separately sanitised synthesis below.
