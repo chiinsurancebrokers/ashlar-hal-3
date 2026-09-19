@@ -98,6 +98,11 @@ _RENEWAL_WORDS = (
     "ανανέωση", "ανανεώσουμε το συμβόλαιο", "ανανεώσουμε το ασφαλιστήριο",
 )
 
+_AFFIRMATIVE_WORDS = (
+    "yes", "yes please", "sure", "ok", "okay", "please do", "go ahead",
+    "ναι", "βεβαίως", "φυσικά", "προχώρα", "προχωράμε",
+)
+
 
 def _contains_any(text: str, needles: tuple[str, ...]) -> bool:
     return any(needle in text for needle in needles)
@@ -1058,6 +1063,49 @@ class AshlarOrchestrator:
         intelligence = self._case_intelligence(case_id=resolved_case_id, context=ctx)
         if intelligence:
             ctx["case_intelligence"] = intelligence
+
+        # Discovery has already created an AshlarCase, but a market-review case
+        # is not yet an evidence comparison. A short affirmative such as "Yes"
+        # must therefore continue the visible journey instead of falling into
+        # evidence-aware advice with an empty comparison snapshot.
+        record = self._stored_record(case_id=resolved_case_id, context=ctx)
+        state = ctx.get("state") if isinstance(ctx.get("state"), dict) else {}
+        normalized_message = re.sub(r"\\s+", " ", str(message or "").strip().casefold())
+        if (
+            record is not None
+            and state.get("discovery_complete")
+            and not record.case.selected_plan_keys
+            and normalized_message in _AFFIRMATIVE_WORDS
+        ):
+            applicant = record.case.applicant
+            quotes = quote_shortlist(applicant, get_settings()) if applicant is not None else []
+            response = SpecialistResponse(
+                specialist=SpecialistName.HAL_ADVISER,
+                status="completed",
+                reply=(
+                    "Absolutely. The shortlist is the market-discovery step. "
+                    "Now choose 2–4 plans using + Compare. I will create the grounded comparison on this same AshlarCase; "
+                    "after that you can attach the actual carrier quotations, brochure/Table of Benefits and policy wording "
+                    "for document analysis, conflict checking and the Ashlar Assessment."
+                ),
+                payload={
+                    "state": dict(state),
+                    "quotes": [q.model_dump(mode="json") for q in quotes],
+                    "excluded_plans": [],
+                    "quick_replies": [],
+                    "journey": "ipmi",
+                    "followup_message": "Select 2–4 plans below, then open Compare. The evidence and Proposal Studio workflow starts from that comparison.",
+                    "mode": "adviser_os_market_review_continuation",
+                },
+            )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                responses=[response],
+                payload={"case_intelligence": intelligence} if intelligence else {},
+            )
+
         response = await self.hal_adviser.handle(
             case_id=resolved_case_id,
             message=message,
