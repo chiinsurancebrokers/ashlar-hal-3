@@ -33,6 +33,12 @@ class Settings(BaseSettings):
 
     database_url: str | None = None
 
+    # Server-only bridge to Proposal Studio's persistent Provider Library.
+    # The browser never receives this key or raw provider-library text.
+    proposal_library_api_url: str | None = None
+    proposal_library_api_key: str | None = None
+    proposal_library_timeout_seconds: int = 12
+
     # SECURITY: admin_password has NO default. If it is not set, the admin
     # endpoint refuses every request (fail-closed) instead of silently
     # allowing unauthenticated access. See api/admin.py.
