@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from backend.app.cases.models import AshlarCase, CaseStatus, FactSourceType, FactStatus
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.main import app
+from backend.app.schemas.applicant import Applicant
 
 
 client = TestClient(app)
@@ -158,3 +159,50 @@ def test_application_workspace_renders_carrier_blueprint_and_safety_boundaries()
     assert "adviser-application-warning" in source
     assert "Work on this" in source
     assert "do not infer declarations, medical answers or signatures" in source
+
+
+def test_affirmative_after_discovery_continues_into_adviser_os_shortlist_workflow():
+    applicant_payload, _ = _comparison_payload()
+    applicant_payload["chronic_conditions_note"] = None
+    market = CASE_ANALYSIS_STORE.put(
+        case=AshlarCase(
+            status=CaseStatus.MARKET_REVIEW,
+            applicant=Applicant(**applicant_payload),
+            needs_profile={"priorities": ["outpatient_required"]},
+        ),
+        results=[],
+    )
+
+    response = client.post(
+        "/api/v1/chat/turn",
+        json={
+            "message": "Yes",
+            "state": {
+                **applicant_payload,
+                "discovery_complete": True,
+                "_adviser_os_case_id": str(market.case.case_id),
+                "_adviser_os_case_token": market.access_token,
+            },
+            "history": [],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert "choose 2–4 plans" in data["reply"].lower()
+    assert len(data["quotes"]) >= 2
+    assert data["_adviser_os"]["case_id"] == str(market.case.case_id)
+
+
+def test_adviser_os_ui_exposes_evidence_pipeline_and_carrier_upload_from_compare():
+    response = client.get("/static/adviser-os.js")
+
+    assert response.status_code == 200
+    source = response.text
+    assert "Quote Engine" in source
+    assert "Document Analysis" in source
+    assert "Conflict Check" in source
+    assert "Ashlar Assessment" in source
+    assert "PDF / PPTX" in source
+    assert "attachEvidenceFromCompareBtn" in source
+    assert "Attach carrier evidence" in source
