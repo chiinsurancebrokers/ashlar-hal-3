@@ -69,6 +69,9 @@
       .adviser-application-copy{flex:1;min-width:0}.adviser-application-copy strong{display:block;font-size:11px}.adviser-application-copy small{display:block;font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.35}
       .adviser-section-help{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 8px;font-size:9.5px;font-weight:800;cursor:pointer}
       .adviser-application-warning{margin-top:8px;padding:8px 9px;border-radius:9px;background:#fff6e8;border:1px solid #f1dfbd;color:#8a5700;font-size:10px;line-height:1.4}
+      .adviser-current-policy{margin:8px 14px;padding:10px 11px;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
+      .adviser-current-policy-copy{font-size:10.5px;color:var(--muted);line-height:1.45;max-width:680px}
+      .adviser-current-policy button{border:1px solid var(--border);background:var(--bg);border-radius:9px;padding:7px 9px;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer}
       @media(max-width:720px){
         .adviser-case-workspace{margin:0 10px 10px}
         .adviser-journey{overflow-x:auto;grid-template-columns:repeat(6,minmax(74px,1fr));padding-bottom:8px}
@@ -120,9 +123,9 @@
         const quotes = document.querySelector('.quotes-row');
         if (quotes) quotes.scrollIntoView({behavior:'smooth', block:'center'});
       }],
-      upload_carrier_documents: ['Attach carrier evidence', 'Attach documents', openDocumentUpload],
-      complete_plan_evidence: ['Complete plan evidence', 'Attach missing evidence', openDocumentUpload],
-      verify_material_plan_facts: ['Strengthen evidence', 'Attach evidence', openDocumentUpload],
+      upload_carrier_documents: ['Ashlar is verifying insurer evidence', 'Continue with HAL', () => askHal('Continue with my shortlist while Ashlar verifies the insurer evidence internally.')],
+      complete_plan_evidence: ['Ashlar is completing insurer evidence', 'Continue with HAL', () => askHal('Continue with my shortlist while Ashlar completes the insurer evidence internally.')],
+      verify_material_plan_facts: ['Ashlar is verifying plan facts', 'Continue with HAL', () => askHal('Explain what is already known about my shortlist and what Ashlar is still verifying internally.')],
       resolve_evidence_conflicts: ['Resolve evidence conflicts', 'Review conflicts', () => askHal('Show me the evidence conflicts and tell me exactly what needs to be checked.')],
       prepare_proposal: ['Prepare the client proposal', 'Prepare proposal', prepareProposal],
       explain_document_findings: ['Explain the evidence', 'Ask HAL to explain', () => askHal('Explain the document findings and the important differences between these plans.')],
@@ -368,6 +371,8 @@
     const conflicts = Number(intel.conflict_count || 0);
     const confidence = String(intel.evidence_confidence || (docs ? 'building' : 'quote only'));
     const currentPhase = journey.current_phase || (comparisonPlans.length ? 'compare' : 'discover');
+    const currentPolicy = intel.current_policy || {};
+
 
     let action = lastNextBestAction;
     if (pendingDocumentRefs.length) {
@@ -433,11 +438,20 @@
       '</div>' +
       '<div class="adviser-case-metrics">' +
         '<div class="adviser-metric"><strong>' + completeness + '%</strong><span>material facts ready</span></div>' +
-        '<div class="adviser-metric"><strong>' + docs + '</strong><span>carrier documents</span></div>' +
+        '<div class="adviser-metric"><strong>' + docs + '</strong><span>case documents</span></div>' +
         '<div class="adviser-metric"><strong>' + conflicts + '</strong><span>evidence conflicts</span></div>' +
         '<div class="adviser-metric"><strong>' + esc(confidence) + '</strong><span>evidence confidence</span></div>' +
       '</div>' +
       (documentChips ? '<div class="adviser-evidence"><div class="adviser-evidence-title">Case documents</div>' + documentChips + '</div>' : '') +
+      '<div class="adviser-current-policy">' +
+        '<div><div class="adviser-evidence-title">Your current policy</div>' +
+        '<div class="adviser-current-policy-copy">' +
+          (currentPolicy.present
+            ? '✓ Current policy analysed' + (currentPolicy.provider ? ' · ' + esc(currentPolicy.provider) : '') + '. HAL can compare it with the alternatives.'
+            : 'Already insured? Upload your current Bupa, Cigna, IMG or other policy and HAL can explain what you have now and compare it with the alternatives.') +
+        '</div></div>' +
+        '<button type="button" id="existingPolicyUploadBtn">' + (currentPolicy.present ? 'Replace policy' : 'Upload current policy') + '</button>' +
+      '</div>' +
       (evidenceRows ? '<div class="adviser-evidence"><div class="adviser-evidence-title">Evidence by plan</div>' + evidenceRows + '</div>' : '') +
       '<div class="adviser-next-action">' +
         '<div class="adviser-next-copy"><div class="adviser-next-label">HAL · next best action</div>' +
@@ -446,6 +460,8 @@
         '<button type="button" id="adviserNextActionBtn">' + esc(actionView.label) + '</button>' +
       '</div>';
 
+    const currentPolicyButton = document.getElementById('existingPolicyUploadBtn');
+    if (currentPolicyButton) currentPolicyButton.onclick = openExistingPolicyUpload;
     const actionButton = document.getElementById('adviserNextActionBtn');
     if (actionButton) actionButton.onclick = actionView.handler;
   }
@@ -490,6 +506,87 @@
       if (content) content.insertAdjacentElement('afterend', status);
     }
     return button;
+  }
+
+  function ensureExistingPolicyModal() {
+    let modal = document.getElementById('existingPolicyModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.id = 'existingPolicyModal';
+    modal.innerHTML = '<div class="modal" style="max-width:520px">' +
+      '<h3>Upload your current policy</h3>' +
+      '<p style="font-size:12px;color:var(--muted);line-height:1.5">Optional. Upload the policy schedule, certificate, Table of Benefits or policy wording you already have. HAL will analyse it as your current-cover baseline and can compare it with the alternatives — it will not treat it as a new plan quotation.</p>' +
+      '<label>Current insurer</label><input id="existingPolicyProvider" type="text" placeholder="e.g. Bupa Global, Cigna, IMG">' +
+      '<label>Policy / plan name <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="existingPolicyPlan" type="text" placeholder="e.g. Lifeline Classic">' +
+      '<label>Policy document</label><input id="existingPolicyFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">' +
+      '<div id="existingPolicyStatus" style="font-size:12px;margin-top:8px"></div>' +
+      '<div class="modal-actions"><button class="btn-secondary" type="button" id="existingPolicyCancel">Cancel</button><button class="btn-primary" type="button" id="existingPolicyUpload">Analyse my policy</button></div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', event => { if (event.target === modal) modal.classList.remove('open'); });
+    document.getElementById('existingPolicyCancel').onclick = () => modal.classList.remove('open');
+    document.getElementById('existingPolicyUpload').onclick = uploadExistingPolicy;
+    return modal;
+  }
+
+  function openExistingPolicyUpload() {
+    if (!proposalCase) {
+      if (typeof addMsg === 'function') addMsg('Finish the short needs interview first so I can attach your current policy to your AshlarCase.', 'hal');
+      return;
+    }
+    const modal = ensureExistingPolicyModal();
+    document.getElementById('existingPolicyFile').value = '';
+    document.getElementById('existingPolicyStatus').textContent = '';
+    modal.classList.add('open');
+  }
+
+  async function uploadExistingPolicy() {
+    if (!proposalCase || documentBusy) return;
+    const provider = document.getElementById('existingPolicyProvider').value.trim() || 'Current insurer';
+    const planName = document.getElementById('existingPolicyPlan').value.trim() || 'Existing policy';
+    const file = document.getElementById('existingPolicyFile').files[0];
+    const status = document.getElementById('existingPolicyStatus');
+    if (!file) {
+      status.textContent = 'Choose your current policy document first.';
+      status.style.color = '#b3261e';
+      return;
+    }
+    documentBusy = true;
+    const uploadButton = document.getElementById('existingPolicyUpload');
+    uploadButton.disabled = true;
+    try {
+      status.textContent = 'Uploading and extracting ' + file.name + '…';
+      status.style.color = 'var(--muted)';
+      const form = new FormData();
+      form.append('case_id', proposalCase.case_id);
+      form.append('case_token', proposalCase.case_token);
+      form.append('provider_label', provider);
+      form.append('target_plan', planName);
+      form.append('role', 'existing_policy');
+      form.append('file', file, file.name);
+      const response = await fetch(API + '/documents/upload', {method:'POST', body:form});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not upload your current policy.');
+      if (!pendingDocumentRefs.includes(data.document_ref)) pendingDocumentRefs.push(data.document_ref);
+      uploadedDocuments.push({
+        document_ref:data.document_ref,
+        filename:data.filename || file.name,
+        role:'current policy',
+        plan_key:'existing_policy',
+        analysed:false
+      });
+      syncCaseIntoHalState();
+      renderDocumentStatus();
+      document.getElementById('existingPolicyModal').classList.remove('open');
+      askHal('Analyse the current policy I just uploaded. Explain what cover I have now, then use it as the baseline when comparing my shortlisted alternatives. Keep any missing or uncertain policy facts explicit.');
+    } catch (error) {
+      status.textContent = error.message || 'Could not upload your current policy.';
+      status.style.color = '#b3261e';
+    } finally {
+      documentBusy = false;
+      uploadButton.disabled = false;
+    }
   }
 
   function ensureDocumentControls() {
