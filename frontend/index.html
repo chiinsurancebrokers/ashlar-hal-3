@@ -337,6 +337,29 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&am
 function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
 
+function diversifyQuotes(quotes){
+  const rows = Array.isArray(quotes) ? quotes : [];
+  const groups = new Map();
+  rows.forEach(q => {
+    const carrier = String(q.insurer || 'Other');
+    if (!groups.has(carrier)) groups.set(carrier, []);
+    groups.get(carrier).push(q);
+  });
+  const queues = [...groups.values()];
+  const mixed = [];
+  let added = true;
+  while (added) {
+    added = false;
+    queues.forEach(queue => {
+      if (queue.length) {
+        mixed.push(queue.shift());
+        added = true;
+      }
+    });
+  }
+  return mixed;
+}
+
 function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
   addMsg("Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.", 'hal');
@@ -376,7 +399,7 @@ async function sendHiddenMessage(text){
     if (!r.ok) throw new Error(d.detail || 'HAL service error');
     state = d.state || state;
     currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
+    lastQuotes = diversifyQuotes(d.quotes || []);
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
@@ -571,7 +594,7 @@ function renderDetailedCompare(d){
     ['Annual limit', p => p.card_annual_limit],
     ['Deductible', p => p.card_deductible],
   ];
-  html += '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
+  html += '<table class="compare-table"><tr><th>Feature</th>' +
     plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
   summaryRows.forEach(([label,fn]) => {
     html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';
@@ -652,7 +675,7 @@ async function saveNeeds(){
     const r = await fetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not recalculate.');
-    lastQuotes = d.shortlist || [];
+    lastQuotes = diversifyQuotes(d.shortlist || []);
     excludedPlans = d.exclusions || [];
     addMsg('I updated the shortlist using your edited needs.', 'hal', lastQuotes, excludedPlans, {show:true, journey:currentJourney, label:'Request a proposal'});
   } catch(e) { addMsg('I could not recalculate the shortlist just now. Please try again.', 'hal'); }
@@ -857,7 +880,7 @@ async function sendMessage(){
     if (!r.ok) throw new Error(d.detail || 'HAL service error');
     state = d.state || state;
     currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
+    lastQuotes = diversifyQuotes(d.quotes || []);
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
