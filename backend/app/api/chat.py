@@ -67,6 +67,10 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
         )
         if is_legacy_hal_payload:
             payload = dict(primary.payload)
+            # SpecialistResponse.reply is the canonical conversational answer.
+            # Preserve it when an Adviser OS continuation payload carries state
+            # and workflow UI data but does not duplicate the reply field.
+            payload.setdefault("reply", primary.reply or "")
         else:
             payload = {
                 "reply": primary.reply or "I need a little more information to continue.",
