@@ -41,6 +41,7 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
             continue
         plan_facts[fact.plan_key].append(fact)
 
+    current_policy_facts = plan_facts.pop("existing_policy", [])
     plan_keys = list(dict.fromkeys([*case.selected_plan_keys, *plan_facts.keys()]))
     plans: list[dict[str, Any]] = []
     total_material = 0
@@ -162,6 +163,12 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
         "plans": plans,
         "ready_for_proposal": ready_for_proposal,
         "next_actions": next_actions[:10],
+        "current_policy": {
+            "present": bool(current_policy_facts),
+            "fact_count": len(current_policy_facts),
+            "provider": next((fact.provider for fact in current_policy_facts if fact.provider), None),
+            "available_keys": sorted({fact.key for fact in current_policy_facts}),
+        },
     }
     snapshot["journey"] = build_journey_snapshot(case, intelligence=snapshot)
     return snapshot
