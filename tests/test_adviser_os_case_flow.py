@@ -199,7 +199,7 @@ def test_adviser_os_ui_exposes_evidence_pipeline_and_carrier_upload_from_compare
 
     assert response.status_code == 200
     source = response.text
-    assert "Quote Engine" in source
+    assert "Find plans" in source
     assert "Compare" in source
     assert "Ashlar Assessment" in source
     assert "Proposal" in source
