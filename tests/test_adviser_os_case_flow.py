@@ -207,3 +207,59 @@ def test_adviser_os_ui_exposes_evidence_pipeline_and_carrier_upload_from_compare
     assert "Broker evidence review" in source
     assert "carrier evidence is a broker/internal responsibility" in source
     assert "Shortlist comparison ready. Ashlar will verify any insurer-specific quotation" in source
+
+
+def test_client_can_upload_existing_policy_as_separate_case_baseline():
+    applicant, plan_keys = _comparison_payload()
+    comparison = client.post(
+        "/api/v1/quotes/compare",
+        json={"applicant_state": applicant, "plan_keys": plan_keys, "language": "en"},
+    )
+    assert comparison.status_code == 200
+    case = comparison.json()
+
+    response = client.post(
+        "/api/v1/documents/upload",
+        data={
+            "case_id": case["case_id"],
+            "case_token": case["case_token"],
+            "provider_label": "Bupa Global",
+            "target_plan": "Lifeline Classic",
+            "role": "existing_policy",
+        },
+        files={
+            "file": (
+                "current-policy.txt",
+                b"Bupa Global Lifeline Classic. Annual limit EUR 2,000,000. Worldwide excluding USA.",
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["role"] == "existing_policy"
+    assert data["plan_key"] == "existing_policy"
+    assert data["comparison_role"] == "current_policy"
+
+    record = CASE_ANALYSIS_STORE.get(UUID(case["case_id"]), case["case_token"])
+    assert record is not None
+    current_docs = [doc for doc in record.case.documents if doc.plan_key == "existing_policy"]
+    assert len(current_docs) == 1
+    assert current_docs[0].metadata["role"] == "existing_policy"
+
+
+def test_client_ui_exposes_current_policy_upload_and_provider_diverse_quotes():
+    adviser = client.get("/static/adviser-os.js")
+    home = client.get("/")
+
+    assert adviser.status_code == 200
+    assert "Upload your current policy" in adviser.text
+    assert "existing_policy" in adviser.text
+    assert "use it as the baseline when comparing my shortlisted alternatives" in adviser.text
+    assert "carrier evidence is a broker/internal responsibility" in adviser.text
+
+    assert home.status_code == 200
+    assert "<th>Feature</th>" in home.text
+    assert "Χαρακτηριστικό" not in home.text
+    assert "function diversifyQuotes" in home.text
