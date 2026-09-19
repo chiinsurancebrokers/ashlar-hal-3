@@ -200,9 +200,10 @@ def test_adviser_os_ui_exposes_evidence_pipeline_and_carrier_upload_from_compare
     assert response.status_code == 200
     source = response.text
     assert "Quote Engine" in source
-    assert "Document Analysis" in source
-    assert "Conflict Check" in source
+    assert "Compare" in source
     assert "Ashlar Assessment" in source
-    assert "PDF / PPTX" in source
+    assert "Proposal" in source
     assert "attachEvidenceFromCompareBtn" in source
-    assert "Attach carrier evidence" in source
+    assert "Broker evidence review" in source
+    assert "carrier evidence is a broker/internal responsibility" in source
+    assert "Shortlist comparison ready. Ashlar will verify any insurer-specific quotation" in source
