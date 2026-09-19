@@ -146,3 +146,15 @@ def test_adviser_os_frontend_exposes_final_plan_choice_and_application_workspace
     assert "prepareApplication" in source
     assert "/application/prepare" in source
     assert "Application workspace" in source
+
+
+def test_application_workspace_renders_carrier_blueprint_and_safety_boundaries():
+    response = client.get("/static/adviser-os.js")
+
+    assert response.status_code == 200
+    source = response.text
+    assert "applicationBlueprint" in source
+    assert "source_status" in source
+    assert "adviser-application-warning" in source
+    assert "Work on this" in source
+    assert "do not infer declarations, medical answers or signatures" in source
