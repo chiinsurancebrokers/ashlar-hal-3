@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from backend.app.cases.models import (
     AshlarCase,
@@ -16,6 +17,8 @@ from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.cases.intelligence import build_case_intelligence
 from backend.app.core.config import get_settings
 from backend.app.documents.quality import case_quality
+from backend.app.documents.deep_analysis import prepare_deep_analysis
+from backend.app.documents.provider_library import get_proposal_library_client
 from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions, quote_current
 from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_to_dict, NOT_CONFIRMED
@@ -149,6 +152,93 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
             "library_source": bool(focused_rows),
         })
     return results
+
+
+def _target_plan_name(quote) -> str:
+    name = str(getattr(quote, "product_name", "") or "").strip()
+    insurer = str(getattr(quote, "insurer", "") or "").strip()
+    for prefix in (insurer, "Morgan Price", "APRIL International", "APRIL", "IMG", "Cigna", "Bupa"):
+        if prefix and name.casefold().startswith(prefix.casefold()):
+            name = name[len(prefix):].strip(" -–—")
+            break
+    return name or str(getattr(quote, "product_name", "") or "Plan")
+
+
+async def _enrich_results_from_provider_library(selected, results: list[dict]) -> list[dict]:
+    """Reuse Proposal Studio's persistent brochures/wordings for shortlisted plans.
+
+    Pricing remains owned by the deterministic Quote Engine. Provider Library
+    evidence only enriches benefits/terms and keeps its source metadata.
+    """
+    client = get_proposal_library_client()
+    if not client.configured:
+        return results
+
+    enriched = []
+    for quote, base in zip(selected, results):
+        item = dict(base)
+        try:
+            context = await run_in_threadpool(
+                client.plan_context,
+                provider_label=quote.insurer,
+                target_plan=_target_plan_name(quote),
+            )
+        except Exception:
+            context = None
+        if not context:
+            enriched.append(item)
+            continue
+
+        docs = context.get("documents") or []
+        brochure_parts = []
+        wording_parts = []
+        focused_parts = []
+        for doc in docs:
+            if not isinstance(doc, dict):
+                continue
+            text = str(doc.get("extracted_text") or "")
+            doc_type = str(doc.get("doc_type") or "").casefold()
+            if doc_type in {"brochure", "tob"}:
+                brochure_parts.append(text)
+            else:
+                wording_parts.append(text)
+            focused = str(doc.get("focused_table_context") or "")
+            if focused:
+                focused_parts.append(focused)
+
+        envelope = await run_in_threadpool(
+            prepare_deep_analysis,
+            provider_label=quote.insurer,
+            target_plan=_target_plan_name(quote),
+            brochure_text="\n\n".join(brochure_parts),
+            wording_text="\n\n".join(wording_parts),
+            focused_table_context="\n\n".join(focused_parts),
+        )
+        library_analysis = envelope.get("analysis") or {}
+        analysis = dict(item.get("analysis") or {})
+        benefits = dict(analysis.get("benefits") or {})
+        for key, value in (library_analysis.get("benefits") or {}).items():
+            if value and str(value).strip().casefold() not in {"not mentioned", "not specified", "unknown"}:
+                benefits[key] = value
+        analysis["benefits"] = benefits
+        for key in ("annual_limit", "deductible_or_excess", "area_of_cover"):
+            current = str(analysis.get(key) or "").strip().casefold()
+            value = library_analysis.get(key)
+            if current in {"", "not specified", "annual limit on request"} and value and str(value).casefold() != "not specified":
+                analysis[key] = value
+        analysis["source_evidence"] = list(analysis.get("source_evidence") or []) + list(library_analysis.get("source_evidence") or [])
+        analysis["provider_library"] = {
+            "provider": context.get("provider"),
+            "product": context.get("product"),
+            "version": context.get("version"),
+            "document_count": len(docs),
+        }
+        item["analysis"] = analysis
+        item["focused_rows"] = envelope.get("focused_rows") or item.get("focused_rows") or []
+        item["library_source"] = bool(docs)
+        item["provider_library_source"] = analysis["provider_library"]
+        enriched.append(item)
+    return enriched
 
 
 def _quote_engine_facts(selected) -> list[Fact]:
@@ -355,6 +445,7 @@ async def compare(req: CompareRequest):
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 
     results = _server_results(selected, matrix_dict)
+    results = await _enrich_results_from_provider_library(selected, results)
     reused = _reuse_market_case(
         req,
         applicant=applicant,
