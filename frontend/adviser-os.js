@@ -12,6 +12,7 @@
   let lastCaseIntelligence = null;
   let lastNextBestAction = null;
   let applicationState = null;
+  let applicationBlueprint = null;
   let lifecycleBusy = false;
 
   function ensureAdviserOsStyles() {
@@ -61,6 +62,12 @@
       .adviser-application-card{background:#fff;border:1px solid var(--border)!important}
       .adviser-checklist{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
       .adviser-checkitem{font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:5px 8px;color:var(--muted)}
+      .adviser-application-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+      .adviser-application-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;padding:8px;background:var(--bg)}
+      .adviser-application-status{width:20px;font-weight:800;color:var(--good);text-align:center}
+      .adviser-application-copy{flex:1;min-width:0}.adviser-application-copy strong{display:block;font-size:11px}.adviser-application-copy small{display:block;font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+      .adviser-section-help{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 8px;font-size:9.5px;font-weight:800;cursor:pointer}
+      .adviser-application-warning{margin-top:8px;padding:8px 9px;border-radius:9px;background:#fff6e8;border:1px solid #f1dfbd;color:#8a5700;font-size:10px;line-height:1.4}
       @media(max-width:720px){
         .adviser-case-workspace{margin:0 10px 10px}
         .adviser-journey{overflow-x:auto;grid-template-columns:repeat(6,minmax(74px,1fr));padding-bottom:8px}
@@ -251,6 +258,7 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Could not prepare the application workspace.');
       applicationState = data.payload && data.payload.application ? data.payload.application : null;
+      applicationBlueprint = data.payload && data.payload.blueprint ? data.payload.blueprint : null;
       lastCaseIntelligence = data.case_intelligence || lastCaseIntelligence;
       lastNextBestAction = {
         action:data.action || 'complete_application',
@@ -282,19 +290,49 @@
       medical_underwriting_questionnaire:'Medical underwriting',
       signature:'Signature'
     };
-    const checklist = required.map(section =>
-      '<span class="adviser-checkitem">' + (completed.has(section) ? '✓ ' : '○ ') + esc(labels[section] || section.replaceAll('_',' ')) + '</span>'
-    ).join('');
+    const requirements = applicationBlueprint && Array.isArray(applicationBlueprint.requirements)
+      ? applicationBlueprint.requirements : [];
+    const requirementByKey = new Map(requirements.map(item => [item.key, item]));
+    const checklist = required.map(section => {
+      const requirement = requirementByKey.get(section) || {};
+      const label = requirement.label || labels[section] || section.replaceAll('_',' ');
+      const badges = [];
+      if (requirement.owner === 'broker') badges.push('Broker');
+      if (requirement.sensitive) badges.push('Sensitive');
+      if (requirement.requires_signature) badges.push('Signature');
+      return '<div class="adviser-application-row">' +
+        '<div class="adviser-application-status">' + (completed.has(section) ? '✓' : '○') + '</div>' +
+        '<div class="adviser-application-copy"><strong>' + esc(label) + '</strong>' +
+          (badges.length ? '<small>' + esc(badges.join(' · ')) + '</small>' : '') +
+          (requirement.help_text ? '<small>' + esc(requirement.help_text) + '</small>' : '') +
+        '</div>' +
+        '<button class="adviser-section-help" data-section="' + esc(section) + '" type="button">Work on this</button>' +
+      '</div>';
+    }).join('');
+    const carrier = applicationBlueprint && applicationBlueprint.carrier
+      ? String(applicationBlueprint.carrier).toUpperCase() : 'Carrier';
+    const sourceStatus = applicationBlueprint && applicationBlueprint.source_status
+      ? String(applicationBlueprint.source_status) : '';
+    const blueprintNote = applicationBlueprint && applicationBlueprint.note
+      ? String(applicationBlueprint.note) : '';
     const card = document.createElement('div');
     card.className = 'msg hal adviser-application-card';
     card.innerHTML =
       '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:800">Application workspace</div>' +
-      '<div style="font-weight:800;font-size:14px;margin-top:3px">Your selected plan is moving into application</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-top:4px">HAL will keep the checklist on this AshlarCase. Carrier-specific answers and signatures must be collected explicitly; they are not inferred from the conversation.</div>' +
-      '<div class="adviser-checklist">' + checklist + '</div>' +
+      '<div style="font-weight:800;font-size:14px;margin-top:3px">' + esc(carrier) + ' application workspace</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">HAL keeps this checklist on the same AshlarCase. Answers, declarations and signatures are collected explicitly; they are never inferred from general conversation.</div>' +
+      (sourceStatus.includes('unverified') ? '<div class="adviser-application-warning">' + esc(blueprintNote || 'Carrier requirements still require verification against the current carrier application form.') + '</div>' : '') +
+      '<div class="adviser-application-list">' + checklist + '</div>' +
       '<div style="margin-top:10px"><button class="q-primary adviser-application-help" style="padding:8px 12px">Continue application with HAL</button></div>';
+    card.querySelectorAll('.adviser-section-help').forEach(button => {
+      button.onclick = () => {
+        const section = button.getAttribute('data-section') || '';
+        const requirement = requirementByKey.get(section) || {};
+        askHal('Help me work on the application section "' + (requirement.label || labels[section] || section) + '". Ask only for information that is required and do not infer declarations, medical answers or signatures.');
+      };
+    });
     const help = card.querySelector('.adviser-application-help');
-    if (help) help.onclick = () => askHal('Help me complete the application checklist for the plan I selected.');
+    if (help) help.onclick = () => askHal('Help me complete the application checklist for the plan I selected. Use the carrier application requirements attached to this AshlarCase and do not infer declarations, medical answers or signatures.');
     chat.appendChild(card);
     card.scrollIntoView({behavior:'smooth',block:'start'});
   }
