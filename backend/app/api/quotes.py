@@ -405,7 +405,7 @@ def _reuse_market_case(
         fact
         for fact in case.facts
         if fact.source.source_type != FactSourceType.QUOTE_ENGINE
-        and (not fact.plan_key or fact.plan_key in selected_keys)
+        and (not fact.plan_key or fact.plan_key in selected_keys or fact.plan_key == "existing_policy")
     ]
     case.facts = [
         *retained,
@@ -415,7 +415,7 @@ def _reuse_market_case(
     case.documents = [
         document
         for document in case.documents
-        if not document.plan_key or document.plan_key in selected_keys
+        if not document.plan_key or document.plan_key in selected_keys or document.plan_key == "existing_policy"
     ]
     case.metadata["comparison_updated_from"] = "server_quote_comparison"
     case.touch()
