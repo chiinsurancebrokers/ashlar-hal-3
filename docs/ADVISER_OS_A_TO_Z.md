@@ -175,3 +175,31 @@ durable persistence (for example Postgres/Supabase).
 Until that migration, the dedicated app is the clean service boundary and test
 target, while the HAL application mounts the same orchestrator-owned lifecycle
 routes in-process so one AshlarCase remains authoritative.
+
+## Verified GPMI / Inspire comparison (September 2026)
+
+The client can open **Compare plan benefits** after the needs interview, select
+2–4 catalogue plans, and compare the loaded EUR benefit evidence even when no
+price exists. GPMI uses `img:gpmi_<tier>` and Inspire uses
+`cigna:inspire_<tier>`; these identities deliberately differ from legacy IMG
+rate products. Legacy premiums never price these brochure plans. Missing
+benefits remain **Not confirmed**, and unknown acceptance, deductible and area
+remain unconfirmed. This is a comparison of sourced brochure details, not a
+binding policy offer. The catalogue does not claim to contain every brochure row.
+
+Comparison cells retain source page, optional selections, waiting periods and
+conditions. These are carried into the case evidence and proposal inputs.
+Optional/selectable benefits do not produce an unconditional covered verdict.
+A catalogue plan without a carrier premium cannot pass the proposal quality
+gate or be silently omitted from a priced comparison email.
+
+**Current policy upload** remains available to the client with the active case
+token and the separate `existing_policy` baseline. New quotations, brochures and
+wordings require both the case token and `X-Admin-Password`; the endpoint fails
+closed when `ADMIN_PASSWORD` is absent. The internal upload controls are available
+at `/?workspace=broker`, which only switches the UI: the server still authenticates
+every new-carrier upload. Enter the configured broker password in the upload form.
+Never place that password in a URL. No source policy files or client quotations
+are committed to the repository.
+
+Validation: 249 Python tests pass; JavaScript syntax and git diff checks pass.

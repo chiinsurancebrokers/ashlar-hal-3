@@ -32,6 +32,8 @@ _MISSING = {
 def _missing(value: Any) -> bool:
     if value is None:
         return True
+    if isinstance(value, dict) and "amount" in value:
+        return _missing(value["amount"])
     if isinstance(value, str):
         return value.strip().casefold() in _MISSING
     return False

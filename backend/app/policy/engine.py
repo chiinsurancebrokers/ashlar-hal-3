@@ -114,6 +114,13 @@ class PolicyEngine:
             )
 
         winner = facts[-1]
+        if isinstance(winner.value, str) and re.search(r"\boption(?:al)?\b", winner.value, re.I):
+            return PolicyCoverageResult(
+                verdict=PolicyVerdict.UNKNOWN, benefit_key=normalized,
+                plan_key=winner.plan_key or candidate_plan, value=winner.value,
+                evidence=evidence,
+                reason="The brochure describes optional or selectable benefits. The selected option and individual cover must be confirmed from the carrier schedule.",
+            )
         if _negative(winner.value):
             return PolicyCoverageResult(
                 verdict=PolicyVerdict.NOT_COVERED,

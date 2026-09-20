@@ -2,6 +2,7 @@
   'use strict';
 
   let proposalCase = null;
+  const brokerWorkspace = new URLSearchParams(location.search).get('workspace') === 'broker';
   let proposalBusy = false;
   let pendingChatProposalDownloads = null;
   let pendingOrchestratorUi = null;
@@ -478,7 +479,7 @@
       evidenceButton.id = 'attachEvidenceFromCompareBtn';
       evidenceButton.className = 'btn-secondary';
       evidenceButton.textContent = 'Broker evidence review';
-      evidenceButton.style.display = 'none'; // internal broker workflow; never request carrier files from the retail user
+      evidenceButton.style.display = brokerWorkspace ? '' : 'none';
       evidenceButton.onclick = () => {
         document.getElementById('compareModal')?.classList.remove('open');
         openDocumentUpload();
@@ -623,6 +624,7 @@
       modal.id = 'carrierDocumentModal';
       modal.innerHTML = '<div class="modal" style="max-width:520px">' +
         '<h3>Attach carrier evidence</h3>' +
+        '<label>Broker password</label><input id="brokerDocumentPassword" type="password" autocomplete="off">' +
         '<p style="font-size:12px;color:var(--muted);line-height:1.5">Documents are extracted on the server and bound to this case. HAL receives only an opaque reference.</p>' +
         '<label>Plan</label><select id="carrierDocumentPlan"></select>' +
         '<label>Document type</label><select id="carrierDocumentRole">' +
@@ -649,7 +651,7 @@
   function renderDocumentStatus() {
     const status = document.getElementById('adviserDocumentStatus');
     const button = ensureDocumentControls();
-    if (button) button.style.display = 'none'; // carrier evidence is a broker/internal responsibility
+    if (button) button.style.display = brokerWorkspace ? '' : 'none';
     if (!status) return;
 
     if (!proposalCase || !uploadedDocuments.length) {
@@ -718,7 +720,7 @@
         form.append('plan_key', planKey);
         form.append('role', role);
         form.append('file', file, file.name);
-        const response = await fetch(API + '/documents/upload', {method:'POST', body:form});
+        const response = await fetch(API + '/documents/upload', {method:'POST', headers:{'X-Admin-Password': document.getElementById('brokerDocumentPassword').value}, body:form});
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || ('Could not attach ' + file.name + '.'));
         if (!pendingDocumentRefs.includes(data.document_ref)) pendingDocumentRefs.push(data.document_ref);
@@ -1043,6 +1045,57 @@
     }
   };
 
+  function ensureCatalogueControl() {
+    const composer = document.querySelector('.composer');
+    if (!composer) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn-secondary';
+    button.textContent = 'Compare plan benefits';
+    button.onclick = async () => {
+      if (!state || !state.age) {
+        addMsg('Complete your needs interview first, then compare the verified plan benefits.', 'hal');
+        return;
+      }
+      let modal = document.getElementById('verifiedCatalogueModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'verifiedCatalogueModal';
+        modal.className = 'modal-backdrop';
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = '<div class="modal"><h3>Compare verified benefits</h3><p>Select 2–4 plans. IMG GPMI and Cigna Inspire require a separate insurer quotation. Benefits shown in EUR; eligibility and chosen options must be confirmed.</p><div id="catalogueChoices">Loading…</div><div id="catalogueError"></div><div class="modal-actions"><button id="catalogueClose" class="btn-secondary">Cancel</button><button id="catalogueCompare" class="btn-primary">Compare benefits</button></div></div>';
+      modal.classList.add('open');
+      document.getElementById('catalogueClose').onclick = () => modal.classList.remove('open');
+      document.getElementById('catalogueCompare').disabled = true;
+      try {
+        const response = await fetch(API + '/quotes/catalogue');
+        const data = await response.json();
+        if (!response.ok) throw new Error('Could not load the catalogue.');
+        document.getElementById('catalogueChoices').innerHTML = data.plans.map(p =>
+          '<label class="adviser-plan-choice"><input type="checkbox" value="' + esc(p.plan_key) + '"><strong>' + esc(p.carrier_name + ' — ' + p.plan_name) + '</strong><small>' + esc(p.product_family || '') + ' · ' + esc(p.pricing_status === 'quotation_required' ? 'Quotation required' : 'Rate calculation available, subject to eligibility') + '</small></label>'
+        ).join('');
+        document.getElementById('catalogueCompare').disabled = false;
+        document.getElementById('catalogueCompare').onclick = () => {
+          const keys = [...modal.querySelectorAll('input:checked')].map(input => input.value);
+          if (keys.length < 2 || keys.length > 4) {
+            document.getElementById('catalogueError').textContent = 'Select 2–4 plans.';
+            return;
+          }
+          compareSelected.clear();
+          keys.forEach(key => compareSelected.add(key));
+          renderState();
+          modal.classList.remove('open');
+          window.openCompare();
+        };
+      } catch (error) {
+        document.getElementById('catalogueChoices').textContent = error.message;
+      }
+    };
+    composer.insertAdjacentElement('afterend', button);
+  }
+
+  ensureCatalogueControl();
   ensureProposalControls();
   ensureDocumentControls();
   ensureCaseWorkspace();

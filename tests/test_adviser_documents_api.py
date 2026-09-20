@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+import pytest
+from backend.app.core.config import get_settings
+
+@pytest.fixture(autouse=True)
+def broker_config(monkeypatch):
+    monkeypatch.setenv("ADMIN_PASSWORD", "upload-test-secret")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
 
 from backend.app.cases.models import AshlarCase
 from backend.app.cases.store import CASE_ANALYSIS_STORE
@@ -20,6 +30,7 @@ def test_server_owned_document_upload_then_orchestrator_analysis():
     secret_phrase = "PRIVATE-CARRIER-EVIDENCE-MARKER"
     response = client.post(
         "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
         data={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,
@@ -78,6 +89,7 @@ def test_document_upload_is_bound_to_active_case_token():
     record = _active_case()
     response = client.post(
         "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
         data={
             "case_id": str(record.case.case_id),
             "case_token": "wrong-token",
@@ -109,6 +121,7 @@ def test_document_upload_rejects_plan_not_selected_in_active_case():
     record = _active_case()
     response = client.post(
         "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
         data={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,
@@ -157,6 +170,7 @@ def test_document_analysis_updates_proposal_results_but_preserves_server_premium
 
     upload = client.post(
         "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
         data={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,

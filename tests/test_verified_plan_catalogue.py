@@ -13,24 +13,24 @@ def test_verified_catalogue_separates_benefits_from_pricing():
     plans = response.json()["plans"]
     by_key = {row["plan_key"]: row for row in plans}
 
-    assert by_key["img:bronze"]["benefit_evidence_status"] == "verified"
-    assert by_key["img:bronze"]["pricing_status"] == "testing_legacy_rates"
-    assert by_key["cigna:executive_care"]["benefit_evidence_status"] == "verified"
-    assert by_key["cigna:executive_care"]["pricing_status"] == "quotation_required"
-    assert "No verified general Cigna price table" in by_key["cigna:executive_care"]["pricing_note"]
+    assert by_key["img:gpmi_bronze"]["benefit_evidence_status"] == "verified"
+    assert by_key["img:gpmi_bronze"]["pricing_status"] == "quotation_required"
+    assert by_key["cigna:inspire_executive_care"]["benefit_evidence_status"] == "verified"
+    assert by_key["cigna:inspire_executive_care"]["pricing_status"] == "quotation_required"
+    assert "No verified general Cigna price table" in by_key["cigna:inspire_executive_care"]["pricing_note"]
 
 
 def test_img_gpmi_matrix_uses_verified_brochure_values():
     matrix = build_comparison_matrix([
         {
-            "plan_key": "img:bronze",
+            "plan_key": "img:gpmi_bronze",
             "carrier": "img",
             "product_code": "bronze",
             "insurer": "IMG",
             "product_name": "IMG Bronze",
         },
         {
-            "plan_key": "img:platinum",
+            "plan_key": "img:gpmi_platinum",
             "carrier": "img",
             "product_code": "platinum",
             "insurer": "IMG",
@@ -38,23 +38,23 @@ def test_img_gpmi_matrix_uses_verified_brochure_values():
         },
     ])
     rows = {row.benefit_code: row for row in matrix.rows}
-    assert rows["overall_maximum"].values["img:bronze"] == "€1,000,000"
-    assert rows["overall_maximum"].values["img:platinum"] == "€5,000,000"
-    assert rows["outpatient_psychiatric"].values["img:bronze"] == "Not covered"
-    assert rows["outpatient_psychiatric"].values["img:platinum"] == "€10,000 each year"
+    assert rows["overall_maximum"].values["img:gpmi_bronze"] == "€1,000,000 — Bronze: no pre-existing condition cover"
+    assert rows["overall_maximum"].values["img:gpmi_platinum"] == "€5,000,000"
+    assert rows["outpatient_psychiatric"].values["img:gpmi_bronze"] == "Not covered"
+    assert rows["outpatient_psychiatric"].values["img:gpmi_platinum"] == "€10,000 each year"
 
 
 def test_cigna_inspire_is_comparable_without_fake_price():
     matrix = build_comparison_matrix([
         {
-            "plan_key": "cigna:executive_care",
+            "plan_key": "cigna:inspire_executive_care",
             "carrier": "cigna",
             "product_code": "executive_care",
             "insurer": "Cigna Healthcare",
             "product_name": "ExecutiveCare",
         },
         {
-            "plan_key": "cigna:elite_care",
+            "plan_key": "cigna:inspire_elite_care",
             "carrier": "cigna",
             "product_code": "elite_care",
             "insurer": "Cigna Healthcare",
@@ -62,6 +62,6 @@ def test_cigna_inspire_is_comparable_without_fake_price():
         },
     ])
     rows = {row.benefit_code: row for row in matrix.rows}
-    assert rows["overall_maximum"].values["cigna:executive_care"] == "€7,500,000"
-    assert rows["overall_maximum"].values["cigna:elite_care"] == "Unlimited"
-    assert rows["medical_evacuation_transport"].values["cigna:executive_care"] == "Paid in Full"
+    assert rows["overall_maximum"].values["cigna:inspire_executive_care"] == "€7,500,000"
+    assert rows["overall_maximum"].values["cigna:inspire_elite_care"] == "Unlimited"
+    assert rows["medical_evacuation_transport"].values["cigna:inspire_executive_care"] == "Paid in Full"

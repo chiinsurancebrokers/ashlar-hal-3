@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import os
+import hmac
 from pathlib import Path
 import tempfile
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Header
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from backend.app.core.config import get_settings
 from backend.app.cases.models import CaseDocument
 from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.documents.brochure_tables import extract_target_plan_from_pdf
@@ -45,6 +47,7 @@ async def upload_carrier_document(
     role: Literal["quotation", "brochure", "wording", "existing_policy"] = Form(...),
     plan_key: str | None = Form(default=None),
     file: UploadFile = File(...),
+    x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
 ):
     """Extract a carrier document server-side and return only an opaque ref.
 
@@ -58,6 +61,13 @@ async def upload_carrier_document(
     record = CASE_ANALYSIS_STORE.get(case_id, case_token)
     if record is None:
         raise HTTPException(status_code=404, detail="Active case not found or expired.")
+
+    if role != "existing_policy":
+        expected = get_settings().admin_password
+        if not expected:
+            raise HTTPException(status_code=503, detail="Broker document uploads require ADMIN_PASSWORD configuration.")
+        if not x_admin_password or not hmac.compare_digest(x_admin_password, expected):
+            raise HTTPException(status_code=403, detail="Broker credentials are required for new carrier documents.")
 
     provider = _clean_label(provider_label, name="provider_label", max_length=120)
     target = _clean_label(target_plan, name="target_plan", max_length=200)

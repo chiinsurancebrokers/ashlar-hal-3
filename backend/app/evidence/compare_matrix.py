@@ -1,7 +1,7 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from backend.app.evidence.catalogue import load_carrier_table, supported_carriers
+from backend.app.evidence.catalogue import load_carrier_table, supported_carriers, verified_benefit, benefit_terms
 
 NOT_CONFIRMED = "Not confirmed"
 
@@ -16,6 +16,7 @@ class ComparisonRow:
     benefit_code: str
     label: str
     values: dict[str, str]  # plan_key -> display value (or NOT_CONFIRMED)
+    evidence: dict[str, dict] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -33,8 +34,11 @@ def build_comparison_matrix(plans: list[dict]) -> ComparisonMatrix:
     Inspire). Such a plan belongs in the verified catalogue, but it is only
     passed here when another deterministic workflow has selected it.
     """
-    supported = [p for p in plans if p["carrier"] in SUPPORTED_CARRIERS]
-    unsupported = [p["plan_key"] for p in plans if p["carrier"] not in SUPPORTED_CARRIERS]
+    def has_plan(p):
+        table = load_carrier_table(p["carrier"]) or {}
+        return any(p["product_code"] in (b.get("values") or {}) for b in table.get("benefits", []))
+    supported = [p for p in plans if has_plan(p)]
+    unsupported = [p["plan_key"] for p in plans if not has_plan(p)]
 
     plan_keys = [p["plan_key"] for p in supported]
     plan_labels = {p["plan_key"]: f'{p["insurer"]} — {p["product_name"]}' for p in supported}
@@ -60,17 +64,27 @@ def build_comparison_matrix(plans: list[dict]) -> ComparisonMatrix:
     for code, meta in sorted(benefit_index.items(), key=lambda item: item[1]["order"]):
         values: dict[str, str] = {}
         any_value = False
+        evidence = {}
         for plan in supported:
             table = load_carrier_table(plan["carrier"]) or {}
-            benefit = next((b for b in table.get("benefits") or [] if b.get("benefit_code") == code), None)
+            benefit = verified_benefit(plan["carrier"], plan["product_code"], code)
             value = (benefit.get("values") or {}).get(plan["product_code"]) if benefit else None
             if value:
                 values[plan["plan_key"]] = str(value)
+                terms = benefit_terms(table, benefit, plan["product_code"])
+                if terms:
+                    values[plan["plan_key"]] += " — " + "; ".join(terms)
+                evidence[plan["plan_key"]] = {
+                    "source": table.get("source"), "version": table.get("version"),
+                    "page": benefit.get("page"), "currency": table.get("currency", "EUR"),
+                    "waiting_period": benefit.get("waiting_period"),
+                    "conditions": terms, "benefit_code": code,
+                }
                 any_value = True
             else:
                 values[plan["plan_key"]] = NOT_CONFIRMED
         if any_value:
-            rows.append(ComparisonRow(benefit_code=code, label=meta["label"], values=values))
+            rows.append(ComparisonRow(benefit_code=code, label=meta["label"], values=values, evidence=evidence))
 
     return ComparisonMatrix(
         plan_keys=plan_keys,
@@ -84,6 +98,6 @@ def matrix_to_dict(matrix: ComparisonMatrix) -> dict:
     return {
         "plan_keys": matrix.plan_keys,
         "plan_labels": matrix.plan_labels,
-        "rows": [{"benefit_code": r.benefit_code, "label": r.label, "values": r.values} for r in matrix.rows],
+        "rows": [{"benefit_code": r.benefit_code, "label": r.label, "values": r.values, "evidence": r.evidence} for r in matrix.rows],
         "unsupported_plan_keys": matrix.unsupported_plan_keys,
     }

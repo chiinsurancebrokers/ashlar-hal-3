@@ -5,7 +5,7 @@
   "document_type": "brochure_table_of_benefits",
   "source": "gpmi-brochure (3).pdf",
   "source_library_file_id": "libfile_dcd7327e5f6081918d2a959ebadc967b",
-  "version": "user-provided brochure",
+  "version": "0426 / CM0050A2292240228",
   "plan_codes": [
     "bronze",
     "bronze_plus",
@@ -26,7 +26,12 @@
         "platinum": "€5,000,000"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "plan_conditions": {
+        "bronze": [
+          "Bronze: no pre-existing condition cover"
+        ]
+      }
     },
     {
       "benefit_code": "outpatient_services_combined",
@@ -140,7 +145,10 @@
       },
       "waiting_period": "6 months",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Optional add-on, additional premium required; Class 1: 10% co-insurance, Class 2: 30%, Class 3: 50% within the selected dental limit"
+      ]
     },
     {
       "benefit_code": "normal_maternity",
@@ -155,7 +163,14 @@
       },
       "waiting_period": "10 months",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Optional add-on, additional premium required; for family cover applies to females aged 18–54; maximum 12 pre/postnatal check-ups and 3 scans (one per trimester)"
+      ],
+      "condition_pages": [
+        9,
+        12
+      ]
     },
     {
       "benefit_code": "emergency_out_of_area",
@@ -169,7 +184,10 @@
         "platinum": "Up to €50,000; trips under 30 days"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Maximum 30 nights each year; emergency in/day-patient treatment must commence within 24 hours; not routine treatment"
+      ]
     },
     {
       "benefit_code": "organ_transplants",
@@ -183,7 +201,12 @@
         "platinum": "€500,000"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Lifetime limit"
+      ]
     }
-  ]
+  ],
+  "currency": "EUR",
+  "evidence_scope": "Published brochure summary; not confirmation of individual cover or underwriting."
 }

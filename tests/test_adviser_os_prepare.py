@@ -1,4 +1,14 @@
 from fastapi.testclient import TestClient
+import pytest
+from backend.app.core.config import get_settings
+
+@pytest.fixture(autouse=True)
+def broker_config(monkeypatch):
+    monkeypatch.setenv("ADMIN_PASSWORD", "upload-test-secret")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
 
 from backend.app.main import app
 
@@ -11,6 +21,7 @@ def _attach_selected_quotations(compare_data, selected_plans):
     for plan in selected_plans:
         upload = client.post(
             "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
             data={
                 "case_id": compare_data["case_id"],
                 "case_token": compare_data["case_token"],

@@ -132,6 +132,8 @@ def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: S
     applicant = Applicant(**fields)
     all_current = quote_current(applicant, settings)
     by_key = {q.plan_key: q for q in all_current if q.plan_key}
+    if any(k.startswith(("img:gpmi_", "cigna:inspire_")) for k in plan_keys):
+        raise ValueError("A broker-reviewed carrier quotation is required before emailing a priced comparison for GPMI or Inspire.")
     selected = [by_key[k] for k in plan_keys if k in by_key]
     if not selected:
         raise ValueError("None of the requested plan_keys match a currently eligible plan for this applicant.")

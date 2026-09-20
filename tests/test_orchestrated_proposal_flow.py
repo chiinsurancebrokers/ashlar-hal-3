@@ -2,6 +2,16 @@ import asyncio
 from uuid import UUID
 
 from fastapi.testclient import TestClient
+import pytest
+from backend.app.core.config import get_settings
+
+@pytest.fixture(autouse=True)
+def broker_config(monkeypatch):
+    monkeypatch.setenv("ADMIN_PASSWORD", "upload-test-secret")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
 
 from backend.app.agents.orchestrator import get_ashlar_orchestrator
 from backend.app.main import app
@@ -13,6 +23,7 @@ client = TestClient(app)
 def _upload_quote(compare_data, plan):
     response = client.post(
         "/api/v1/documents/upload",
+        headers={"X-Admin-Password": "upload-test-secret"},
         data={
             "case_id": compare_data["case_id"],
             "case_token": compare_data["case_token"],

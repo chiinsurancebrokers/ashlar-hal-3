@@ -46,7 +46,10 @@
         "elite_care": "Paid in Full"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Prior approval required; prescribed medication falls under the drugs and dressings benefit; not subject to out-patient annual limit or co-insurance"
+      ]
     },
     {
       "benefit_code": "outpatient_psychiatric",
@@ -58,7 +61,10 @@
         "elite_care": "Paid in Full"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Prescribed medication falls under the drugs and dressings benefit; not subject to out-patient annual limit or co-insurance; extended treatment may require clinical review"
+      ]
     },
     {
       "benefit_code": "outpatient_services_combined",
@@ -70,7 +76,10 @@
         "elite_care": "Paid in Full"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Cancer and mental health care excluded from out-patient limit; separate co-insurance selection: 0%, 10% or 20% (not applicable to cancer or mental health care)"
+      ]
     },
     {
       "benefit_code": "outpatient_diagnostics",
@@ -94,7 +103,10 @@
         "elite_care": "Paid in Full"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "Maximum 90-day supply per refill; drug shipment requires prior approval; USA medications subject to formulary"
+      ]
     },
     {
       "benefit_code": "wellness_screening",
@@ -130,7 +142,10 @@
         "elite_care": "Paid in Full"
       },
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "conditions": [
+        "For insured employee or spouse; EssentialCare depends on selected maternity option; waiting period not confirmed in this brochure table"
+      ]
     },
     {
       "benefit_code": "medical_evacuation_transport",
@@ -167,6 +182,24 @@
       },
       "status": "verified",
       "allow_generation": true
+    },
+    {
+      "benefit_code": "emergency_out_of_area",
+      "label": "Emergency treatment outside area of cover",
+      "page": 8,
+      "values": {
+        "essential_care": "Treatment must commence within 42 days of absence from selected area",
+        "executive_care": "Treatment must commence within 42 days of absence from selected area",
+        "elite_care": "Treatment must commence within 42 days of absence from selected area"
+      },
+      "conditions": [
+        "Emergency treatment only; not routine or pre-planned treatment"
+      ],
+      "status": "verified",
+      "allow_generation": true
     }
-  ]
+  ],
+  "currency": "EUR",
+  "evidence_scope": "Published brochure summary; not confirmation of individual cover or underwriting.",
+  "eligibility_note": "Group plan for employees and dependants; corporate eligibility, local nationals and underwriting require carrier confirmation."
 }

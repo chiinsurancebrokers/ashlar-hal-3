@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions, quote_current
 from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_to_dict, NOT_CONFIRMED
 from backend.app.evidence.catalogue import verified_plan_catalogue
+from backend.app.evidence.catalogue_plan import catalogue_plan
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion
 
@@ -63,6 +64,8 @@ class CompareRequest(BaseModel):
 
 def _benefit_field(code: str, label: str) -> str | None:
     text = f"{code} {label}".casefold()
+    if "hospital_accommodation" in text:
+        return "inpatient"
     if "cancer" in text:
         return "cancer"
     if "chronic" in text:
@@ -98,19 +101,30 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
     for quote in selected:
         plan_key = quote.plan_key or ""
         benefits: dict[str, str] = {}
+        benefit_evidence = []
+        waiting_periods = []
         focused_rows: list[dict] = []
         for row in rows:
             value = (row.get("values") or {}).get(plan_key)
             if not value or value == NOT_CONFIRMED:
                 continue
+            evidence = (row.get("evidence") or {}).get(plan_key) or {}
+            benefit_evidence.append({"field": "benefit." + row["benefit_code"], "value": value,
+                "document": evidence.get("source"), "page": evidence.get("page"),
+                "evidence": value, "version": evidence.get("version")})
+            if evidence.get("waiting_period"):
+                waiting_periods.append({"benefit": row["label"], "waiting_period": evidence["waiting_period"]})
             focused_rows.append({
-                "page": None,
+                "page": evidence.get("page"),
+                "source": evidence.get("source"),
+                "benefit_code": row["benefit_code"],
                 "benefit": row.get("label") or row.get("benefit_code") or "Benefit",
                 "value": value,
             })
             field = _benefit_field(str(row.get("benefit_code") or ""), str(row.get("label") or ""))
-            if field and field not in benefits:
-                benefits[field] = value
+            if field:
+                detail = f"{row.get('label')}: {value}"
+                benefits[field] = (benefits[field] + "; " + detail) if field in benefits else detail
 
         annual_limit = quote.card_annual_limit or "Not specified"
         deductible = quote.card_deductible or (
@@ -133,18 +147,18 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
                 "pre_existing_conditions": "Subject to carrier underwriting and governing terms",
             },
             "benefits": benefits,
-            "waiting_periods": [],
+            "waiting_periods": waiting_periods,
             "optional_benefits": [],
             "critical_limitations": list(quote.warnings or []),
-            "source_evidence": [
+            "source_evidence": benefit_evidence + ([
                 {
                     "field": "premium",
                     "value": quote.premium,
                     "document": quote.rate_version,
                     "page": None,
-                    "evidence": "Server-recomputed current rate",
+                    "evidence": "Server-recomputed rate; see rate version and warnings for official/legacy status",
                 }
-            ],
+            ] if quote.premium is not None else []),
             "confidence": "high" if quote.evidence_confidence >= 1 else "medium",
             "carrier_adapter": {
                 "carrier_id": plan_key.split(":")[0] if ":" in plan_key else plan_key,
@@ -160,6 +174,7 @@ def _server_results(selected, matrix_dict: dict) -> list[dict]:
             "focused_rows": focused_rows,
             "analysis": analysis,
             "library_source": bool(focused_rows),
+            "pricing_status": getattr(quote, "pricing_status", "priced"),
         })
     return results
 
@@ -186,6 +201,11 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
 
     enriched = []
     for quote, base in zip(selected, results):
+        # Preserve this explicitly reviewed catalogue and avoid crossing IMG
+        # product families through a broad provider-library name match.
+        if getattr(quote, "pricing_status", None) == "quotation_required" or str(getattr(quote, "plan_key", "")).startswith("img:"):
+            enriched.append(base)
+            continue
         item = dict(base)
         try:
             context = await run_in_threadpool(
@@ -299,18 +319,18 @@ def _quote_engine_facts(selected) -> list[Fact]:
             facts.append(Fact(key="premium_frequency", value="Annual", **base))
 
         area = getattr(quote, "coverage_area_label", None)
-        if area:
+        if area and area != "Not specified":
             facts.append(Fact(key="area_of_cover", value=area, **base))
 
         annual_limit = getattr(quote, "card_annual_limit", None)
-        if annual_limit:
+        if annual_limit and getattr(quote, "pricing_status", None) != "quotation_required":
             facts.append(Fact(key="annual_limit", value=annual_limit, **base))
 
         deductible = getattr(quote, "card_deductible", None)
         raw_deductible = getattr(quote, "deductible", None)
         if not deductible and raw_deductible is not None:
             deductible = f"{currency or 'EUR'} {raw_deductible:g}"
-        if deductible:
+        if deductible and deductible != "Not specified":
             facts.append(Fact(key="deductible_or_excess", value=deductible, **base))
     return facts
 
@@ -342,7 +362,19 @@ def _comparison_evidence_facts(results: list[dict] | None) -> list[Fact]:
             "confidence": 1.0,
             "source": source,
         }
+        for row in result.get("focused_rows") or []:
+            if not row.get("benefit_code") or not row.get("source"):
+                continue
+            document_id = uuid5(NAMESPACE_URL, str(row["source"]))
+            row_source = FactSource(source_type=FactSourceType.CARRIER_TOB,
+                source_ref=row["source"], document_id=document_id, page=row.get("page"),
+                quote=str(row["value"])[:800])
+            facts.append(Fact(key="benefit." + row["benefit_code"], value=row["value"],
+                              **{**base, "source": row_source}))
+        precise_codes = {row.get("benefit_code") for row in result.get("focused_rows") or []}
         for benefit, value in (analysis.get("benefits") or {}).items():
+            if benefit in precise_codes:
+                continue
             if value and str(value).strip().casefold() not in {"not confirmed", "not specified", "unknown"}:
                 facts.append(Fact(key=f"benefit.{benefit}", value=value, **base))
     return facts
@@ -439,12 +471,23 @@ async def compare(req: CompareRequest):
 
     all_current = quote_current(applicant, settings)
     by_key = {q.plan_key: q for q in all_current if q.plan_key}
-    selected = [by_key[k] for k in req.plan_keys if k in by_key]
-    if len(selected) < 2:
-        raise HTTPException(status_code=400, detail="At least 2 currently eligible plan_keys are required to compare.")
+    catalogue_by_key = {p["plan_key"]: p for p in verified_plan_catalogue()}
+    selected = []
+    if len(set(req.plan_keys)) != len(req.plan_keys):
+        raise HTTPException(status_code=422, detail="Select distinct plans for comparison.")
+    for key in req.plan_keys:
+        row = catalogue_by_key.get(key)
+        # GPMI and Inspire are benefit-only entries. Never attach an older
+        # similarly named rate product to these brochure families.
+        if row and row["carrier"] in {"img", "cigna"}:
+            selected.append(catalogue_plan(row))
+        elif key in by_key:
+            selected.append(by_key[key])
+        else:
+            raise HTTPException(status_code=400, detail="Unknown or currently ineligible plan_key: " + key)
 
     plans_for_matrix = [
-        {"plan_key": q.plan_key, "carrier": q.plan_key.split(":")[0], "product_code": q.product_code,
+        {"plan_key": q.plan_key, "carrier": ("img_legacy" if q.plan_key.startswith("img:") and getattr(q, "pricing_status", None) != "quotation_required" else q.plan_key.split(":")[0]), "product_code": q.product_code,
          "insurer": q.insurer, "product_name": q.product_name}
         for q in selected
     ]

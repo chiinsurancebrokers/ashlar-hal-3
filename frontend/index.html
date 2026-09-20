@@ -580,6 +580,11 @@ async function openCompare(){
 
 function renderDetailedCompare(d){
   const plans = d.plans, matrix = d.matrix;
+  const emailButton = document.querySelector('button[onclick="openComparisonEmail()"]');
+  if (emailButton) {
+    emailButton.disabled = plans.some(p => p.premium == null);
+    emailButton.title = emailButton.disabled ? 'A carrier quotation is needed before emailing a priced comparison.' : '';
+  }
 
   let html = '<div style="display:grid;grid-template-columns:repeat(' + plans.length + ',1fr);gap:10px;margin-bottom:16px">' +
     plans.map(p => `<div style="background:var(--bg);border-radius:10px;padding:10px">
@@ -588,8 +593,8 @@ function renderDetailedCompare(d){
     </div>`).join('') + '</div>';
 
   const summaryRows = [
-    ['Annual premium', p => money(p.premium, p.currency)],
-    ['Monthly', p => money(p.premium/12, p.currency)],
+    ['Annual premium', p => p.premium == null ? 'Quotation required' : money(p.premium, p.currency)],
+    ['Monthly', p => p.premium == null ? 'Quotation required' : money(p.premium/12, p.currency)],
     ['Coverage area', p => p.coverage_area_label],
     ['Annual limit', p => p.card_annual_limit],
     ['Deductible', p => p.card_deductible],
@@ -603,7 +608,9 @@ function renderDetailedCompare(d){
     html += `<tr><td>${esc(row.label)}</td>` + plans.map(p => {
       const v = row.values[p.plan_key];
       const dim = (v === 'Not confirmed') ? 'style="color:var(--muted)"' : '';
-      return `<td ${dim}>${esc(v || '—')}</td>`;
+      const source = (row.evidence || {})[p.plan_key];
+      const citation = source && source.source ? `<small style="display:block;color:var(--muted);margin-top:4px">${esc(source.source)} · p. ${esc(source.page || '—')}</small>` : '';
+      return `<td ${dim}>${esc(v || '—')}${citation}</td>`;
     }).join('') + '</tr>';
   });
   html += '</table>';

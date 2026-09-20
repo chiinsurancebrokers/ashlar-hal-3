@@ -73,6 +73,10 @@ def assess_result_quality(result: dict) -> dict:
             f"{adapter_meta.get('carrier_name') or 'Carrier'} adapter is enabled but not yet validated against a real carrier sample in this build."
         )
 
+    if result.get("pricing_status") == "quotation_required" and "premium" in missing_fields:
+        return {"status": "blocked", "score": 0, "can_generate": False,
+                "missing_fields": missing_fields, "warnings": ["A carrier quotation is required before issuing a proposal."] + warnings}
+
     critical_missing = {"premium", "annual limit", "selected plan"}.intersection(missing_fields)
     if len(critical_missing) >= 2 or "selected plan" in critical_missing:
         status, can_generate = "blocked", False

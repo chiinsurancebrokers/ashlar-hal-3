@@ -205,7 +205,7 @@ def test_adviser_os_ui_exposes_evidence_pipeline_and_carrier_upload_from_compare
     assert "Proposal" in source
     assert "attachEvidenceFromCompareBtn" in source
     assert "Broker evidence review" in source
-    assert "carrier evidence is a broker/internal responsibility" in source
+    assert "brokerWorkspace ? '' : 'none'" in source
     assert "Shortlist comparison ready. Ashlar will verify any insurer-specific quotation" in source
 
 
@@ -257,7 +257,7 @@ def test_client_ui_exposes_current_policy_upload_and_provider_diverse_quotes():
     assert "Upload your current policy" in adviser.text
     assert "existing_policy" in adviser.text
     assert "use it as the baseline when comparing my shortlisted alternatives" in adviser.text
-    assert "carrier evidence is a broker/internal responsibility" in adviser.text
+    assert "brokerWorkspace ? '' : 'none'" in adviser.text
 
     assert home.status_code == 200
     assert "<th>Feature</th>" in home.text
