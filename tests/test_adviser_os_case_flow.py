@@ -263,3 +263,42 @@ def test_client_ui_exposes_current_policy_upload_and_provider_diverse_quotes():
     assert "<th>Feature</th>" in home.text
     assert "Χαρακτηριστικό" not in home.text
     assert "function diversifyQuotes" in home.text
+
+
+def test_existing_policy_baseline_survives_shortlist_refresh():
+    applicant, plan_keys = _comparison_payload()
+    first = client.post(
+        "/api/v1/quotes/compare",
+        json={"applicant_state": applicant, "plan_keys": plan_keys, "language": "en"},
+    )
+    assert first.status_code == 200
+    case = first.json()
+
+    uploaded = client.post(
+        "/api/v1/documents/upload",
+        data={
+            "case_id": case["case_id"],
+            "case_token": case["case_token"],
+            "provider_label": "Bupa Global",
+            "target_plan": "Lifeline Classic",
+            "role": "existing_policy",
+        },
+        files={"file": ("current.txt", b"Bupa Global Lifeline Classic current policy.", "text/plain")},
+    )
+    assert uploaded.status_code == 200
+
+    refreshed = client.post(
+        "/api/v1/quotes/compare",
+        json={
+            "applicant_state": applicant,
+            "plan_keys": plan_keys,
+            "language": "en",
+            "case_id": case["case_id"],
+            "case_token": case["case_token"],
+        },
+    )
+    assert refreshed.status_code == 200
+
+    record = CASE_ANALYSIS_STORE.get(UUID(case["case_id"]), case["case_token"])
+    assert record is not None
+    assert any(doc.plan_key == "existing_policy" for doc in record.case.documents)
