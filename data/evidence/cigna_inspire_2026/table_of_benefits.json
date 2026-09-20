@@ -1,0 +1,172 @@
+{
+  "carrier": "cigna",
+  "carrier_name": "Cigna Healthcare",
+  "product_family": "Cigna Inspire",
+  "document_type": "sales_brochure_table_of_benefits",
+  "source": "591615 INSPIRE V5 SALES BROCHURE EN 0226 (1).pdf",
+  "source_library_file_id": "libfile_cfe0fad4decc8191b43cc40b0b5fa9e2",
+  "version": "0226",
+  "plan_codes": [
+    "essential_care",
+    "executive_care",
+    "elite_care"
+  ],
+  "benefits": [
+    {
+      "benefit_code": "overall_maximum",
+      "label": "Annual benefit maximum",
+      "page": 8,
+      "values": {
+        "essential_care": "€3,000,000",
+        "executive_care": "€7,500,000",
+        "elite_care": "Unlimited"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "chronic_conditions",
+      "label": "Chronic conditions",
+      "page": 8,
+      "values": {
+        "essential_care": "Covered up to applicable policy limits",
+        "executive_care": "Covered up to applicable policy limits",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "inpatient_psychiatric",
+      "label": "In-patient mental health care",
+      "page": 14,
+      "values": {
+        "essential_care": "Up to 20 days per year",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "outpatient_psychiatric",
+      "label": "Out-patient mental health care",
+      "page": 14,
+      "values": {
+        "essential_care": "Paid in Full up to 40 sessions per year",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "outpatient_services_combined",
+      "label": "Out-patient annual benefit",
+      "page": 15,
+      "values": {
+        "essential_care": "Option 1 €4,125 / Option 2 €8,250 / Option 3 €15,000",
+        "executive_care": "Paid in Full up to overall plan limit",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "outpatient_diagnostics",
+      "label": "Out-patient diagnostic tests incl. MRI/CT/PET",
+      "page": 18,
+      "values": {
+        "essential_care": "Up to overall annual limit; not included in out-patient limit",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "prescribed_drugs",
+      "label": "Prescribed medicines, drugs and dressings",
+      "page": 17,
+      "values": {
+        "essential_care": "Option 1 €3,000 / Option 2 €5,250 / Option 3 €7,500",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "wellness_screening",
+      "label": "Routine physical exams",
+      "page": 12,
+      "values": {
+        "essential_care": "Wellness Option 1/2: not covered; Option 3: €1,000 per year",
+        "executive_care": "€3,000 per year",
+        "elite_care": "€7,500 per year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "cancer_treatment",
+      "label": "Out-patient & in-patient cancer treatment",
+      "page": 25,
+      "values": {
+        "essential_care": "Paid in Full",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "normal_maternity",
+      "label": "Routine maternity and childbirth",
+      "page": 26,
+      "values": {
+        "essential_care": "Option 1 not covered / Option 2 €8,250 / Option 3 €18,000",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "medical_evacuation_transport",
+      "label": "Emergency medical evacuation",
+      "page": 28,
+      "values": {
+        "essential_care": "Paid in Full",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "medical_repatriation",
+      "label": "Emergency medical repatriation",
+      "page": 28,
+      "values": {
+        "essential_care": "Paid in Full",
+        "executive_care": "Paid in Full",
+        "elite_care": "Paid in Full"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "hospital_accommodation",
+      "label": "Hospital charges incl. standard private room",
+      "page": 21,
+      "values": {
+        "essential_care": "Paid in Full – standard private room",
+        "executive_care": "Paid in Full – standard private room",
+        "elite_care": "Paid in Full – standard private room"
+      },
+      "status": "verified",
+      "allow_generation": true
+    }
+  ]
+}
