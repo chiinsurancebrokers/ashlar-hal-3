@@ -22,10 +22,20 @@ from backend.app.documents.provider_library import get_proposal_library_client
 from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions, quote_current
 from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_to_dict, NOT_CONFIRMED
+from backend.app.evidence.catalogue import verified_plan_catalogue
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
+
+
+@router.get("/catalogue")
+async def catalogue():
+    """Verified benefit catalogue; pricing status is explicit and separate."""
+    return {
+        "plans": verified_plan_catalogue(),
+        "rule": "Verified benefits do not imply a live price. Cigna remains quotation-required until verified pricing is loaded.",
+    }
 
 
 @router.post("/preview")
