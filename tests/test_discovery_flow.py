@@ -44,21 +44,24 @@ def test_age_and_residence_are_not_skippable_since_no_safe_default_exists():
     assert all(r["value"] != "skip" for r in q["quick_replies"]), "age question must not offer a skip option"
 
 
-def test_optical_wellness_chronic_are_reachable_in_guided_order():
+def test_optional_benefits_are_grouped_into_one_short_question():
     state = {"name_asked": True, "age": 30, "residence_country": "Greece", "coverage_area": "area1",
               "deductible_answered": True, "outpatient_answered": True, "chronic_answered": True,
               "maternity_answered": True, "dental_answered": True, "mental_health_answered": True}
     q = next_discovery_question(state)
-    assert q["key"] == "wellness"
-    state["wellness_answered"] = True
-    q2 = next_discovery_question(state)
-    assert q2["key"] == "optical"
+    assert q["key"] == "extras"
+    out = apply_discovery_answer("Dental, yearly check-ups and optical", {**state, "pending_question": "extras"})
+    assert out["dental_required"] is True
+    assert out["wellness_required"] is True
+    assert out["optical_required"] is True
+    assert out["mental_health_required"] is False
+    assert all(out[f"{key}_answered"] for key in ("maternity", "dental", "mental_health", "wellness", "optical", "evacuation"))
 
 
 def test_discovery_progress_counts_chronic():
     state = {"age": 30, "residence_country": "Greece", "coverage_area": "area1"}
     p = discovery_progress(state)
-    assert p["total"] >= 11
+    assert p["total"] == 9
     state["chronic_answered"] = True
     p2 = discovery_progress(state)
     assert p2["completed"] == p["completed"] + 1

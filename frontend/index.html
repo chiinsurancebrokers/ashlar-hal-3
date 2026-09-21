@@ -6,6 +6,23 @@
 <link rel="icon" href="data:,">
 <title>Ashlar Assurance — HAL Insurance Adviser</title>
 <style>
+html,body{max-width:100%;overflow-x:hidden}
+.msg,.composer,.q-spec>div{min-width:0;overflow-wrap:anywhere}
+.modal-backdrop{padding:12px!important;z-index:1000!important}
+.modal-backdrop>div{max-width:100%!important;max-height:calc(100dvh - 32px)!important;overflow:auto;overscroll-behavior:contain}
+body:has(.modal-backdrop.open){overflow:hidden}
+body:has(.modal-backdrop.open) #compareTray,body:has(.modal-backdrop.open) .adviser-case-launcher{visibility:hidden}
+.compare-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.compare-table th,.compare-table td{min-width:150px;max-width:240px;overflow-wrap:anywhere}
+@media(max-width:600px){
+ .msg{max-width:100%!important}.quotes-row{max-width:100%;min-width:0}
+ .quote-card{min-width:260px!important;max-width:calc(100vw - 64px)!important}
+ input,select,textarea{font-size:16px!important}
+ .q-price{font-size:24px!important;overflow-wrap:normal}
+ .modal-actions,.adviser-compare-actions{flex-wrap:wrap}
+ #compareTray{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+
 :root{
   --navy:#0c1727; --navy-2:#172333; --white:#ffffff; --bg:#f5f7f9;
   --border:#e7ebef; --text:#172333; --muted:#687586;
@@ -296,12 +313,13 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <label>First name</label><input id="leadFirstName">
     <label>Last name</label><input id="leadLastName">
     <label>Email</label><input id="leadEmail" type="email">
-    <label>Country of residence</label><input id="leadResidence">
-    <label>Age</label><input id="leadAge" type="number">
-    <label>Coverage area / destination</label><input id="leadCoverage">
-    <label>Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
-    <label>Approx. annual budget</label><input id="leadBudget">
-    <label>Anything else you want us to know?</label>
+    <details><summary>Review the details HAL already collected</summary>
+    <label>Country of residence</label><input id="leadResidence" readonly>
+    <label>Age</label><input id="leadAge" readonly type="number">
+    <label>Coverage area / destination</label><input id="leadCoverage" readonly>
+    <label>Family / travellers</label><input id="leadFamily" readonly placeholder="e.g. 2 adults + 1 child">
+    <label>Approx. annual budget</label><input id="leadBudget" readonly>
+    </details><label>Anything else you want us to know?</label>
     <textarea id="leadMessage" rows="3" placeholder="Please do not enter detailed medical records or sensitive medical history here."></textarea>
     <input class="honeypot" id="leadWebsite" tabindex="-1" autocomplete="off">
     <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
@@ -316,8 +334,9 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
   </div>
 </div>
 
-<div class="footer-disclaimer">HAL is an Ashlar Assurance decision-support tool. Morgan Price quotations use the official 2026 rate workbook; other carriers may still use clearly-labelled legacy rate data. Final eligibility, underwriting, benefits and premium remain subject to the insurer's current terms and confirmation.</div>
+<div class="footer-disclaimer">HAL is an Ashlar Assurance decision-support tool. Morgan Price quotations use the official 2026 rate workbook; IMG and Cigna require personal quotations; legacy prices are not shown. Final eligibility, underwriting, benefits and premium remain subject to the insurer's current terms and confirmation.</div>
 
+<script src="/static/network.js"></script>
 <script>
 const API = '/api/v1';
 let state = {};
@@ -336,6 +355,29 @@ const MUST_FIELDS = {
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
+
+function diversifyQuotes(quotes){
+  const rows = Array.isArray(quotes) ? quotes : [];
+  const groups = new Map();
+  rows.forEach(q => {
+    const carrier = String(q.insurer || 'Other');
+    if (!groups.has(carrier)) groups.set(carrier, []);
+    groups.get(carrier).push(q);
+  });
+  const queues = [...groups.values()];
+  const mixed = [];
+  let added = true;
+  while (added) {
+    added = false;
+    queues.forEach(queue => {
+      if (queue.length) {
+        mixed.push(queue.shift());
+        added = true;
+      }
+    });
+  }
+  return mixed;
+}
 
 function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
@@ -369,14 +411,14 @@ async function sendHiddenMessage(text){
   const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
   try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await ashlarFetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json', ...(window.ashlarBrokerHeaders ? window.ashlarBrokerHeaders() : {})},
       body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
     const d = await r.json();
     removeThinking();
     if (!r.ok) throw new Error(d.detail || 'HAL service error');
     state = d.state || state;
     currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
+    lastQuotes = diversifyQuotes(d.quotes || []);
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
@@ -470,7 +512,8 @@ function logoColor(insurer){
 }
 
 function renderQuoteCard(q, i) {
-  const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
+  const hasPrice = q.premium !== null && q.premium !== undefined && q.pricing_status !== 'quotation_required';
+  const annual = hasPrice ? Number(q.premium) : null, monthly = hasPrice ? annual/12 : null, key = qkey(q);
   const selected = compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
@@ -482,8 +525,9 @@ function renderQuoteCard(q, i) {
       <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
     </div>
     <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
-    <div class="q-price">${money(annual,q.currency)}<span>/year</span></div>
-    <div class="q-month">${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}</div>
+    <div class="q-month">${hasPrice ? 'Indicative premium available' : 'Benefit comparison · acceptance unconfirmed'}</div>
+    <div class="q-price">${hasPrice ? `${money(annual,q.currency)}<span>/year</span>` : 'Personal quotation required'}</div>
+    <div class="q-month">${hasPrice ? `${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}` : 'No verified current premium loaded'}</div>
     <div class="q-divider"></div>
     <div class="q-spec">
       <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>
@@ -491,11 +535,12 @@ function renderQuoteCard(q, i) {
       <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
     </div>
     ${renderBenefitGrid(q.benefit_checklist)}
+    ${(q.eligibility_checks||[]).map(t => `<div class="q-note">${esc(t)}</div>`).join('')}
     <div class="q-why">${esc(q.card_why||'')}</div>
     ${q.client_note ? `<div class="q-note">${esc(q.client_note)}</div>` : ''}
     ${(q.warnings||[]).length ? `<div class="q-warnings">${q.warnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>` : ''}
     <div class="q-actions">
-      <button class="q-primary" onclick="openLeadForm(currentJourney)">Get proposal</button>
+      <button class="q-primary" onclick="requestPlanProposal('${esc(key)}')">Get proposal</button>
       <button class="q-secondary" onclick="tellMeMore(${i})">Tell me more</button>
     </div>
   </div>`;
@@ -524,6 +569,7 @@ function renderTravelCard(rec){
 
 function toggleCompare(key, btn){
   const nowSelected = !compareSelected.has(key);
+  if (nowSelected && compareSelected.size >= 4) { addMsg('Choose up to 4 plans for a readable comparison.', 'hal'); return; }
   if (nowSelected) compareSelected.add(key); else compareSelected.delete(key);
   if (btn) {
     btn.classList.toggle('selected', nowSelected);
@@ -545,7 +591,7 @@ async function openCompare(){
   document.getElementById('compareModal').classList.add('open');
 
   try {
-    const r = await fetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await ashlarFetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected], language: (state && state.language) || 'en'})});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not build the comparison.');
@@ -557,6 +603,11 @@ async function openCompare(){
 
 function renderDetailedCompare(d){
   const plans = d.plans, matrix = d.matrix;
+  const emailButton = document.querySelector('button[onclick="openComparisonEmail()"]');
+  if (emailButton) {
+    emailButton.disabled = plans.some(p => p.premium == null);
+    emailButton.title = emailButton.disabled ? 'A carrier quotation is needed before emailing a priced comparison.' : '';
+  }
 
   let html = '<div style="display:grid;grid-template-columns:repeat(' + plans.length + ',1fr);gap:10px;margin-bottom:16px">' +
     plans.map(p => `<div style="background:var(--bg);border-radius:10px;padding:10px">
@@ -565,13 +616,13 @@ function renderDetailedCompare(d){
     </div>`).join('') + '</div>';
 
   const summaryRows = [
-    ['Annual premium', p => money(p.premium, p.currency)],
-    ['Monthly', p => money(p.premium/12, p.currency)],
+    ['Annual premium', p => p.premium == null ? 'Personal quotation required' : money(p.premium, p.currency)],
+    ['Monthly', p => p.premium == null ? 'Personal quotation required' : money(p.premium/12, p.currency)],
     ['Coverage area', p => p.coverage_area_label],
     ['Annual limit', p => p.card_annual_limit],
     ['Deductible', p => p.card_deductible],
   ];
-  html += '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
+  html += '<div class="compare-scroll"><table class="compare-table"><tr><th>Feature</th>' +
     plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
   summaryRows.forEach(([label,fn]) => {
     html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';
@@ -580,10 +631,12 @@ function renderDetailedCompare(d){
     html += `<tr><td>${esc(row.label)}</td>` + plans.map(p => {
       const v = row.values[p.plan_key];
       const dim = (v === 'Not confirmed') ? 'style="color:var(--muted)"' : '';
-      return `<td ${dim}>${esc(v || '—')}</td>`;
+      const source = (row.evidence || {})[p.plan_key];
+      const citation = source && source.source ? `<small style="display:block;color:var(--muted);margin-top:4px">${esc(source.source)} · p. ${esc(source.page || '—')}</small>` : '';
+      return `<td ${dim}>${esc(v || '—')}${citation}</td>`;
     }).join('') + '</tr>';
   });
-  html += '</table>';
+  html += '</table></div>';
 
   if (d.unsupported_note) {
     html += `<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(d.unsupported_note)}</p>`;
@@ -592,6 +645,19 @@ function renderDetailedCompare(d){
   if (allWarnings.length) {
     html += `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${allWarnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>`;
   }
+  window.activeEvidenceCase = {case_id:d.case_id, case_token:d.case_token};
+  html += (d.document_gaps || []).map(g => `<p class="q-note">${esc(g.plan_key)}: ${esc(g.missing)}. ${esc(g.message)}</p>`).join('');
+  const evidenceDocuments = Array.isArray(d.evidence_documents) ? d.evidence_documents : [];
+  if (evidenceDocuments.length) {
+    html += '<div style="margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)"><div style="font-weight:700;font-size:12px;margin-bottom:7px">Documents used in this comparison</div>' +
+      evidenceDocuments.map(document => {
+        const label = esc(document.title || document.document_type || 'Carrier document');
+        const meta = esc((document.document_type || 'document') + (document.version ? ' · ' + document.version : ''));
+        const title = document.official_url ? `<a href="${esc(document.official_url)}" target="_blank" rel="noopener noreferrer">${label}</a>` : label;
+        return `<div style="font-size:11px;padding:5px 0;border-top:1px solid var(--border)"><strong>${title}</strong><small style="display:block;color:var(--muted);margin-top:2px">${meta} · ${esc(document.plan_key || '')}</small></div>`;
+      }).join('') + '</div>';
+  }
+  html += plans.map(p => `<button class="btn-secondary source-evidence-button" data-plan-key="${esc(p.plan_key)}">View source evidence: ${esc(p.product_name)}</button>`).join('');
   const isGreek = (state && state.language) === 'el';
   html += `<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px">
     <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${isGreek ? 'Σύντομο Συμπέρασμα' : 'Short Conclusion'}</div>
@@ -614,7 +680,7 @@ async function sendComparisonEmail(){
   const email = document.getElementById('emailAddress').value.trim();
   if (!email) { alert('Please enter an email address.'); return; }
   try {
-    const r = await fetch(API+'/leads/comparison', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await ashlarFetch(API+'/leads/comparison', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({name, email, applicant_state: state, plan_keys: [...compareSelected]})});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not send comparison.');
@@ -649,10 +715,10 @@ async function saveNeeds(){
   if (!state.age || !state.residence_country || !state.coverage_area) return;
 
   try {
-    const r = await fetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
+    const r = await ashlarFetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not recalculate.');
-    lastQuotes = d.shortlist || [];
+    lastQuotes = diversifyQuotes(d.shortlist || []);
     excludedPlans = d.exclusions || [];
     addMsg('I updated the shortlist using your edited needs.', 'hal', lastQuotes, excludedPlans, {show:true, journey:currentJourney, label:'Request a proposal'});
   } catch(e) { addMsg('I could not recalculate the shortlist just now. Please try again.', 'hal'); }
@@ -766,7 +832,7 @@ async function speakText(text){
   if (!speakerOn || !text) return;
   try {
     const language = isGreekText(text) ? 'el' : 'en';
-    const r = await fetch(API+'/speak', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,2000), language})});
+    const r = await ashlarFetch(API+'/speak', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,2000), language})});
     if (!r.ok) { console.warn('Voice output unavailable:', (await r.json()).detail); return; }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
@@ -817,7 +883,7 @@ async function toggleRecording(){
       form.append('file', blob, 'audio.webm');
       form.append('language', (state && state.language) || 'en');
       try {
-        const r = await fetch(API+'/transcribe', {method:'POST', body: form});
+        const r = await ashlarFetch(API+'/transcribe', {method:'POST', body: form});
         const d = await r.json();
         if (!r.ok) throw new Error(d.detail || 'Could not transcribe audio.');
         document.getElementById('input').value = d.text;
@@ -850,14 +916,14 @@ async function sendMessage(){
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
 
   try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await ashlarFetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json', ...(window.ashlarBrokerHeaders ? window.ashlarBrokerHeaders() : {})},
       body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
     const d = await r.json();
     removeThinking();
     if (!r.ok) throw new Error(d.detail || 'HAL service error');
     state = d.state || state;
     currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
+    lastQuotes = diversifyQuotes(d.quotes || []);
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
@@ -872,20 +938,29 @@ async function sendMessage(){
   document.getElementById('sendBtn').disabled = false;
 }
 
+function requestPlanProposal(key){
+  compareSelected = new Set([key]);
+  renderState();
+  openLeadForm(currentJourney);
+}
+
 function openLeadForm(journey){
+  document.querySelectorAll('.modal-backdrop.open').forEach(el => el.classList.remove('open'));
   currentJourney = journey || currentJourney;
   const titles = {ipmi:['Request a proposal','Tell us about you and Ashlar will follow up.'],
                    travel:['Travel insurance enquiry','Tell us about your trip and Ashlar will follow up.'],
                    local_review:['Request a local-vs-international review','Tell us your priorities and Ashlar will follow up.']};
   const [title, sub] = titles[journey] || titles.ipmi;
   document.getElementById('leadTitle').textContent = state.client_segment==='hnwi' ? 'Request a private consultation' : title;
-  document.getElementById('leadSubtitle').textContent = sub;
+  document.getElementById('leadSubtitle').textContent = compareSelected.size ? 'Your selected plans and needs will be included. Add your contact details below.' : sub;
   if (state.residence_country) document.getElementById('leadResidence').value = state.residence_country;
   if (state.applicant_name) document.getElementById('leadFirstName').value = state.applicant_name;
   if (state.age) document.getElementById('leadAge').value = state.age;
   if (state.coverage_area) document.getElementById('leadCoverage').value = areaLabel(state.coverage_area);
   if (state.budget_annual) document.getElementById('leadBudget').value = state.budget_annual;
+  document.getElementById('leadFamily').value = state.dependents ? String(1 + state.dependents.length) : '1';
   document.getElementById('leadStatus').textContent = '';
+  document.querySelector('#leadModal .btn-primary').disabled = false;
   document.getElementById('leadModal').classList.add('open');
 }
 
@@ -901,21 +976,41 @@ async function submitLead(){
     family_members: document.getElementById('leadFamily').value.trim(),
     budget: document.getElementById('leadBudget').value.trim(),
     message: document.getElementById('leadMessage').value.trim(),
+    applicant_state: {...state, chronic_conditions_note: undefined},
+    plan_keys: [...compareSelected],
     consent: document.getElementById('leadConsent').checked,
     website: document.getElementById('leadWebsite').value,
   };
   const status = document.getElementById('leadStatus');
   if (!payload.first_name || !payload.last_name || !payload.email) { status.textContent = 'Please fill in your name and email.'; status.style.color = '#b3261e'; return; }
   if (!payload.consent) { status.textContent = 'Please confirm consent to proceed.'; status.style.color = '#b3261e'; return; }
+  const submitButton = document.querySelector('#leadModal .btn-primary');
+  if (submitButton.disabled) return;
+  submitButton.disabled = true;
   status.textContent = 'Sending...'; status.style.color = 'var(--muted)';
   try {
-    const r = await fetch(API+'/leads', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const r = await ashlarFetch(API+'/leads', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'Could not send enquiry.');
     status.textContent = 'Sent! Reference: ' + (d.reference || ''); status.style.color = 'var(--good)';
-    setTimeout(() => closeModal('leadModal'), 1400);
-  } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; }
+    status.textContent += ' Your selected plans and needs have been sent to Ashlar. We will contact you at ' + payload.email + ' to confirm eligibility and obtain personal quotations.';
+  } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; submitButton.disabled = false; }
 }
+
+document.addEventListener('click', async event => {
+  const button = event.target.closest('.source-evidence-button');
+  if (!button || !window.activeEvidenceCase) return;
+  button.disabled = true;
+  try {
+    const response = await ashlarFetch(API+'/quotes/source-evidence', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...window.activeEvidenceCase, plan_key:button.dataset.planKey})});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Evidence unavailable');
+    const panel = document.createElement('details');
+    panel.open = true;
+    panel.innerHTML = '<summary>Source excerpts</summary><p>'+esc(data.note)+'</p>'+data.excerpts.map(r => '<p><strong>'+esc(r.benefit)+'</strong>: '+esc(r.value)+'<br><small>'+esc(r.source)+' · p. '+esc(r.page)+'</small></p>').join('');
+    button.replaceWith(panel);
+  } catch(error) { button.textContent = error.message + ' — retry'; button.disabled = false; }
+});
 
 // Initial state: HAL greets immediately and asks for the applicant's name
 // first (with a friendly, personalised follow-up into age) — no separate

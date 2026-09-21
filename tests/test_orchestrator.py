@@ -38,7 +38,8 @@ async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
     }
     r = await chat_turn("continue", state, [])
     assert r["ai_status"] == "deterministic_shortlist"
-    assert "top pick" in r["reply"].lower()
+    assert "top pick" not in r["reply"].lower()
+    assert "personal quotations" in r["reply"].lower()
     assert "excluded" in r["reply"].lower()  # maternity exclusions must be mentioned, not just hidden in a link
 
 
@@ -81,12 +82,7 @@ async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     r = await turn("skip")   # deductible
     r = await turn("include outpatient")
     r = await turn("no")     # chronic
-    r = await turn("yes")    # maternity (age 51 -> not asked; but harmless if skipped by flow)
-    r = await turn("skip")   # dental
-    r = await turn("skip")   # mental health
-    r = await turn("skip")   # wellness
-    r = await turn("skip")   # optical
-    r = await turn("skip")   # evacuation
+    r = await turn("Dental and yearly check-ups")  # one bundled extras question
     final = await turn("skip")  # budget
 
     assert final["ai_status"] == "deterministic_shortlist"

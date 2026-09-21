@@ -194,13 +194,11 @@ Hard rules:
 - Never state a number, benefit or limit not present in the data above.
 - If a row says "Not confirmed" for a plan, either omit it or say explicitly that it is not confirmed for that plan — never guess a value.
 - No sales pressure, no superlatives beyond what the data supports.
-- The data above IS sourced from the insurer's loaded official Table of
-  Benefits — for rows that are NOT "Not confirmed", state the benefit as a
-  confirmed fact (e.g. "includes medical evacuation") rather than adding a
-  hedge like "should be verified against the policy wording" — that
-  wording is already the verified source, don't undercut your own
-  evidence. Reserve any "not yet confirmed" caveat strictly for rows that
-  actually say "Not confirmed".
+- These are sourced benefit-table or brochure summaries, not an individual policy schedule.
+- Preserve optional selections, waiting periods, co-insurance and approval requirements exactly.
+- Never imply optional benefits are included, or that a brochure confirms pre-existing cover or acceptance.
+- No premium data is supplied here. Do not claim a plan is cheaper, priced or within budget.
+
 
 {_fairness_clause()}
 """
@@ -247,8 +245,8 @@ def _deterministic_comparison_conclusion(matrix_rows: list[dict], plan_labels: d
         confirmed = [r["label"] for r in matrix_rows if r["values"].get(key, "Not confirmed") != "Not confirmed"]
         if confirmed:
             sample = ", ".join(confirmed[:3])
-            parts.append((f"{plan_labels[key]}: επιβεβαιωμένη κάλυψη σε {sample}." if greek
-                           else f"{plan_labels[key]}: verified cover confirmed for {sample}."))
+            parts.append((f"{plan_labels[key]}: τεκμηριωμένα στοιχεία για {sample}· ισχύουν οι όροι και οι επιλογές του πίνακα." if greek
+                           else f"{plan_labels[key]}: sourced benefit details for {sample}; the table’s limits and options apply."))
     return " ".join(parts) or ("Επαληθεύστε τα στοιχεία στον πίνακα παρακάτω." if greek else "Please review the table below for verified details.")
 
 
