@@ -18,10 +18,10 @@
     #ashlarLifecycle details{border-top:1px solid #d7e2de;padding:14px 0} #ashlarLifecycle summary{font-weight:700;cursor:pointer} #ashlarLifecycle pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#edf3f0;padding:12px}
     #ashlarLifecycle .life-error{color:#a13228} #ashlarLifecycle .life-status{color:#47645c;font-size:13px} #ashlarLifecycle h3{margin-bottom:8px}
   `, document.head);
-  const open = el('button', 'My Ashlar case', document.body);
+  const open = el('button', broker ? 'Broker workspace' : 'My comparison', document.body);
   open.id = 'ashlarLifecycleOpen';
   const dialog = el('dialog', undefined, document.body); dialog.id = 'ashlarLifecycle';
-  const title = el('h2', broker ? 'Broker case workspace' : 'My Ashlar case', dialog);
+  const title = el('h2', broker ? 'Broker case workspace' : 'My comparison & documents', dialog);
   const close = el('button', 'Close', dialog); close.onclick = () => dialog.close();
   const status = el('p', '', dialog); status.className = 'life-status'; status.setAttribute('role', 'status');
   const body = el('div', undefined, dialog);
@@ -77,9 +77,11 @@
     const upload = field(restore, 'Restore access file', 'file'); upload.accept = '.json';
     upload.onchange = async () => { try { const data = JSON.parse(await upload.files[0].text()); if (!/^[0-9a-f-]{36}$/i.test(data.case_id) || typeof data.case_token !== 'string' || data.case_token.length < 20 || data.case_token.length > 256) throw new Error('Invalid access file.'); access = {case_id:data.case_id, case_token:data.case_token}; if (typeof state === 'object') { state._adviser_os_case_id = access.case_id; state._adviser_os_case_token = access.case_token; } document.dispatchEvent(new CustomEvent('ashlar:restore-case', {detail:access})); await refresh(); } catch (e) { status.textContent = e.message; } };
     if (!snapshot) { el('p', 'Create a plan comparison in HAL or restore an existing case.', body); return; }
-    el('p', 'Case ' + snapshot.case_id + ' · ' + snapshot.status, body);
+    if (!broker) el('p', 'This workspace keeps your answers, selected plans, uploaded policy and next step together while you compare. It is not an insurance policy or a permanent document wallet.', body);
+    el('p', 'Reference ' + snapshot.case_id + ' · ' + snapshot.status, body);
     if(snapshot.storage !== 'encrypted_sqlite') el('p','This advice case is temporary. Save the reviewed handoff pack; permanent client documents belong in the CHI Insurance Portal.',body);
-    const docs = section('Documents');
+    const docs = section(broker ? 'Documents' : 'Compare your current policy');
+    if (!broker) el('p', 'Already insured? Upload your current policy and HAL will compare what you have now with the plans you selected.', docs);
     for (const doc of snapshot.documents) for (const ref of doc.refs || []) { button(docs, doc.filename, async () => download(await request('/documents/' + encodeURIComponent(ref) + '/download', {}, true), doc.filename)); if(['application','claim','preauthorisation','carrier_response','issued_policy'].includes(doc.metadata?.role)) button(docs,'Review '+doc.filename,async()=>{const review=await request('/documents/'+encodeURIComponent(ref)+'/analyse');el('p','Extracted candidates — require human verification',docs);el('pre',review.excerpt,docs);el('p','Amounts found: '+review.candidate_amounts.join(', '),docs);el('p','Dates found: '+review.candidate_dates.join(', '),docs);}); }
     let role, file, label;
     const df = form(docs, 'Upload document', async () => {

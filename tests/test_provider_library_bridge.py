@@ -8,7 +8,7 @@ import backend.app.api.quotes as quotes_api
 class FakeLibrary:
     configured = True
 
-    def plan_context(self, *, provider_label: str, target_plan: str):
+    def plan_context(self, *, provider_label: str, target_plan: str, product_hint: str | None = None):
         assert provider_label == "IMG"
         assert target_plan == "Silver"
         return {
@@ -18,6 +18,7 @@ class FakeLibrary:
             "documents": [
                 {
                     "doc_type": "brochure",
+                    "title": "IMG GPMI Table of Benefits",
                     "extracted_text": "IMG Global Prima brochure",
                     "focused_table_context": "[Page 7] Annual overall benefit maximum => EUR 2,000,000\n[Page 8] Medical evacuation => Covered",
                 }
@@ -54,3 +55,4 @@ async def test_shortlist_is_enriched_from_proposal_studio_provider_library(monke
     assert enriched[0]["analysis"]["annual_limit"] == "€ 2,000,000"
     assert "evacuation_repatriation" in enriched[0]["analysis"]["benefits"]
     assert enriched[0]["analysis"]["premium"]["amount"] == 1234
+    assert enriched[0]["evidence_documents"][0]["title"] == "IMG GPMI Table of Benefits"

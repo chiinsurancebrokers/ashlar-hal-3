@@ -65,11 +65,16 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
                 continue
             available_material += 1
 
+        library_documents = list((case.metadata.get("library_evidence") or {}).get(plan_key) or [])
+        library_roles = {
+            str(document.get("document_type") or "document").casefold()
+            for document in library_documents if isinstance(document, dict)
+        }
         roles = sorted({
             str(doc.metadata.get("role") or doc.document_type or "other")
             for doc in case.documents
             if doc.plan_key == plan_key
-        })
+        } | library_roles)
         provider = next((fact.provider for fact in active if fact.provider), None)
 
         plans.append({
@@ -80,6 +85,7 @@ def build_case_intelligence(case: AshlarCase) -> dict[str, Any]:
             "missing_material_keys": missing_keys,
             "conflicting_material_keys": conflicting_keys,
             "document_roles": roles,
+            "library_documents": library_documents,
             "has_quotation": "quotation" in roles or "quote" in roles or "carrier_quote" in roles,
             "has_brochure_or_tob": any(role in roles for role in ("brochure", "tob", "carrier_tob")),
             "has_wording": any(role in roles for role in ("wording", "policy_wording", "member_guide")),

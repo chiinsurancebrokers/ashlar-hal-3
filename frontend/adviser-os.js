@@ -76,6 +76,9 @@
       .adviser-current-policy{margin:8px 14px;padding:10px 11px;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
       .adviser-current-policy-copy{font-size:10.5px;color:var(--muted);line-height:1.45;max-width:680px}
       .adviser-current-policy button{border:1px solid var(--border);background:var(--bg);border-radius:9px;padding:7px 9px;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer}
+      .adviser-policy-shortcut{display:none;margin:8px 16px 12px;padding:12px 14px;border:1px solid #d9d3ff;border-radius:13px;background:var(--accent-soft);align-items:center;gap:12px}
+      .adviser-policy-shortcut.show{display:flex}.adviser-policy-shortcut div{flex:1}.adviser-policy-shortcut strong{display:block;font-size:12px;color:var(--navy)}.adviser-policy-shortcut span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.4}.adviser-policy-shortcut button{border:0;border-radius:9px;background:var(--accent);color:#fff;padding:9px 11px;font-size:10.5px;font-weight:800;cursor:pointer}
+      .adviser-compare-complete{margin-top:16px;padding:14px;border:1px solid #d9d3ff;border-radius:13px;background:var(--accent-soft)}.adviser-compare-complete strong{display:block;font-size:14px;color:var(--navy)}.adviser-compare-complete p{font-size:11.5px;color:var(--muted);line-height:1.45;margin:5px 0 10px}.adviser-compare-actions{display:flex;gap:7px;flex-wrap:wrap}.adviser-compare-actions button{border-radius:9px;padding:9px 11px;font-size:11px;font-weight:800;cursor:pointer}.adviser-library-docs{font-size:9.5px;color:var(--muted);line-height:1.4;margin-top:4px}
       @media(max-width:720px){
         .adviser-case-workspace{margin:0 10px 10px}
         .adviser-journey{overflow-x:auto;grid-template-columns:repeat(6,minmax(74px,1fr));padding-bottom:8px}
@@ -84,6 +87,7 @@
         .adviser-plan-name{max-width:none}
         .adviser-next-action{align-items:flex-start;flex-direction:column}
         .adviser-next-action button{width:100%}
+        .adviser-policy-shortcut{margin:8px 10px 10px;align-items:flex-start;flex-direction:column}.adviser-policy-shortcut button{width:100%}
       }
     `;
     document.head.appendChild(style);
@@ -101,6 +105,20 @@
     workspace.setAttribute('aria-live', 'polite');
     progress.insertAdjacentElement('afterend', workspace);
     return workspace;
+  }
+
+  function ensureCurrentPolicyShortcut() {
+    let card = document.getElementById('currentPolicyShortcut');
+    if (card) return card;
+    const row = document.getElementById('dynamicInputRow');
+    if (!row) return null;
+    card = document.createElement('div');
+    card.id = 'currentPolicyShortcut';
+    card.className = 'adviser-policy-shortcut';
+    card.innerHTML = '<div><strong>Already insured? Compare your current policy</strong><span>Upload your Bupa, Cigna, IMG or other policy. HAL will show what you have now beside the plans you selected.</span></div><button type="button">Upload my policy</button>';
+    card.querySelector('button').onclick = openExistingPolicyUpload;
+    row.insertAdjacentElement('afterend', card);
+    return card;
   }
 
   function casePlanLabel(planKey) {
@@ -410,6 +428,10 @@
       const benefits = plan.has_brochure_or_tob || roles.has('brochure') || roles.has('tob') || roles.has('carrier_tob');
       const wording = plan.has_wording || roles.has('wording') || roles.has('policy_wording') || roles.has('member_guide');
       const pending = uploadedDocuments.filter(item => item.plan_key === plan.plan_key && !item.analysed).length;
+      const libraryDocs = (plan.library_documents || []).map(document =>
+        esc(document.title || document.document_type || 'Carrier document') +
+        (document.version ? ' · ' + esc(document.version) : '')
+      ).join('<br>');
       const conflictCount = (plan.conflicting_material_keys || []).length;
       const missingCount = (plan.missing_material_keys || []).length;
       return '<div class="adviser-plan-row">' +
@@ -421,6 +443,7 @@
           (pending ? '<span class="evidence-pill pending">↻ ' + pending + ' awaiting analysis</span>' : '') +
           (conflictCount ? '<span class="evidence-pill conflict">! ' + conflictCount + ' conflict' + (conflictCount===1?'':'s') + '</span>' : '') +
           (!conflictCount && missingCount ? '<span class="evidence-pill pending">' + missingCount + ' fact' + (missingCount===1?'':'s') + ' to verify</span>' : '') +
+          (libraryDocs ? '<div class="adviser-library-docs">' + libraryDocs + '</div>' : '') +
         '</div></div>';
     }).join('');
 
@@ -430,7 +453,7 @@
 
     workspace.innerHTML =
       '<div class="adviser-case-head">' +
-        '<div><div class="adviser-case-title">Ashlar Case</div><div class="adviser-case-ref">#' + esc(String(activeCaseId).slice(0,8).toUpperCase()) + ' · one case across the full journey</div></div>' +
+        '<div><div class="adviser-case-title">Your comparison workspace</div><div class="adviser-case-ref">#' + esc(String(activeCaseId).slice(0,8).toUpperCase()) + ' · keeps your answers, selected plans, evidence and next step together</div></div>' +
         '<span class="adviser-case-badge">' + esc(phaseLabel(currentPhase)) + '</span>' +
       '</div>' +
       '<div class="adviser-journey">' + phaseHtml + '</div>' +
@@ -545,6 +568,7 @@
     document.getElementById('existingPolicyStatus').textContent = '';
     modal.classList.add('open');
   }
+  window.ashlarOpenExistingPolicy = openExistingPolicyUpload;
 
   async function uploadExistingPolicy() {
     if (!proposalCase || documentBusy) return;
@@ -842,6 +866,8 @@
     ensureDocumentControls();
     renderDocumentStatus();
     renderCaseWorkspace();
+    const policyShortcut = ensureCurrentPolicyShortcut();
+    if (policyShortcut) policyShortcut.classList.toggle('show', Boolean(proposalCase) && !brokerWorkspace);
 
     if (!proposalCase) {
       button.style.display = 'none';
@@ -866,6 +892,28 @@
         status.style.color = 'var(--muted)';
       }
     }
+  }
+
+  function renderComparisonCompletion(data) {
+    const content = document.getElementById('compareContent');
+    if (!content || !proposalCase) return;
+    const existing = document.getElementById('comparisonCompletionCard');
+    if (existing) existing.remove();
+    const card = document.createElement('div');
+    card.id = 'comparisonCompletionCard';
+    card.className = 'adviser-compare-complete';
+    card.innerHTML = '<strong>Comparison complete — what would you like to do next?</strong>' +
+      '<p>HAL can explain the important differences in plain language, or compare these plans with the policy you already have.</p>' +
+      '<div class="adviser-compare-actions"><button type="button" class="btn-primary" id="comparisonWalkthrough">Walk me through it</button><button type="button" class="btn-secondary" id="comparisonCurrentPolicy">Compare with my current policy</button></div>';
+    content.appendChild(card);
+    card.querySelector('#comparisonWalkthrough').onclick = () => {
+      document.getElementById('compareModal')?.classList.remove('open');
+      askHal('Walk me through this comparison. Start with the differences that matter for my stated needs, explain the trade-offs, and tell me what remains unconfirmed.');
+    };
+    card.querySelector('#comparisonCurrentPolicy').onclick = () => {
+      document.getElementById('compareModal')?.classList.remove('open');
+      openExistingPolicyUpload();
+    };
   }
 
   function renderProposalDownloadCard(downloads) {
@@ -1045,6 +1093,7 @@
       if (!response.ok) throw new Error(data.detail || 'Could not build the comparison.');
       content.innerHTML = renderDetailedCompare(data);
       setProposalContext(data);
+      renderComparisonCompletion(data);
     } catch (error) {
       content.innerHTML = '<p style="color:#b3261e">' + esc(error.message) + '</p>';
       if (proposalStatus) {

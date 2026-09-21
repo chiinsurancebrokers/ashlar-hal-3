@@ -81,12 +81,7 @@ async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     r = await turn("skip")   # deductible
     r = await turn("include outpatient")
     r = await turn("no")     # chronic
-    r = await turn("yes")    # maternity (age 51 -> not asked; but harmless if skipped by flow)
-    r = await turn("skip")   # dental
-    r = await turn("skip")   # mental health
-    r = await turn("skip")   # wellness
-    r = await turn("skip")   # optical
-    r = await turn("skip")   # evacuation
+    r = await turn("Dental and yearly check-ups")  # one bundled extras question
     final = await turn("skip")  # budget
 
     assert final["ai_status"] == "deterministic_shortlist"

@@ -14,7 +14,7 @@ def _norm(value: str) -> str:
 
 
 def _provider_tokens(value: str) -> set[str]:
-    ignored = {"international", "global", "insurance", "health", "limited", "ltd"}
+    ignored = {"international", "global", "insurance", "health", "medical", "limited", "ltd"}
     return {part for part in _norm(value).split() if len(part) > 2 and part not in ignored}
 
 
@@ -44,14 +44,19 @@ class ProposalLibraryClient:
         rows = response.json().get("catalog") or []
         return tuple(row for row in rows if isinstance(row, dict))
 
-    def match_catalog(self, provider_label: str) -> dict[str, Any] | None:
+    def match_catalog(self, provider_label: str, product_hint: str | None = None) -> dict[str, Any] | None:
         wanted = _provider_tokens(provider_label)
+        wanted_product = _provider_tokens(product_hint or "")
         matches = []
         for row in self.catalog():
             provider = str(row.get("provider") or "")
             tokens = _provider_tokens(provider)
-            if wanted and tokens and (wanted & tokens):
-                matches.append(row)
+            if not (wanted and tokens and (wanted & tokens)):
+                continue
+            product_tokens = _provider_tokens(str(row.get("product") or ""))
+            if wanted_product and not (wanted_product & product_tokens):
+                continue
+            matches.append(row)
         if not matches:
             return None
         return sorted(
@@ -63,8 +68,8 @@ class ProposalLibraryClient:
             reverse=True,
         )[0]
 
-    def plan_context(self, *, provider_label: str, target_plan: str) -> dict[str, Any] | None:
-        row = self.match_catalog(provider_label)
+    def plan_context(self, *, provider_label: str, target_plan: str, product_hint: str | None = None) -> dict[str, Any] | None:
+        row = self.match_catalog(provider_label, product_hint)
         if row is None:
             return None
         payload = {

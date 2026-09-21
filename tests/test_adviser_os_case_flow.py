@@ -255,6 +255,9 @@ def test_client_ui_exposes_current_policy_upload_and_provider_diverse_quotes():
 
     assert adviser.status_code == 200
     assert "Upload your current policy" in adviser.text
+    assert "Compare with my current policy" in adviser.text
+    assert "Walk me through it" in adviser.text
+    assert "Your comparison workspace" in adviser.text
     assert "existing_policy" in adviser.text
     assert "use it as the baseline when comparing my shortlisted alternatives" in adviser.text
     assert "brokerWorkspace ? '' : 'none'" in adviser.text

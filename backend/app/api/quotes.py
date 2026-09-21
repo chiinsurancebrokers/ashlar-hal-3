@@ -201,17 +201,13 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
 
     enriched = []
     for quote, base in zip(selected, results):
-        # Preserve this explicitly reviewed catalogue and avoid crossing IMG
-        # product families through a broad provider-library name match.
-        if getattr(quote, "pricing_status", None) == "quotation_required" or str(getattr(quote, "plan_key", "")).startswith("img:"):
-            enriched.append(base)
-            continue
         item = dict(base)
         try:
             context = await run_in_threadpool(
                 client.plan_context,
                 provider_label=quote.insurer,
                 target_plan=_target_plan_name(quote),
+                product_hint=str(getattr(quote, "product_family", "") or ""),
             )
         except Exception:
             context = None
@@ -267,8 +263,45 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
         item["focused_rows"] = envelope.get("focused_rows") or item.get("focused_rows") or []
         item["library_source"] = bool(docs)
         item["provider_library_source"] = analysis["provider_library"]
+        item["evidence_documents"] = [
+            {
+                "document_type": str(doc.get("doc_type") or "document").casefold(),
+                "title": str(doc.get("title") or doc.get("filename") or doc.get("name") or doc.get("doc_type") or "Carrier document"),
+                "version": str(doc.get("version") or context.get("version") or ""),
+                "official_url": str(doc.get("official_url") or "") if str(doc.get("official_url") or "").startswith("https://") else "",
+                "source": "proposal_studio_provider_library",
+            }
+            for doc in docs if isinstance(doc, dict)
+        ]
         enriched.append(item)
     return enriched
+
+
+def _evidence_document_index(results: list[dict] | None) -> list[dict]:
+    documents: list[dict] = []
+    seen: set[tuple[str, str, str]] = set()
+    for result in results or []:
+        plan_key = str(result.get("plan_key") or "")
+        supplied = list(result.get("evidence_documents") or [])
+        if not supplied:
+            for row in result.get("focused_rows") or []:
+                source = str(row.get("source") or "")
+                if source:
+                    supplied.append({"document_type": "brochure", "title": source, "version": "", "official_url": "", "source": "verified_catalogue"})
+        for document in supplied:
+            key = (plan_key, str(document.get("document_type") or "document"), str(document.get("title") or "Carrier document"))
+            if key in seen:
+                continue
+            seen.add(key)
+            documents.append({"plan_key": plan_key, **document})
+    return documents
+
+
+def _library_evidence_metadata(results: list[dict] | None) -> dict[str, list[dict]]:
+    grouped: dict[str, list[dict]] = {}
+    for document in _evidence_document_index(results):
+        grouped.setdefault(document["plan_key"], []).append(document)
+    return grouped
 
 
 def _quote_engine_facts(selected) -> list[Fact]:
@@ -395,7 +428,7 @@ def _server_case(req: CompareRequest, applicant: Applicant, selected, results: l
         },
         selected_plan_keys=[q.plan_key for q in selected if q.plan_key],
         facts=[*_quote_engine_facts(selected), *_comparison_evidence_facts(results)],
-        metadata={"created_from": "server_quote_comparison"},
+        metadata={"created_from": "server_quote_comparison", "library_evidence": _library_evidence_metadata(results)},
     )
 
 
@@ -450,6 +483,7 @@ def _reuse_market_case(
         if not document.plan_key or document.plan_key in selected_keys or document.plan_key == "existing_policy" or bool(case.policy)
     ]
     case.metadata["comparison_updated_from"] = "server_quote_comparison"
+    case.metadata["library_evidence"] = _library_evidence_metadata(results)
     case.touch()
     return case, req.case_token
 
@@ -535,4 +569,5 @@ async def compare(req: CompareRequest):
         "proposal_available": bool(intelligence.get("ready_for_proposal")),
         "proposal_quality": quality,
         "case_intelligence": intelligence,
+        "evidence_documents": _evidence_document_index(results),
     }

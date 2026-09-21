@@ -15,9 +15,10 @@ SKIP = {"skip", "not sure", "no preference", "i don't know", "i dont know", "pas
 # tucked away in an optional edit panel.
 QUESTION_ORDER = [
     "age", "residence", "coverage_area", "deductible", "outpatient",
-    "chronic", "maternity", "dental", "mental_health", "wellness",
-    "optical", "evacuation", "budget",
+    "chronic", "extras", "budget",
 ]
+
+EXTRA_KEYS = ("maternity", "dental", "mental_health", "wellness", "optical", "evacuation")
 
 
 def _norm(text: str) -> str:
@@ -204,6 +205,26 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
             if _has_any(text, keywords):
                 out.update({field: True, answered: True})
 
+    elif pending == "extras":
+        # One compact question replaces six consecutive yes/no turns. Anything
+        # explicitly named is selected; unmentioned extras are recorded as not
+        # required so the applicant can reach a shortlist without fatigue.
+        patterns = {
+            "maternity": r"maternity|pregnan|childbirth|τοκετ|εγκυμοσ",
+            "dental": r"dental|dentist|οδοντ",
+            "mental_health": r"mental[\s-]?health|psycholog|psychiatr|therapy|ψυχολ|ψυχιατρ",
+            "wellness": r"wellness|screening|check[\s-]?up|προληπτ",
+            "optical": r"optical|eye\s?(?:test|care)|glasses|οφθαλμ|γυαλι",
+            "evacuation": r"evacuation|repatriation|emergency transport|διακομιδ|επαναπατρ",
+        }
+        age = int(state.get("age") or 0)
+        for key in EXTRA_KEYS:
+            required = bool(state.get(f"{key}_required")) or bool(re.search(patterns[key], text))
+            if key == "maternity" and not 18 <= age <= 45:
+                required = False
+            out[f"{key}_required"] = required
+            out[f"{key}_answered"] = True
+
     elif pending == "budget":
         if any(x in text for x in ["no fixed budget", "no budget", "flexible budget", "χωρις budget"]):
             out.update(budget_answered=True, budget_preference="flexible")
@@ -236,6 +257,14 @@ def _skip_result(pending: str) -> dict:
         "wellness": {"wellness_required": False, "wellness_answered": True},
         "optical": {"optical_required": False, "optical_answered": True},
         "evacuation": {"evacuation_required": False, "evacuation_answered": True},
+        "extras": {
+            "maternity_required": False, "maternity_answered": True,
+            "dental_required": False, "dental_answered": True,
+            "mental_health_required": False, "mental_health_answered": True,
+            "wellness_required": False, "wellness_answered": True,
+            "optical_required": False, "optical_answered": True,
+            "evacuation_required": False, "evacuation_answered": True,
+        },
         "budget": {"budget_answered": True, "budget_preference": "flexible"},
     }
     out = dict(defaults.get(pending, {}))
@@ -274,26 +303,23 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
                 "Έχετε κάποια χρόνια πάθηση, ή θέλετε κάλυψη γι' αυτό στο μέλλον; Για τώρα, απλώς ναι ή όχι.")
         return _q("chronic", text, [("Yes", "Yes"), ("No", "No")])
     age = int(state.get("age") or 0)
-    if 18 <= age <= 45 and not state.get("maternity_answered"):
-        text = ("Do you want maternity cover included?" if not greek else "Θέλετε να περιλαμβάνεται κάλυψη εγκυμοσύνης/τοκετού;")
-        return _q("maternity", text, [("Yes, maternity", "Yes, maternity is required"), ("No", "No maternity needed")])
-    if not state.get("maternity_answered"):
+    if not 18 <= age <= 45:
         state["maternity_answered"] = True
-    if not state.get("dental_answered"):
-        return _q("dental", "Do you want dental cover too?" if not greek else "Θέλετε να περιλαμβάνεται και οδοντιατρική κάλυψη;",
-                   [("Yes", "Yes, dental is important"), ("No", "No dental needed")])
-    if not state.get("mental_health_answered"):
-        text = "Do you want mental health cover, like therapy or psychiatry?" if not greek else "Θέλετε κάλυψη για ψυχική υγεία, όπως ψυχοθεραπεία;"
-        return _q("mental_health", text, [("Yes", "Yes, mental health is important"), ("No", "No mental health cover needed")])
-    if not state.get("wellness_answered"):
-        text = "Do you want yearly check-ups included?" if not greek else "Θέλετε να περιλαμβάνονται ετήσιες προληπτικές εξετάσεις;"
-        return _q("wellness", text, [("Yes", "Yes, wellness is important"), ("No", "No wellness cover needed")])
-    if not state.get("optical_answered"):
-        text = "Do you want eye care included, like eye tests or glasses?" if not greek else "Θέλετε να περιλαμβάνεται οφθαλμολογική φροντίδα, όπως εξετάσεις ή γυαλιά;"
-        return _q("optical", text, [("Yes", "Yes, optical is important"), ("No", "No optical cover needed")])
-    if not state.get("evacuation_answered"):
-        text = "Do you want cover for emergency transport home if you get seriously ill abroad?" if not greek else "Θέλετε κάλυψη επείγουσας μεταφοράς σπίτι αν αρρωστήσετε σοβαρά στο εξωτερικό;"
-        return _q("evacuation", text, [("Yes", "Yes, evacuation is important"), ("No", "No evacuation priority")])
+    if not all(state.get(f"{key}_answered") for key in EXTRA_KEYS):
+        text = (
+            "Which extra benefits matter to you? Choose a common combination below, or type several — for example dental, check-ups and evacuation."
+            if not greek else
+            "Ποιες πρόσθετες καλύψεις σας ενδιαφέρουν; Επιλέξτε έναν συνδυασμό ή γράψτε περισσότερες — π.χ. οδοντιατρικά, check-up και διακομιδή."
+        )
+        choices = [
+            ("No extras", "No extra benefits"),
+            ("Dental + check-ups", "Dental and yearly check-ups"),
+            ("Mental health + check-ups", "Mental health and yearly check-ups"),
+            ("Emergency evacuation", "Emergency evacuation"),
+        ]
+        if 18 <= age <= 45:
+            choices.insert(1, ("Maternity + dental", "Maternity and dental"))
+        return _q("extras", text, choices)
     if not state.get("budget_answered"):
         return _q("budget", "Do you have a yearly budget in mind?" if not greek else "Έχετε κάποιο ετήσιο ποσό κατά νου;",
                    [("No fixed budget", "No fixed budget"), ("Up to €3,000", "Budget €3000"), ("Up to €5,000", "Budget €5000")])
@@ -302,10 +328,7 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
 
 def discovery_progress(state: dict) -> dict:
     keys = ["name_asked", "age", "residence_country", "coverage_area", "deductible_answered", "outpatient_answered",
-            "chronic_answered", "dental_answered", "mental_health_answered", "wellness_answered",
-            "optical_answered", "evacuation_answered", "budget_answered"]
-    age = int(state.get("age") or 0)
-    if 18 <= age <= 45:
-        keys.insert(6, "maternity_answered")
+            "chronic_answered", "extras_answered", "budget_answered"]
+    state["extras_answered"] = all(state.get(f"{key}_answered") for key in EXTRA_KEYS)
     done = sum(bool(state.get(k)) for k in keys)
     return {"completed": done, "total": len(keys), "percent": round(done / max(len(keys), 1) * 100)}

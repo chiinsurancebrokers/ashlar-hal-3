@@ -36,6 +36,8 @@ def test_real_catalogue_comparison_no_price_and_persisted_provenance():
     assert 'Waiting period: 6 months' in row['values']['img:gpmi_silver']
     assert '10% co-insurance' in row['values']['img:gpmi_silver']
     assert row['values']['cigna:inspire_executive_care'] == 'Not confirmed'
+    img_docs = [d for d in body['evidence_documents'] if d['plan_key'] == 'img:gpmi_silver']
+    assert any(d['title'] == 'gpmi-brochure (3).pdf' and d['document_type'] == 'brochure' for d in img_docs)
     record = CASE_ANALYSIS_STORE.get(UUID(body['case_id']), body['case_token'])
     assert record is not None
     assert not any(f.key == 'premium_amount' for f in record.case.facts)
@@ -43,6 +45,8 @@ def test_real_catalogue_comparison_no_price_and_persisted_provenance():
     assert dental.source.page == 10
     assert dental.source.source_ref == 'gpmi-brochure (3).pdf'
     assert any(r['analysis']['waiting_periods'] for r in record.results)
+    img_intelligence = next(p for p in body['case_intelligence']['plans'] if p['plan_key'] == 'img:gpmi_silver')
+    assert img_intelligence['has_brochure_or_tob'] is True
     from backend.app.policy.engine import get_policy_engine, PolicyVerdict
     check = get_policy_engine().check_benefit(case=record.case, benefit_key='routine_dental', plan_key='img:gpmi_silver')
     assert check.verdict == PolicyVerdict.UNKNOWN
