@@ -54,7 +54,7 @@ class ProposalLibraryClient:
             if not (wanted and tokens and (wanted & tokens)):
                 continue
             product_tokens = _provider_tokens(str(row.get("product") or ""))
-            if wanted_product and not (wanted_product & product_tokens):
+            if wanted_product and not wanted_product.issubset(product_tokens):
                 continue
             matches.append(row)
         if not matches:

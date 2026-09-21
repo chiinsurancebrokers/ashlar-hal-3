@@ -10,6 +10,13 @@ class CataloguePlan(BaseModel):
     product_code: str
     product_name: str
     product_family: str
+    match_status: str = "not_assessed"
+    eligibility_status: str = "requires_carrier_confirmation"
+    eligibility_checks: list[str] = Field(default_factory=list)
+    matched_requirements: list[str] = Field(default_factory=list)
+    unmatched_requirements: list[str] = Field(default_factory=list)
+    unconfirmed_requirements: list[str] = Field(default_factory=list)
+    card_why: str = ""
     premium: None = None
     base_premium: None = None
     currency: str = "EUR"

@@ -233,7 +233,7 @@
       button.textContent = 'Recording…';
     }
     try {
-      const response = await fetch(
+      const response = await ashlarFetch(
         API + '/journey/' + encodeURIComponent(proposalCase.case_id) + '/select-plan',
         {
           method:'POST',
@@ -274,7 +274,7 @@
     if (!proposalCase || lifecycleBusy) return;
     lifecycleBusy = true;
     try {
-      const response = await fetch(
+      const response = await ashlarFetch(
         API + '/journey/' + encodeURIComponent(proposalCase.case_id) + '/application/prepare',
         {
           method:'POST',
@@ -594,7 +594,7 @@
       form.append('target_plan', planName);
       form.append('role', 'existing_policy');
       form.append('file', file, file.name);
-      const response = await fetch(API + '/documents/upload', {method:'POST', body:form});
+      const response = await ashlarFetch(API + '/documents/upload', {method:'POST', body:form});
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Could not upload your current policy.');
       if (!pendingDocumentRefs.includes(data.document_ref)) pendingDocumentRefs.push(data.document_ref);
@@ -749,7 +749,7 @@
         form.append('plan_key', planKey);
         form.append('role', role);
         form.append('file', file, file.name);
-        const response = await fetch(API + '/documents/upload', {method:'POST', headers:{'X-Admin-Password': document.getElementById('brokerDocumentPassword').value}, body:form});
+        const response = await ashlarFetch(API + '/documents/upload', {method:'POST', headers:{'X-Admin-Password': document.getElementById('brokerDocumentPassword').value}, body:form});
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || ('Could not attach ' + file.name + '.'));
         if (!pendingDocumentRefs.includes(data.document_ref)) pendingDocumentRefs.push(data.document_ref);
@@ -1002,7 +1002,7 @@
     }
 
     try {
-      const response = await fetch(API + '/proposals/prepare', {
+      const response = await ashlarFetch(API + '/proposals/prepare', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -1073,12 +1073,12 @@
       proposalButton.disabled = true;
     }
     if (proposalStatus) {
-      proposalStatus.textContent = 'Building the server-owned comparison…';
+      proposalStatus.textContent = 'Checking plan benefits and source documents…';
       proposalStatus.style.color = 'var(--muted)';
     }
 
     try {
-      const response = await fetch(API + '/quotes/compare', {
+      const response = await ashlarFetch(API + '/quotes/compare', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -1128,7 +1128,7 @@
       document.getElementById('catalogueClose').onclick = () => modal.classList.remove('open');
       document.getElementById('catalogueCompare').disabled = true;
       try {
-        const response = await fetch(API + '/quotes/catalogue');
+        const response = await ashlarFetch(API + '/quotes/catalogue');
         const data = await response.json();
         if (!response.ok) throw new Error('Could not load the catalogue.');
         document.getElementById('catalogueChoices').innerHTML = data.plans.map(p =>

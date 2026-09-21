@@ -38,7 +38,8 @@ async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
     }
     r = await chat_turn("continue", state, [])
     assert r["ai_status"] == "deterministic_shortlist"
-    assert "top pick" in r["reply"].lower()
+    assert "top pick" not in r["reply"].lower()
+    assert "personal quotations" in r["reply"].lower()
     assert "excluded" in r["reply"].lower()  # maternity exclusions must be mentioned, not just hidden in a link
 
 

@@ -121,6 +121,8 @@ class TransactionLock:
 def configure_store(store, *, attribute, namespace, record_type, key_type=str):
     path = os.environ.get("ASHLAR_DB_PATH")
     if not path:
+        if os.environ.get("ASHLAR_REQUIRE_DURABLE_STORAGE", "").lower() in {"1", "true"}:
+            raise RuntimeError("Durable comparison storage is required: mount a persistent volume and configure ASHLAR_DB_PATH and ASHLAR_STORAGE_KEY")
         return store
     key = os.environ.get("ASHLAR_STORAGE_KEY")
     if not key:
@@ -131,7 +133,7 @@ def configure_store(store, *, attribute, namespace, record_type, key_type=str):
     store.durable = True
     # Retention is explicit and independent of the browser session.
     from datetime import timedelta
-    store.ttl = timedelta(days=int(os.environ.get("ASHLAR_RETENTION_DAYS", "365")))
+    store.ttl = timedelta(days=int(os.environ.get("ASHLAR_RETENTION_DAYS", "7")))
     return store
 
 

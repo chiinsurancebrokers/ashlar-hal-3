@@ -139,7 +139,7 @@ def test_deterministic_walkthrough_explains_real_differences_and_unknown_prices(
 
     assert "GPMI Silver" in result["answer"]
     assert "EUR 3,000,000" in result["answer"]
-    assert "outpatient" in result["answer"]
+    assert "outpatient" in result["answer"].lower()
     assert "no verified current premium" in result["answer"]
     assert "Standard Plus" in result["answer"]
     assert "EUR 2,694.72" in result["answer"]

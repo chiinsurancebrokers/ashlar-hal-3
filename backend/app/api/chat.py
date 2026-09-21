@@ -76,7 +76,7 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
             payload = {
                 "reply": primary.reply or "I need a little more information to continue.",
                 "state": dict(req.state),
-                "quick_replies": [],
+                "quick_replies": [{"label": q, "value": q} for q in (primary.payload.get("advice") or {}).get("follow_up_questions", [])],
             }
 
         proposal_response = next(

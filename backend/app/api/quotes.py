@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, HTTPException
@@ -26,7 +27,7 @@ from backend.app.evidence.catalogue import verified_plan_catalogue
 from backend.app.evidence.catalogue_plan import catalogue_plan
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion
-from backend.app.services.market_shortlist import public_market_exclusions, public_market_shortlist
+from backend.app.services.market_shortlist import public_market_exclusions, public_market_shortlist, matched_catalogue_plan
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
@@ -204,12 +205,12 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
     for quote, base in zip(selected, results):
         item = dict(base)
         try:
-            context = await run_in_threadpool(
+            context = await asyncio.wait_for(run_in_threadpool(
                 client.plan_context,
                 provider_label=quote.insurer,
                 target_plan=_target_plan_name(quote),
                 product_hint=str(getattr(quote, "product_family", "") or ""),
-            )
+            ), timeout=12)
         except Exception:
             context = None
         if not context:
@@ -246,7 +247,8 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
         benefits = dict(analysis.get("benefits") or {})
         for key, value in (library_analysis.get("benefits") or {}).items():
             if value and str(value).strip().casefold() not in {"not mentioned", "not specified", "unknown"}:
-                benefits[key] = value
+                if key not in benefits:
+                    benefits[key] = value
         analysis["benefits"] = benefits
         for key in ("annual_limit", "deductible_or_excess", "area_of_cover"):
             current = str(analysis.get(key) or "").strip().casefold()
@@ -261,10 +263,10 @@ async def _enrich_results_from_provider_library(selected, results: list[dict]) -
             "document_count": len(docs),
         }
         item["analysis"] = analysis
-        item["focused_rows"] = envelope.get("focused_rows") or item.get("focused_rows") or []
+        item["focused_rows"] = item.get("focused_rows") or envelope.get("focused_rows") or []
         item["library_source"] = bool(docs)
         item["provider_library_source"] = analysis["provider_library"]
-        item["evidence_documents"] = [
+        item["evidence_documents"] = _evidence_document_index([base]) + [
             {
                 "document_type": str(doc.get("doc_type") or "document").casefold(),
                 "title": str(doc.get("title") or doc.get("filename") or doc.get("name") or doc.get("doc_type") or "Carrier document"),
@@ -296,6 +298,17 @@ def _evidence_document_index(results: list[dict] | None) -> list[dict]:
             seen.add(key)
             documents.append({"plan_key": plan_key, **document})
     return documents
+
+
+def _document_gaps(results):
+    gaps = []
+    for result in results:
+        key = result.get('plan_key')
+        docs = _evidence_document_index([result])
+        has_wording = any(d.get('document_type') in {'wording', 'policy_wording'} for d in docs)
+        if not has_wording:
+            gaps.append({'plan_key': key, 'missing': 'Matching full policy wording', 'message': 'Brochure benefits are available; governing terms still require review.'})
+    return gaps
 
 
 def _library_evidence_metadata(results: list[dict] | None) -> dict[str, list[dict]]:
@@ -505,7 +518,7 @@ async def compare(req: CompareRequest):
         raise HTTPException(status_code=400, detail=f"Invalid applicant_state: {str(exc)[:180]}") from exc
 
     all_current = quote_current(applicant, settings)
-    by_key = {q.plan_key: q for q in all_current if q.plan_key}
+    by_key = {q.plan_key: q for q in all_current if q.plan_key and q.official_rate}
     catalogue_by_key = {p["plan_key"]: p for p in verified_plan_catalogue()}
     selected = []
     if len(set(req.plan_keys)) != len(req.plan_keys):
@@ -515,7 +528,10 @@ async def compare(req: CompareRequest):
         # GPMI and Inspire are benefit-only entries. Never attach an older
         # similarly named rate product to these brochure families.
         if row and row["carrier"] in {"img", "cigna"}:
-            selected.append(catalogue_plan(row))
+            plan = matched_catalogue_plan(row, applicant)
+            if plan.unmatched_requirements:
+                raise HTTPException(422, detail="This plan does not cover your stated requirements: " + ", ".join(plan.unmatched_requirements))
+            selected.append(plan)
         elif key in by_key:
             selected.append(by_key[key])
         else:
@@ -529,11 +545,18 @@ async def compare(req: CompareRequest):
     matrix = build_comparison_matrix(plans_for_matrix)
     matrix_dict = matrix_to_dict(matrix)
 
-    conclusion = await comparison_conclusion(matrix_dict["rows"], matrix_dict["plan_labels"], greek=(req.language == "el"))
+    try:
+        conclusion = await asyncio.wait_for(comparison_conclusion(matrix_dict["rows"], matrix_dict["plan_labels"], greek=(req.language == "el")), timeout=12)
+    except Exception:
+        conclusion = ("Review the verified rows below, then ask HAL to explain the differences for your needs. Unknown values require insurer confirmation.")
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 
     results = _server_results(selected, matrix_dict)
-    results = await _enrich_results_from_provider_library(selected, results)
+    enriched = await asyncio.gather(*[
+        _enrich_results_from_provider_library([plan], [result])
+        for plan, result in zip(selected, results)
+    ])
+    results = [group[0] for group in enriched]
     reused = _reuse_market_case(
         req,
         applicant=applicant,
@@ -571,4 +594,28 @@ async def compare(req: CompareRequest):
         "proposal_quality": quality,
         "case_intelligence": intelligence,
         "evidence_documents": _evidence_document_index(results),
+        "document_gaps": _document_gaps(results),
+    }
+
+
+class SourceRequest(BaseModel):
+    case_id: UUID
+    case_token: str = Field(max_length=256)
+    plan_key: str = Field(max_length=160)
+
+
+@router.post('/source-evidence')
+async def source_evidence(req: SourceRequest):
+    """Authenticated extracted evidence, never a invented original PDF link."""
+    record = CASE_ANALYSIS_STORE.get(req.case_id, req.case_token)
+    if record is None:
+        raise HTTPException(404, 'Comparison unavailable or expired.')
+    result = next((r for r in record.results if r.get('plan_key') == req.plan_key), None)
+    if result is None:
+        raise HTTPException(404, 'Plan is not part of this comparison.')
+    return {
+        'plan_key': req.plan_key,
+        'documents': _evidence_document_index([result]),
+        'excerpts': [{k: r.get(k) for k in ('source', 'page', 'benefit', 'value')} for r in result.get('focused_rows') or []],
+        'note': 'Extracted comparison evidence. This is not the full policy wording or the original document.',
     }
