@@ -117,6 +117,8 @@ def generate_case_proposal(
     deterministic target-plan corrections. Proposal Studio may write narrative,
     but the factual matrix remains grounded in those structured results.
     """
+    if case.metadata.get("proposal_requires_reanalysis"):
+        raise ProposalGenerationBlocked("Broker conflict resolution changed the ledger; the comparison matrix must be rebuilt and reviewed before export.")
     quality = case_quality(results)
     if not quality.get("can_generate"):
         raise ProposalGenerationBlocked(

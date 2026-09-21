@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Protocol
+import os
 from uuid import UUID
 
 from .asklepios_backend import AsklepiosHttpBackend, AsklepiosServiceError
@@ -42,9 +43,10 @@ class HealthNavigator:
             return SpecialistResponse(
                 specialist=self.name,
                 status="handoff",
-                reply="This request belongs to Asklepios. The health-service endpoint is not configured in Adviser OS yet.",
+                reply="Continue health navigation in Asklepios using the workspace link. No clinical information is transferred automatically." if os.getenv("ASKLEPIOS_WEB_URL") else "This request belongs to Asklepios. The health-service endpoint is not configured in Adviser OS yet.",
                 payload={
                     "target": "asklepios",
+                    "handoff_url": os.getenv("ASKLEPIOS_WEB_URL"),
                     "case_id": str(case_id) if case_id else None,
                     "consent_required_for_insurance_transfer": True,
                 },

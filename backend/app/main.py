@@ -64,7 +64,7 @@ if FRONTEND_DIR.exists():
         html = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
         adviser_bridge = FRONTEND_DIR / "adviser-os.js"
         if adviser_bridge.exists():
-            html = html.replace("</body>", '<script src="/static/adviser-os.js"></script>\n</body>')
+            html = html.replace("</body>", '<script src="/static/adviser-os.js"></script><script src="/static/lifecycle.js"></script>\n</body>')
         return HTMLResponse(
             html,
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
@@ -78,6 +78,7 @@ def health():
         "service": settings.app_name,
         "environment": settings.app_env,
         "ashlar_orchestrator": "active",
+        "case_store": __import__("backend.app.core.durable_store", fromlist=["storage_status"]).storage_status(),
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
         "voice_transcription": {
             "primary": "elevenlabs_scribe" if settings.elevenlabs_api_key else "not_configured",

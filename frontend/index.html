@@ -392,7 +392,7 @@ async function sendHiddenMessage(text){
   const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
   try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json', ...(window.ashlarBrokerHeaders ? window.ashlarBrokerHeaders() : {})},
       body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
     const d = await r.json();
     removeThinking();
@@ -880,7 +880,7 @@ async function sendMessage(){
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
 
   try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json', ...(window.ashlarBrokerHeaders ? window.ashlarBrokerHeaders() : {})},
       body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
     const d = await r.json();
     removeThinking();

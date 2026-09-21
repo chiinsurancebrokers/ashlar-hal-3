@@ -33,6 +33,7 @@ class StoredDocumentEvidence:
     focused_table_context: str
     created_at: datetime
     expires_at: datetime
+    original_bytes: bytes = b""
 
 
 class ServerDocumentEvidenceStore:
@@ -53,7 +54,7 @@ class ServerDocumentEvidenceStore:
         expired = [key for key, item in self._records.items() if item.expires_at <= now]
         for key in expired:
             self._records.pop(key, None)
-        if len(self._records) >= self.max_items:
+        if not getattr(self, "durable", False) and len(self._records) >= self.max_items:
             oldest = sorted(self._records.items(), key=lambda pair: pair[1].created_at)
             for key, _ in oldest[: max(1, len(self._records) - self.max_items + 1)]:
                 self._records.pop(key, None)
@@ -70,6 +71,7 @@ class ServerDocumentEvidenceStore:
         extracted_text: str,
         focused_table_context: str = "",
         plan_key: str | None = None,
+        original_bytes: bytes = b"",
     ) -> StoredDocumentEvidence:
         now = _utcnow()
         record = StoredDocumentEvidence(
@@ -85,6 +87,7 @@ class ServerDocumentEvidenceStore:
             focused_table_context=focused_table_context,
             created_at=now,
             expires_at=now + self.ttl,
+            original_bytes=original_bytes,
         )
         with self._lock:
             self._prune_locked(now)
@@ -118,10 +121,13 @@ class ServerDocumentEvidenceStore:
             focused_table_context=record.focused_table_context,
             created_at=record.created_at,
             expires_at=record.expires_at,
+            original_bytes=record.original_bytes,
         )
 
 
-DOCUMENT_EVIDENCE_STORE = ServerDocumentEvidenceStore()
+from backend.app.core.durable_store import configure_store
+
+DOCUMENT_EVIDENCE_STORE = configure_store(ServerDocumentEvidenceStore(), attribute="_records", namespace="documents", record_type=StoredDocumentEvidence)
 
 
 __all__ = ["StoredDocumentEvidence", "ServerDocumentEvidenceStore", "DOCUMENT_EVIDENCE_STORE"]

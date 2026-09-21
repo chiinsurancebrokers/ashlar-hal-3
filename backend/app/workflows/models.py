@@ -69,6 +69,9 @@ class ApplicationRecord(StrictWorkflowModel):
     status: ApplicationStatus = ApplicationStatus.DRAFT
     required_sections: list[str] = Field(default_factory=list)
     completed_sections: list[str] = Field(default_factory=list)
+    section_data: dict[str, Any] = Field(default_factory=dict)
+    submission_reference: str | None = None
+    events: list[dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
@@ -105,6 +108,8 @@ class PolicyWallet(StrictWorkflowModel):
     core_facts: dict[str, Any] = Field(default_factory=dict)
     verified_benefits: dict[str, Any] = Field(default_factory=dict)
     unresolved_conflicts: list[str] = Field(default_factory=list)
+    evidence: list[dict[str, Any]] = Field(default_factory=list)
+    terms_status: str = "issued_terms_unverified"
 
 
 class PreauthorisationRecord(StrictWorkflowModel):
@@ -116,6 +121,7 @@ class PreauthorisationRecord(StrictWorkflowModel):
     planned_date: date | None = None
     status: PreauthorisationStatus = PreauthorisationStatus.DRAFT
     document_refs: list[str] = Field(default_factory=list)
+    events: list[dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
@@ -129,6 +135,7 @@ class ClaimRecord(StrictWorkflowModel):
     status: ClaimStatus = ClaimStatus.DRAFT
     document_refs: list[str] = Field(default_factory=list)
     note: str | None = Field(default=None, max_length=1200)
+    events: list[dict[str, Any]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 

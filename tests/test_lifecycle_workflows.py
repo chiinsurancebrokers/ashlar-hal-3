@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from backend.app.agents.orchestrator import get_ashlar_orchestrator
 from backend.app.cases.models import (
     AshlarCase,
+    CaseDocument,
     CaseStatus,
     Fact,
     FactSource,
@@ -10,6 +11,7 @@ from backend.app.cases.models import (
     FactStatus,
 )
 from backend.app.cases.store import CASE_ANALYSIS_STORE
+from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
 
 
 def _active_proposal_case():
@@ -87,19 +89,30 @@ def test_stages_13_to_20_remain_on_one_ashlar_case_under_orchestrator():
     assert prepared["case_intelligence"]["journey"]["current_step"] == 14
     required = prepared["payload"]["application"]["required_sections"]
 
+    evidence = DOCUMENT_EVIDENCE_STORE.put(case_id=case_id, case_token=token,
+        document=CaseDocument(filename="synthetic-policy.txt", document_type="policy_schedule", plan_key=plan_key),
+        provider_label="Carrier", target_plan="Plan A", role="application", plan_key=plan_key,
+        extracted_text="Synthetic issued schedule", original_bytes=b"Synthetic issued schedule")
     for section in required:
         orchestrator.complete_application_section_workflow(
             case_id=case_id,
             case_token=token,
             section=section,
+            note="Explicit client evidence reviewed",
+            document_refs=[evidence.document_ref],
+            broker_authorized=True,
         )
 
     submitted = orchestrator.submit_application_workflow(
+        broker_authorized=True, external_reference="TEST-CARRIER-SUBMISSION",
         case_id=case_id,
         case_token=token,
     )
     assert submitted["payload"]["application"]["status"] == "submitted"
 
+    schedule = DOCUMENT_EVIDENCE_STORE.put(case_id=case_id, case_token=token,
+        document=evidence.document, provider_label="Carrier", target_plan="Plan A",
+        role="issued_policy", plan_key=plan_key, extracted_text="Issued synthetic policy")
     today = date.today()
     issued = orchestrator.record_policy_issue(
         case_id=case_id,
@@ -109,9 +122,13 @@ def test_stages_13_to_20_remain_on_one_ashlar_case_under_orchestrator():
         start_date=today,
         renewal_date=today + timedelta(days=365),
         broker_authorized=True,
+        document_refs=[schedule.document_ref],
     )
     assert issued["case_intelligence"]["journey"]["current_step"] == 15
 
+    current = CASE_ANALYSIS_STORE.get(case_id, token)
+    current.case.metadata["issued_terms_fact_ids"] = {current.case.policy["policy_id"]: [str(f.fact_id) for f in current.case.facts]}
+    CASE_ANALYSIS_STORE.save_case(case=current.case, access_token=token)
     wallet = orchestrator.policy_wallet(
         case_id=case_id,
         case_token=token,
@@ -150,7 +167,7 @@ def test_stages_13_to_20_remain_on_one_ashlar_case_under_orchestrator():
     assert final is not None
     assert final.case.case_id == case_id
     assert final.case.selected_plan_key == plan_key
-    assert final.case.application is not None
+    assert final.case.metadata["application_history"]
     assert final.case.policy is not None
     assert final.case.preauthorisations
     assert final.case.claims

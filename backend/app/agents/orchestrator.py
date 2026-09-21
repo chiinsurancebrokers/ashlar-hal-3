@@ -351,6 +351,16 @@ class AshlarOrchestrator:
         return record, token
 
     @staticmethod
+    def _workflow_documents(case, token, refs, *, role=None, plan_key=None):
+        from backend.app.documents.store import DOCUMENT_EVIDENCE_STORE
+        items = [DOCUMENT_EVIDENCE_STORE.get(ref, case_id=case.case_id, case_token=token) for ref in (refs or [])]
+        if any(item is None or (plan_key and item.plan_key != plan_key) for item in items):
+            raise WorkflowError("Evidence must belong to this case and plan.")
+        if role and not any(item.role == role for item in items):
+            raise WorkflowError("Required evidence document is missing: " + role)
+        return items
+
+    @staticmethod
     def _save_workflow_case(*, case: AshlarCase, case_token: str):
         saved = CASE_ANALYSIS_STORE.save_case(case=case, access_token=case_token)
         if saved is None:
@@ -420,10 +430,15 @@ class AshlarOrchestrator:
         case_id: UUID | str,
         case_token: str,
         section: str,
+        broker_authorized: bool = False,
+        note: str = "",
+        document_refs: list[str] | None = None,
     ) -> dict[str, Any]:
         record, token = self._workflow_record(case_id=case_id, case_token=case_token)
         case = record.case.model_copy(deep=True)
-        result = self.journey_workflow.complete_application_section(case, section=section)
+        requirement = next((x for x in case.metadata.get("application_blueprint", {}).get("requirements", []) if x["key"] == section), {})
+        self._workflow_documents(case, token, document_refs, role="application" if requirement.get("requires_signature") else None, plan_key=case.selected_plan_key)
+        result = self.journey_workflow.complete_application_section(case, section=section, broker_authorized=broker_authorized, note=note, document_refs=document_refs)
         saved = self._save_workflow_case(case=case, case_token=token)
         return {
             **result.model_dump(mode="json"),
@@ -436,10 +451,12 @@ class AshlarOrchestrator:
         *,
         case_id: UUID | str,
         case_token: str,
+        broker_authorized: bool = False,
+        external_reference: str = "",
     ) -> dict[str, Any]:
         record, token = self._workflow_record(case_id=case_id, case_token=case_token)
         case = record.case.model_copy(deep=True)
-        result = self.journey_workflow.submit_application(case)
+        result = self.journey_workflow.submit_application(case, broker_authorized=broker_authorized, external_reference=external_reference)
         saved = self._save_workflow_case(case=case, case_token=token)
         return {
             **result.model_dump(mode="json"),
@@ -463,6 +480,7 @@ class AshlarOrchestrator:
             raise WorkflowError("Policy issue can only be recorded by an authorised broker workflow.", code="broker_authorisation_required")
         record, token = self._workflow_record(case_id=case_id, case_token=case_token)
         case = record.case.model_copy(deep=True)
+        self._workflow_documents(case, token, document_refs, role="issued_policy", plan_key=case.selected_plan_key)
         result = self.journey_workflow.issue_policy(
             case,
             policy_number=policy_number,
@@ -507,12 +525,13 @@ class AshlarOrchestrator:
     ) -> dict[str, Any]:
         record, token = self._workflow_record(case_id=case_id, case_token=case_token)
         case = record.case.model_copy(deep=True)
-        plan_key = case.selected_plan_key
+        plan_key = (case.policy or {}).get("plan_key")
         coverage = self.policy_engine.check_benefit(
             case=case,
             benefit_key=service_key,
             plan_key=plan_key,
         )
+        self._workflow_documents(case, token, document_refs, plan_key=(case.policy or {}).get("plan_key"))
         result = self.journey_workflow.create_preauthorisation(
             case,
             service_key=service_key,
@@ -542,6 +561,7 @@ class AshlarOrchestrator:
     ) -> dict[str, Any]:
         record, token = self._workflow_record(case_id=case_id, case_token=case_token)
         case = record.case.model_copy(deep=True)
+        self._workflow_documents(case, token, document_refs, plan_key=(case.policy or {}).get("plan_key"))
         result = self.journey_workflow.create_claim(
             case,
             service_date=service_date,
@@ -567,7 +587,7 @@ class AshlarOrchestrator:
         case = record.case.model_copy(deep=True)
         result = self.journey_workflow.start_renewal(case)
         quotes = []
-        if case.applicant is not None:
+        if case.applicant is not None and case.metadata.get("renewal_intake_confirmed"):
             quotes = [
                 quote.model_dump(mode="json")
                 for quote in quote_shortlist(case.applicant, get_settings())

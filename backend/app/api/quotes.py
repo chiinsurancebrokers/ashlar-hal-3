@@ -418,7 +418,7 @@ def _reuse_market_case(
     case = record.case.model_copy(deep=True)
     selected_keys = [q.plan_key for q in selected if q.plan_key]
     sanitized_applicant = applicant.model_copy(update={"chronic_conditions_note": None}, deep=True)
-    case.status = CaseStatus.COMPARISON
+    case.status = CaseStatus.RENEWAL if case.renewal else CaseStatus.COMPARISON
     case.applicant = sanitized_applicant
     case.client.display_name = (
         str(req.applicant_state.get("applicant_name") or case.client.display_name or "Client").strip()[:200]
@@ -437,7 +437,7 @@ def _reuse_market_case(
         fact
         for fact in case.facts
         if fact.source.source_type != FactSourceType.QUOTE_ENGINE
-        and (not fact.plan_key or fact.plan_key in selected_keys or fact.plan_key == "existing_policy")
+        and (not fact.plan_key or fact.plan_key in selected_keys or fact.plan_key == "existing_policy" or bool(case.policy))
     ]
     case.facts = [
         *retained,
@@ -447,7 +447,7 @@ def _reuse_market_case(
     case.documents = [
         document
         for document in case.documents
-        if not document.plan_key or document.plan_key in selected_keys or document.plan_key == "existing_policy"
+        if not document.plan_key or document.plan_key in selected_keys or document.plan_key == "existing_policy" or bool(case.policy)
     ]
     case.metadata["comparison_updated_from"] = "server_quote_comparison"
     case.touch()

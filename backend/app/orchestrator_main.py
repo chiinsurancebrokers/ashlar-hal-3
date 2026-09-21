@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
+from backend.app.core.broker_access import broker_authorized
 from fastapi.responses import JSONResponse
 
 from backend.app.api.adviser import AdviserHandleRequest, dispatch_adviser_request
@@ -47,10 +48,10 @@ def health():
             "fact_ledger",
             "policy_engine",
         ],
-        "case_store": "process_local",
+        "case_store": __import__("backend.app.core.durable_store", fromlist=["storage_status"]).storage_status(),
         "independent_deployment_ready": False,
         "independent_deployment_note": (
-            "The FastAPI boundary is standalone, but cases remain process-local. "
+            "The FastAPI boundary is standalone. SQLite persistence is single-volume. "
             "Use shared durable persistence before running HAL and the orchestrator "
             "as separate production services."
         ),
@@ -58,8 +59,8 @@ def health():
 
 
 @app.post("/v1/handle")
-async def handle(req: AdviserHandleRequest):
-    result = await dispatch_adviser_request(req)
+async def handle(req: AdviserHandleRequest, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    result = await dispatch_adviser_request(req, is_broker=broker_authorized(x_admin_password))
     return JSONResponse(
         content=result.model_dump(mode="json"),
         headers={"Cache-Control": "no-store"},

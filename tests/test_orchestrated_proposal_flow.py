@@ -86,6 +86,7 @@ def test_chat_create_proposal_routes_through_orchestrator_and_returns_real_files
             case_id=UUID(compare_data["case_id"]),
             message="Compare these carrier quotations and create the proposal.",
             context={
+                "broker_authorized": True,
                 "state": state,
                 "case_token": compare_data["case_token"],
                 "document_refs": document_refs,

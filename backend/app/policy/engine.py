@@ -87,8 +87,10 @@ class PolicyEngine:
         if candidate_plan is None and len(case.selected_plan_keys) == 1:
             candidate_plan = case.selected_plan_keys[0]
 
+        from backend.app.workflows.service import issued_policy_facts
+        evidence_facts = issued_policy_facts(case) if case.policy else case.facts
         facts = [
-            fact for fact in case.facts
+            fact for fact in evidence_facts
             if fact.status == FactStatus.VERIFIED
             and fact.key == normalized
             and (candidate_plan is None or fact.plan_key == candidate_plan)

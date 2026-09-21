@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from backend.app.applications.adapters import ApplicationAdapterRegistry, get_application_adapters
 from backend.app.cases.fact_ledger import FactLedger
-from backend.app.cases.models import AshlarCase, CaseStatus, FactStatus
+from backend.app.cases.models import AshlarCase, CaseStatus, FactStatus, FactSourceType
 
 from .models import (
     ApplicationRecord,
@@ -68,6 +68,11 @@ class JourneyWorkflowService:
             selected_by="broker" if selected_by == "broker" else "client",
             note=note,
         )
+        if case.policy and not case.renewal:
+            raise WorkflowError("Start a renewal review before changing an issued plan.")
+        if case.selected_plan_key != selected and case.application:
+            case.metadata.setdefault("application_history", []).append(deepcopy(case.application))
+            case.application = None
         case.selected_plan_key = selected
         case.metadata["plan_selection"] = record.model_dump(mode="json")
         case.touch()
@@ -84,6 +89,8 @@ class JourneyWorkflowService:
         plan_key = self._require_selected_plan(case)
         if case.application:
             current = ApplicationRecord.model_validate(case.application)
+            if current.plan_key != plan_key:
+                raise WorkflowError("Application does not match the selected plan.")
         else:
             adapter = self.application_adapters.for_plan(plan_key)
             blueprint = adapter.blueprint(case, plan_key)
@@ -110,7 +117,8 @@ class JourneyWorkflowService:
                 ],
             }
 
-        case.status = CaseStatus.APPLICATION
+        if not case.policy:
+            case.status = CaseStatus.APPLICATION
         case.touch()
         return WorkflowResult(
             action="complete_application",
@@ -127,6 +135,9 @@ class JourneyWorkflowService:
         case: AshlarCase,
         *,
         section: str,
+        broker_authorized: bool = False,
+        note: str = "",
+        document_refs: list[str] | None = None,
     ) -> WorkflowResult:
         self._require_selected_plan(case)
         if not case.application:
@@ -135,6 +146,17 @@ class JourneyWorkflowService:
                 code="application_not_prepared",
             )
         record = ApplicationRecord.model_validate(case.application)
+        if record.status == ApplicationStatus.SUBMITTED:
+            raise WorkflowError("Submitted application sections are immutable.")
+        requirement = next((x for x in case.metadata.get("application_blueprint", {}).get("requirements", []) if x["key"] == section), {})
+        if requirement.get("owner") == "broker" and not broker_authorized:
+            raise WorkflowError("This section requires an authorised broker.", code="broker_authorisation_required")
+        if not note.strip():
+            raise WorkflowError("Record the information or evidence reviewed for this section.")
+        if requirement.get("requires_signature") and not document_refs:
+            raise WorkflowError("Attach the signed application document; a checklist tick is not a signature.")
+        record.section_data[section] = {"note": note, "document_refs": list(document_refs or []), "recorded_by": "broker" if broker_authorized else "client", "at": datetime.now(timezone.utc).isoformat()}
+        record.updated_at = datetime.now(timezone.utc)
         value = str(section or "").strip()
         if value not in record.required_sections:
             raise WorkflowError(
@@ -163,7 +185,11 @@ class JourneyWorkflowService:
             },
         )
 
-    def submit_application(self, case: AshlarCase) -> WorkflowResult:
+    def submit_application(self, case: AshlarCase, *, broker_authorized: bool = False, external_reference: str = "") -> WorkflowResult:
+        if not broker_authorized:
+            raise WorkflowError("A broker must record the actual carrier submission.", code="broker_authorisation_required")
+        if not external_reference.strip():
+            raise WorkflowError("A real carrier submission reference is required.")
         if not case.application:
             raise WorkflowError("No application is prepared.", code="application_not_prepared")
         record = ApplicationRecord.model_validate(case.application)
@@ -172,13 +198,17 @@ class JourneyWorkflowService:
                 "The application still has incomplete required sections.",
                 code="application_incomplete",
             )
+        if record.status == ApplicationStatus.SUBMITTED:
+            raise WorkflowError("The submission has already been recorded.")
+        record.submission_reference = external_reference
+        record.updated_at = datetime.now(timezone.utc)
         record.status = ApplicationStatus.SUBMITTED
         case.application = record.model_dump(mode="json")
         case.status = CaseStatus.APPLICATION
         case.touch()
         return WorkflowResult(
             action="await_policy_issue",
-            message="The application is recorded as submitted.",
+            message="The broker’s external carrier submission reference has been recorded. Ashlar did not transmit the application.",
             payload={"application": record.model_dump(mode="json")},
         )
 
@@ -205,6 +235,18 @@ class JourneyWorkflowService:
                 code="application_not_submitted",
             )
 
+        if renewal_date <= start_date:
+            raise WorkflowError("Renewal date must be after the policy start date.")
+        carrier = plan_key.split(":")[0]
+        if carrier in {"img", "cigna", "bupa"} and not provider.strip().lower().startswith(carrier):
+            raise WorkflowError("Carrier must match the selected plan.")
+        if str(application.application_id) in case.metadata.get("issued_application_ids", []):
+            raise WorkflowError("This application already has an issued policy.")
+        if not document_refs:
+            raise WorkflowError("Attach the issued policy schedule before recording issuance.")
+        case.metadata.setdefault("issued_application_ids", []).append(str(application.application_id))
+        if case.policy:
+            case.metadata.setdefault("policy_history", []).append(deepcopy(case.policy))
         policy = PolicyRecord(
             policy_number=policy_number,
             provider=provider,
@@ -214,6 +256,9 @@ class JourneyWorkflowService:
             document_refs=list(document_refs or []),
         )
         case.policy = policy.model_dump(mode="json")
+        if case.renewal:
+            case.renewal["status"] = "completed"
+            case.renewal["selected_plan_key"] = plan_key
         case.status = CaseStatus.ACTIVE_POLICY
         case.touch()
         return WorkflowResult(
@@ -226,7 +271,8 @@ class JourneyWorkflowService:
         if not case.policy:
             raise WorkflowError("No issued policy is stored on this case.", code="policy_required")
         policy = PolicyRecord.model_validate(case.policy)
-        ledger = FactLedger(case.facts)
+        issued = issued_policy_facts(case)
+        ledger = FactLedger(issued)
         subject = f"plan:{policy.plan_key}"
 
         core_keys = (
@@ -243,7 +289,7 @@ class JourneyWorkflowService:
                 core[key] = deepcopy(fact.value)
 
         benefits: dict[str, Any] = {}
-        for fact in case.facts:
+        for fact in issued:
             if (
                 fact.subject == subject
                 and fact.status == FactStatus.VERIFIED
@@ -267,6 +313,8 @@ class JourneyWorkflowService:
             core_facts=core,
             verified_benefits=benefits,
             unresolved_conflicts=conflicts,
+            evidence=[f.model_dump(mode="json") for f in issued if f.status == FactStatus.VERIFIED],
+            terms_status="verified_issued_terms" if core or benefits else "issued_terms_unverified",
         )
         case.metadata["policy_wallet"] = wallet.model_dump(mode="json")
         case.touch()
@@ -286,12 +334,15 @@ class JourneyWorkflowService:
         planned_date: date | None = None,
         document_refs: list[str] | None = None,
     ) -> WorkflowResult:
-        plan_key = self._require_selected_plan(case)
-        if not case.policy or case.status not in {CaseStatus.ACTIVE_POLICY, CaseStatus.CLAIM}:
+        plan_key = str((case.policy or {}).get("plan_key") or "")
+        if not case.policy or case.policy.get("status") != "active":
             raise WorkflowError(
                 "An active issued policy is required before pre-authorisation.",
                 code="active_policy_required",
             )
+        service_day = planned_date or date.today()
+        if not (date.fromisoformat(case.policy["start_date"]) <= service_day < date.fromisoformat(case.policy["renewal_date"])):
+            raise WorkflowError("The planned service falls outside the recorded policy period.")
         record = PreauthorisationRecord(
             plan_key=plan_key,
             service_key=service_key,
@@ -318,12 +369,14 @@ class JourneyWorkflowService:
         document_refs: list[str] | None = None,
         note: str | None = None,
     ) -> WorkflowResult:
-        plan_key = self._require_selected_plan(case)
+        plan_key = str((case.policy or {}).get("plan_key") or "")
         if not case.policy:
             raise WorkflowError(
                 "An issued policy is required before a claim can be opened.",
                 code="policy_required",
             )
+        if service_date and not (date.fromisoformat(case.policy["start_date"]) <= service_date < date.fromisoformat(case.policy["renewal_date"])):
+            raise WorkflowError("Claim service date falls outside the recorded policy period.")
         claim = ClaimRecord(
             plan_key=plan_key,
             service_date=service_date,
@@ -348,10 +401,17 @@ class JourneyWorkflowService:
                 code="policy_required",
             )
         policy = PolicyRecord.model_validate(case.policy)
+        if case.renewal and case.renewal.get("status") != "completed":
+            raise WorkflowError("A renewal review is already open.")
+        case.metadata["renewal_baseline"] = {"policy": deepcopy(case.policy), "facts": [f.model_dump(mode="json") for f in issued_policy_facts(case)]}
         renewal = RenewalRecord(
             current_plan_key=policy.plan_key,
             renewal_date=policy.renewal_date,
         )
+        if case.application:
+            case.metadata.setdefault("application_history", []).append(deepcopy(case.application))
+            case.application = None
+        case.metadata.pop("renewal_intake_confirmed", None)
         case.renewal = renewal.model_dump(mode="json")
         case.status = CaseStatus.RENEWAL
         case.touch()
@@ -360,6 +420,14 @@ class JourneyWorkflowService:
             message="The renewal review has started.",
             payload={"renewal": renewal.model_dump(mode="json")},
         )
+
+
+def issued_policy_facts(case: AshlarCase):
+    """Only evidence explicitly reconciled with this issued schedule is authoritative."""
+    if not case.policy:
+        return []
+    ids = set(case.metadata.get("issued_terms_fact_ids", {}).get(str(case.policy.get("policy_id")), []))
+    return [f for f in case.facts if str(f.fact_id) in ids and f.source.source_type in {FactSourceType.POLICY_SCHEDULE, FactSourceType.POLICY_WORDING}]
 
 
 _JOURNEY_WORKFLOW = JourneyWorkflowService()

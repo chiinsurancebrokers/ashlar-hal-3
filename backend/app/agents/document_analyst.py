@@ -178,6 +178,7 @@ class DocumentAnalyst:
         case_id: UUID | None,
         case_token: str,
         document_refs: list[str],
+        broker_authorized: bool = False,
     ) -> SpecialistResponse:
         if case_id is None or not case_token:
             return SpecialistResponse(
@@ -213,6 +214,10 @@ class DocumentAnalyst:
                     reply="One or more document references are invalid, expired, or belong to another case.",
                     payload={"invalid_document_ref": document_ref},
                 )
+            if item.role in {"quotation", "brochure", "wording"} and not broker_authorized:
+                return SpecialistResponse(specialist=self.name, status="blocked", reply="Carrier quotation analysis requires an authenticated broker workspace.")
+            if item.role not in {"quotation", "brochure", "wording", "existing_policy"}:
+                return SpecialistResponse(specialist=self.name, status="blocked", reply="Use lifecycle document review for application, issued-policy and claim evidence; these documents must not overwrite the plan catalogue.")
             records.append(item)
 
         if not records:
@@ -327,6 +332,7 @@ class DocumentAnalyst:
                 case_id=case_id,
                 case_token=case_token,
                 document_refs=document_refs,
+                broker_authorized=ctx.get("broker_authorized") is True,
             )
 
         # Internal/broker compatibility path. Public Adviser OS request models do

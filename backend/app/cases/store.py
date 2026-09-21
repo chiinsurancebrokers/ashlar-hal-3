@@ -45,7 +45,7 @@ class ServerCaseAnalysisStore:
         expired = [case_id for case_id, record in self._records.items() if record.expires_at <= now]
         for case_id in expired:
             self._records.pop(case_id, None)
-        if len(self._records) >= self.max_items:
+        if not getattr(self, "durable", False) and len(self._records) >= self.max_items:
             oldest = sorted(self._records.items(), key=lambda pair: pair[1].updated_at)
             for case_id, _ in oldest[: max(1, len(self._records) - self.max_items + 1)]:
                 self._records.pop(case_id, None)
@@ -53,6 +53,7 @@ class ServerCaseAnalysisStore:
     def put(self, *, case: AshlarCase, results: list[dict[str, Any]]) -> CaseAnalysisRecord:
         now = _utcnow()
         stored_case = case.model_copy(deep=True)
+        stored_case.metadata["storage_revision"] = 1
         record = CaseAnalysisRecord(
             case=stored_case,
             results=deepcopy(results),
@@ -82,9 +83,13 @@ class ServerCaseAnalysisStore:
             record = self._records.get(case.case_id)
             if record is None or not access_token or not hmac.compare_digest(record.access_token, access_token):
                 return None
+            if getattr(self, "durable", False) and case.metadata.get("storage_revision") != record.case.metadata.get("storage_revision"):
+                return None
             record.case = case.model_copy(deep=True)
+            record.case.metadata["storage_revision"] = int(record.case.metadata.get("storage_revision", 0)) + 1
             record.updated_at = now
             record.expires_at = now + self.ttl
+            self._records[case.case_id] = record
             return self._copy(record)
 
     def save_analysis(
@@ -107,10 +112,14 @@ class ServerCaseAnalysisStore:
             record = self._records.get(case.case_id)
             if record is None or not access_token or not hmac.compare_digest(record.access_token, access_token):
                 return None
+            if getattr(self, "durable", False) and case.metadata.get("storage_revision") != record.case.metadata.get("storage_revision"):
+                return None
             record.case = case.model_copy(deep=True)
+            record.case.metadata["storage_revision"] = int(record.case.metadata.get("storage_revision", 0)) + 1
             record.results = deepcopy(results)
             record.updated_at = now
             record.expires_at = now + self.ttl
+            self._records[case.case_id] = record
             return self._copy(record)
 
     @staticmethod
@@ -125,4 +134,6 @@ class ServerCaseAnalysisStore:
         )
 
 
-CASE_ANALYSIS_STORE = ServerCaseAnalysisStore()
+from backend.app.core.durable_store import configure_store
+
+CASE_ANALYSIS_STORE = configure_store(ServerCaseAnalysisStore(), attribute="_records", namespace="cases", record_type=CaseAnalysisRecord, key_type=UUID)

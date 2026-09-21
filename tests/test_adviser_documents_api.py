@@ -56,8 +56,16 @@ def test_server_owned_document_upload_then_orchestrator_analysis():
     assert "focused_table_context" not in uploaded
     assert secret_phrase not in response.text
 
+    blocked = client.post("/api/v1/adviser/handle", json={
+        "case_id": str(record.case.case_id), "case_token": record.access_token,
+        "message": "Compare these PDFs.", "document_refs": [uploaded["document_ref"]],
+    })
+    assert blocked.status_code == 200
+    assert blocked.json()["responses"][0]["status"] == "blocked"
+
     analysis = client.post(
         "/api/v1/adviser/handle",
+        headers={"X-Admin-Password": "upload-test-secret"},
         json={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,
@@ -106,6 +114,7 @@ def test_adviser_api_never_accepts_raw_document_evidence_from_browser():
     record = _active_case()
     response = client.post(
         "/api/v1/adviser/handle",
+        headers={"X-Admin-Password": "upload-test-secret"},
         json={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,
@@ -191,6 +200,7 @@ def test_document_analysis_updates_proposal_results_but_preserves_server_premium
 
     analysis = client.post(
         "/api/v1/adviser/handle",
+        headers={"X-Admin-Password": "upload-test-secret"},
         json={
             "case_id": str(record.case.case_id),
             "case_token": record.access_token,

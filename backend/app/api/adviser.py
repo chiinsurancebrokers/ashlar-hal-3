@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
+from backend.app.core.broker_access import broker_authorized
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -84,12 +85,12 @@ def build_adviser_context(req: AdviserHandleRequest) -> dict[str, Any]:
     return context
 
 
-async def dispatch_adviser_request(req: AdviserHandleRequest):
+async def dispatch_adviser_request(req: AdviserHandleRequest, *, is_broker: bool = False):
     try:
         return await get_ashlar_orchestrator().handle(
             case_id=req.case_id,
             message=req.message,
-            context=build_adviser_context(req),
+            context={**build_adviser_context(req), "broker_authorized": is_broker},
         )
     except Exception as exc:
         raise HTTPException(
@@ -99,8 +100,8 @@ async def dispatch_adviser_request(req: AdviserHandleRequest):
 
 
 @router.post("/handle")
-async def handle(req: AdviserHandleRequest):
-    result = await dispatch_adviser_request(req)
+async def handle(req: AdviserHandleRequest, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    result = await dispatch_adviser_request(req, is_broker=broker_authorized(x_admin_password))
     return JSONResponse(
         content=result.model_dump(mode="json"),
         headers={"Cache-Control": "no-store"},

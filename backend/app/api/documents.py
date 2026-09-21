@@ -28,6 +28,11 @@ _ROLE_TO_TYPE = {
     "brochure": "brochure",
     "wording": "policy_wording",
     "existing_policy": "existing_policy",
+    "issued_policy": "policy_schedule",
+    "application": "application",
+    "claim": "claim_document",
+    "preauthorisation": "preauthorisation",
+    "carrier_response": "carrier_response",
 }
 
 
@@ -44,7 +49,7 @@ async def upload_carrier_document(
     case_token: str = Form(...),
     provider_label: str = Form(...),
     target_plan: str = Form(...),
-    role: Literal["quotation", "brochure", "wording", "existing_policy"] = Form(...),
+    role: Literal["quotation", "brochure", "wording", "existing_policy", "issued_policy", "application", "claim", "preauthorisation", "carrier_response"] = Form(...),
     plan_key: str | None = Form(default=None),
     file: UploadFile = File(...),
     x_admin_password: str | None = Header(default=None, alias="X-Admin-Password"),
@@ -62,7 +67,7 @@ async def upload_carrier_document(
     if record is None:
         raise HTTPException(status_code=404, detail="Active case not found or expired.")
 
-    if role != "existing_policy":
+    if role not in {"existing_policy", "application", "claim", "preauthorisation"}:
         expected = get_settings().admin_password
         if not expected:
             raise HTTPException(status_code=503, detail="Broker document uploads require ADMIN_PASSWORD configuration.")
@@ -77,6 +82,8 @@ async def upload_carrier_document(
         # A client's current policy is a baseline for comparison, not one of
         # the shortlisted replacement plans.
         resolved_plan_key = "existing_policy"
+    elif role in {"claim", "preauthorisation", "carrier_response"} and record.case.policy:
+        resolved_plan_key = record.case.policy["plan_key"]
     else:
         if resolved_plan_key is None:
             if len(selected_plan_keys) == 1:
@@ -161,7 +168,14 @@ async def upload_carrier_document(
             extracted_text=extraction.text,
             focused_table_context=focused_context,
             plan_key=resolved_plan_key,
+            original_bytes=payload,
         )
+        latest = CASE_ANALYSIS_STORE.get(case_id, case_token)
+        if latest is None:
+            raise HTTPException(409, "Case unavailable after upload.")
+        latest.case.metadata.setdefault("document_refs", {})[stored.document_ref] = str(document.document_id)
+        if CASE_ANALYSIS_STORE.save_case(case=latest.case, access_token=case_token) is None:
+            raise HTTPException(409, "Case changed during upload; retry.")
     finally:
         if temp_path:
             try:

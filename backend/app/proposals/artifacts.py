@@ -32,7 +32,7 @@ class ProposalArtifactStore:
         expired = [key for key, item in self._items.items() if item.expires_at <= now]
         for key in expired:
             self._items.pop(key, None)
-        if len(self._items) >= self.max_items:
+        if not getattr(self, "durable", False) and len(self._items) >= self.max_items:
             oldest = sorted(self._items.items(), key=lambda pair: pair[1].created_at)
             for key, _ in oldest[: max(1, len(self._items) - self.max_items + 1)]:
                 self._items.pop(key, None)
@@ -77,7 +77,9 @@ def relative_downloads(proposal_id: str, *, api_prefix: str = "/api/v1") -> dict
     }
 
 
-PROPOSAL_ARTIFACT_STORE = ProposalArtifactStore()
+from backend.app.core.durable_store import configure_store
+
+PROPOSAL_ARTIFACT_STORE = configure_store(ProposalArtifactStore(), attribute="_items", namespace="proposals", record_type=StoredProposal)
 
 
 __all__ = [

@@ -1,7 +1,8 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
+from backend.app.core.broker_access import broker_authorized
 from pydantic import BaseModel, Field
 
 from backend.app.agents.contracts import SpecialistName
@@ -105,12 +106,14 @@ def _legacy_chat_payload(*, req: ChatRequest, result) -> dict[str, Any]:
 
 
 @router.post("/turn")
-async def turn(req: ChatRequest):
+async def turn(req: ChatRequest, x_admin_password: str | None = Header(default=None, alias="X-Admin-Password")):
+    is_broker = broker_authorized(x_admin_password)
     history = [m.model_dump() for m in req.history]
     state = dict(req.state)
     case_token = str(state.get("_adviser_os_case_token") or "").strip()
     context: dict[str, Any] = {
         "state": state,
+        "broker_authorized": is_broker,
         "history": history,
         "health_history": history,
         "language": state.get("language") or "en",

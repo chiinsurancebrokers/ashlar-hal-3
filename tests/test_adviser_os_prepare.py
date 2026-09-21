@@ -83,6 +83,7 @@ def test_server_owned_case_can_prepare_and_download_real_proposal():
     refs = _attach_selected_quotations(compare_data, selected_plans)
     analysed = client.post(
         "/api/v1/adviser/handle",
+        headers={"X-Admin-Password": "upload-test-secret"},
         json={
             "case_id": compare_data["case_id"],
             "case_token": compare_data["case_token"],

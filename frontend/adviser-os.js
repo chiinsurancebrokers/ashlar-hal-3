@@ -12,6 +12,9 @@
   let documentBusy = false;
   let lastCaseIntelligence = null;
   let lastNextBestAction = null;
+  let brokerPassword = "";
+  window.ashlarBrokerHeaders = () => brokerPassword ? {"X-Admin-Password": brokerPassword} : {};
+  document.addEventListener("ashlar:broker-password", event => { brokerPassword = event.detail; });
   let applicationState = null;
   let applicationBlueprint = null;
   let lifecycleBusy = false;
@@ -709,6 +712,7 @@
     document.getElementById('carrierDocumentUpload').disabled = true;
     try {
       let uploaded = 0;
+      brokerPassword = document.getElementById("brokerDocumentPassword").value;
       for (const file of files) {
         status.textContent = 'Uploading and extracting ' + file.name + '…';
         status.style.color = 'var(--muted)';
@@ -791,6 +795,11 @@
       proposalStatus.style.color = '#a15c00';
     }
   }
+
+  document.addEventListener("ashlar:restore-case", event => {
+    proposalCase = event.detail;
+    syncCaseIntoHalState();
+  });
 
   function syncCaseIntoHalState() {
     if (typeof state !== 'object' || !state) return;
