@@ -904,8 +904,9 @@
     card.className = 'adviser-compare-complete';
     card.innerHTML = '<strong>Comparison complete — what would you like to do next?</strong>' +
       '<p>HAL can explain the important differences in plain language, or compare these plans with the policy you already have.</p>' +
-      '<div class="adviser-compare-actions"><button type="button" class="btn-primary" id="comparisonWalkthrough">Walk me through it</button><button type="button" class="btn-secondary" id="comparisonCurrentPolicy">Compare with my current policy</button></div>';
+      '<div class="adviser-compare-actions"><button type="button" class="btn-primary" id="comparisonWalkthrough">Walk me through it</button><button type="button" class="btn-secondary" id="comparisonCurrentPolicy">Compare with my current policy</button><button type="button" class="btn-primary" id="comparisonRequestProposal">Request a personal proposal</button></div>';
     content.appendChild(card);
+    card.querySelector('#comparisonRequestProposal').onclick = () => openLeadForm('ipmi');
     card.querySelector('#comparisonWalkthrough').onclick = () => {
       document.getElementById('compareModal')?.classList.remove('open');
       askHal('Walk me through this comparison. Start with the differences that matter for my stated needs, explain the trade-offs, and tell me what remains unconfirmed.');
