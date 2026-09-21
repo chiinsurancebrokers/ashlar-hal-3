@@ -125,26 +125,81 @@ def safe_fact_projection(case: AshlarCase) -> list[dict[str, Any]]:
 def deterministic_advice_fallback(case: AshlarCase, results: list[dict[str, Any]]) -> dict[str, Any]:
     intelligence = build_case_intelligence(case)
     plans = safe_comparison_projection(results)
-    names = [str(item.get("target_plan") or item.get("provider") or "plan") for item in plans]
+    priorities = [str(value) for value in (case.needs_profile.get("priorities") or [])]
+    benefit_for_priority = {
+        "outpatient_required": "outpatient",
+        "maternity_required": "maternity",
+        "dental_required": "dental",
+        "mental_health_required": "mental_health",
+        "wellness_required": "preventive",
+        "optical_required": "optical",
+        "evacuation_required": "evacuation_repatriation",
+        "chronic_required": "chronic_conditions",
+    }
+
+    summaries: list[str] = []
+    tradeoffs: list[str] = []
+    uncertainties: list[str] = []
+    limits: list[tuple[str, str]] = []
+    prices: list[tuple[str, float, str]] = []
+    for item in plans:
+        analysis = item.get("analysis") or {}
+        name = str(item.get("target_plan") or item.get("provider") or "Plan")
+        details: list[str] = []
+        annual_limit = str(analysis.get("annual_limit") or "").strip()
+        if annual_limit and annual_limit.casefold() != "not specified":
+            details.append(f"an annual limit of {annual_limit}")
+            limits.append((name, annual_limit))
+        area = str(analysis.get("area_of_cover") or "").strip()
+        if area and area.casefold() != "not specified":
+            details.append(f"cover area {area}")
+        premium = analysis.get("premium") if isinstance(analysis.get("premium"), dict) else {}
+        amount = premium.get("amount")
+        currency = str(premium.get("currency") or "EUR")
+        if isinstance(amount, (int, float)):
+            details.append(f"a verified annual premium of {currency} {amount:,.2f}")
+            prices.append((name, float(amount), currency))
+        else:
+            details.append("no verified current premium")
+            uncertainties.append(f"{name}: the current premium requires a carrier quotation.")
+        benefits = analysis.get("benefits") if isinstance(analysis.get("benefits"), dict) else {}
+        priority_details = []
+        for priority in priorities:
+            key = benefit_for_priority.get(priority)
+            value = benefits.get(key) if key else None
+            if value:
+                priority_details.append(f"{key.replace('_', ' ')}: {value}")
+        if priority_details:
+            details.append("stated-needs evidence — " + "; ".join(priority_details[:3]))
+        summaries.append(f"{name} has " + ", ".join(details) + "." if details else f"{name} has no confirmed comparison details yet.")
+
+    if len({value for _, value in limits}) > 1:
+        tradeoffs.append("The annual limits differ: " + "; ".join(f"{name} — {value}" for name, value in limits) + ".")
+    if prices and len(prices) != len(plans):
+        tradeoffs.append("Only the priced option can currently be compared on cost; benefit-only catalogue plans need carrier quotations before a value comparison is fair.")
+    elif len(prices) > 1:
+        ordered = sorted(prices, key=lambda item: item[1])
+        tradeoffs.append(f"{ordered[0][0]} has the lowest verified premium in this comparison; that does not by itself make it the best benefit fit.")
+
     if intelligence["conflict_count"]:
-        answer = (
+        prefix = (
             "I can compare the options, but I would not treat the recommendation as settled yet because "
             f"the case contains {intelligence['conflict_count']} unresolved evidence conflict(s)."
         )
-    elif names:
-        answer = (
-            f"I have server-owned comparison data for {', '.join(names)}. "
-            "The right choice depends on the client's priorities and the material differences shown in the case evidence."
-        )
+    elif summaries:
+        prefix = "Here is the evidence-based walkthrough."
     else:
-        answer = "I need grounded comparison evidence before I can explain a plan recommendation reliably."
+        prefix = "I need grounded comparison evidence before I can explain a plan recommendation reliably."
+
+    answer = " ".join([prefix, *summaries, *(tradeoffs[:1])]).strip()
 
     next_actions = intelligence.get("next_actions") or []
     next_action = str((next_actions[0] or {}).get("reason") or "Review the grounded plan differences with the client.") if next_actions else "Review the grounded plan differences with the client."
+    uncertainties.extend(item["reason"] for item in next_actions[:3] if item.get("reason"))
     return {
         "answer": answer,
-        "tradeoffs": [],
-        "uncertainties": [item["reason"] for item in next_actions[:3] if item.get("reason")],
+        "tradeoffs": tradeoffs,
+        "uncertainties": list(dict.fromkeys(uncertainties))[:6],
         "next_best_action": next_action,
         "confidence": intelligence.get("evidence_confidence") if intelligence.get("evidence_confidence") in {"high", "medium", "low"} else "low",
         "status": "deterministic_fallback",

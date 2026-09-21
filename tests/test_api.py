@@ -27,6 +27,35 @@ def test_quotes_preview_real_data():
     assert any(q["insurer"].startswith("Morgan Price") for q in body["shortlist"])
 
 
+def test_client_shortlist_uses_current_gpmi_catalogue_not_legacy_img_bronze():
+    r = client.post("/api/v1/quotes/preview", json={
+        "age": 51, "residence_country": "Greece", "coverage_area": "area1",
+        "outpatient_required": True,
+    })
+    assert r.status_code == 200
+    plans = {q["plan_key"]: q for q in r.json()["shortlist"]}
+    expected = {
+        "img:gpmi_bronze_plus", "img:gpmi_silver",
+        "img:gpmi_gold", "img:gpmi_platinum",
+    }
+    assert expected <= plans.keys()
+    assert "img:bronze" not in plans
+    assert "img:gpmi_bronze" not in plans
+    for key in expected:
+        assert plans[key]["premium"] is None
+        assert plans[key]["pricing_status"] == "quotation_required"
+
+
+def test_client_shortlist_exposes_verified_cigna_without_a_fabricated_price():
+    r = client.post("/api/v1/quotes/preview", json={
+        "age": 40, "residence_country": "Greece", "coverage_area": "area1",
+    })
+    plans = {q["plan_key"]: q for q in r.json()["shortlist"]}
+    assert "cigna:inspire_executive_care" in plans
+    assert plans["cigna:inspire_executive_care"]["premium"] is None
+    assert plans["cigna:inspire_executive_care"]["pricing_status"] == "quotation_required"
+
+
 def test_quotes_preview_maternity_hard_exclusion_over_http():
     r = client.post("/api/v1/quotes/preview", json={
         "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,

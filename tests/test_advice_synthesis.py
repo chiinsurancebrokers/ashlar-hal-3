@@ -112,6 +112,41 @@ def test_deterministic_advice_fallback_refuses_to_treat_conflicted_case_as_settl
     assert result["advisory_only"] is True
 
 
+def test_deterministic_walkthrough_explains_real_differences_and_unknown_prices():
+    case = AshlarCase(needs_profile={"priorities": ["outpatient_required"]})
+    results = [
+        {
+            "provider": "IMG",
+            "target_plan": "GPMI Silver",
+            "analysis": {
+                "annual_limit": "EUR 3,000,000",
+                "premium": {"amount": None, "currency": "EUR", "frequency": "Annual"},
+                "benefits": {"outpatient": "EUR 10,000 combined limit"},
+            },
+        },
+        {
+            "provider": "Morgan Price",
+            "target_plan": "Standard Plus",
+            "analysis": {
+                "annual_limit": "EUR 750,000",
+                "premium": {"amount": 2694.72, "currency": "EUR", "frequency": "Annual"},
+                "benefits": {"outpatient": "Covered subject to schedule"},
+            },
+        },
+    ]
+
+    result = deterministic_advice_fallback(case, results)
+
+    assert "GPMI Silver" in result["answer"]
+    assert "EUR 3,000,000" in result["answer"]
+    assert "outpatient" in result["answer"]
+    assert "no verified current premium" in result["answer"]
+    assert "Standard Plus" in result["answer"]
+    assert "EUR 2,694.72" in result["answer"]
+    assert result["tradeoffs"]
+    assert any("carrier quotation" in item for item in result["uncertainties"])
+
+
 @pytest.mark.asyncio
 async def test_hal_adviser_uses_server_owned_case_mode_before_legacy_chat(monkeypatch):
     case = AshlarCase(

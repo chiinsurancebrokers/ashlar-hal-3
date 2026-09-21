@@ -493,7 +493,8 @@ function logoColor(insurer){
 }
 
 function renderQuoteCard(q, i) {
-  const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
+  const hasPrice = q.premium !== null && q.premium !== undefined && q.pricing_status !== 'quotation_required';
+  const annual = hasPrice ? Number(q.premium) : null, monthly = hasPrice ? annual/12 : null, key = qkey(q);
   const selected = compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
@@ -505,8 +506,8 @@ function renderQuoteCard(q, i) {
       <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
     </div>
     <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
-    <div class="q-price">${money(annual,q.currency)}<span>/year</span></div>
-    <div class="q-month">${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}</div>
+    <div class="q-price">${hasPrice ? `${money(annual,q.currency)}<span>/year</span>` : 'Quotation required'}</div>
+    <div class="q-month">${hasPrice ? `${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}` : 'No verified current premium loaded'}</div>
     <div class="q-divider"></div>
     <div class="q-spec">
       <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>

@@ -26,6 +26,7 @@ from backend.app.evidence.catalogue import verified_plan_catalogue
 from backend.app.evidence.catalogue_plan import catalogue_plan
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion
+from backend.app.services.market_shortlist import public_market_exclusions, public_market_shortlist
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
@@ -43,8 +44,8 @@ async def catalogue():
 async def preview(applicant: Applicant):
     settings = get_settings()
     try:
-        shortlist = quote_shortlist(applicant, settings)
-        excluded = quote_exclusions(applicant, settings)
+        shortlist = public_market_shortlist(applicant, settings)
+        excluded = public_market_exclusions(applicant, settings)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not compute a shortlist: {str(exc)[:180]}")
     return {

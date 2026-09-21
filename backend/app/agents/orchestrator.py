@@ -12,6 +12,7 @@ from backend.app.cases.store import CASE_ANALYSIS_STORE
 from backend.app.core.config import get_settings
 from backend.app.policy.engine import PolicyEngine, get_policy_engine
 from backend.app.rates.quote_engine import quote_shortlist
+from backend.app.services.market_shortlist import public_market_shortlist
 from backend.app.schemas.applicant import Applicant
 from backend.app.workflows.service import JourneyWorkflowService, WorkflowError, get_journey_workflow
 
@@ -931,7 +932,7 @@ class AshlarOrchestrator:
         if decision.intent == OrchestrationIntent.QUOTE:
             applicant = self._applicant_from_context(case_id=resolved_case_id, context=ctx)
             if applicant is not None:
-                quotes = quote_shortlist(applicant, get_settings())
+                quotes = public_market_shortlist(applicant, get_settings())
                 return self._finalize(
                     case_id=resolved_case_id,
                     decision=decision,
@@ -1139,7 +1140,7 @@ class AshlarOrchestrator:
             and normalized_message in _AFFIRMATIVE_WORDS
         ):
             applicant = record.case.applicant
-            quotes = quote_shortlist(applicant, get_settings()) if applicant is not None else []
+            quotes = public_market_shortlist(applicant, get_settings()) if applicant is not None else []
             response = SpecialistResponse(
                 specialist=SpecialistName.HAL_ADVISER,
                 status="completed",

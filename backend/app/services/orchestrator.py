@@ -4,7 +4,7 @@ from typing import Any
 
 from backend.app.core.config import Settings, get_settings
 from backend.app.schemas.applicant import Applicant
-from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions
+from backend.app.services.market_shortlist import public_market_exclusions, public_market_shortlist
 from backend.app.discovery.flow import apply_discovery_answer, next_discovery_question, discovery_progress
 from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions
@@ -68,14 +68,14 @@ def _quote_payload(state: dict, settings: Settings) -> list[dict]:
     applicant = _applicant_from_state(state)
     if not applicant:
         return []
-    return [q.model_dump(mode="json") for q in quote_shortlist(applicant, settings)]
+    return [q.model_dump(mode="json") for q in public_market_shortlist(applicant, settings)]
 
 
 def _exclusions_payload(state: dict, settings: Settings) -> list[dict]:
     applicant = _applicant_from_state(state)
     if not applicant:
         return []
-    return quote_exclusions(applicant, settings)
+    return public_market_exclusions(applicant, settings)
 
 
 def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) -> str:
@@ -87,7 +87,8 @@ def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) 
         return ""
     top = quotes[0]
     matched = top.get("matched_requirements") or []
-    price = f'{top.get("currency", "EUR")} {top.get("premium", 0):,.2f}'
+    premium = top.get("premium")
+    price = f'{top.get("currency", "EUR")} {premium:,.2f}' if premium is not None else "quotation required"
 
     if greek:
         if matched:
