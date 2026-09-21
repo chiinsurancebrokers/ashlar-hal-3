@@ -138,9 +138,10 @@
       prepare_application: ['Prepare the application', 'Start application', prepareApplication],
       complete_application: ['Complete the application', 'View checklist', renderApplicationCard],
       await_policy_issue: ['Application submitted', 'View application', renderApplicationCard],
-      use_policy_wallet: ['Open Policy Wallet', 'Policy Wallet', () => askHal('Show me my Policy Wallet and explain the verified cover.')],
-      collect_claim_evidence: ['Complete the claim file', 'Add claim evidence', () => askHal('Help me complete the claim file and tell me which documents are still needed.')],
-      compare_renewal_options: ['Review renewal options', 'Compare renewal', () => askHal('Explain my renewal options and what changed versus the current policy.')],
+      use_policy_wallet: ['Continue in CHI Portal', 'Open Portal', () => window.open('https://portalchiinsurance.up.railway.app/login', '_blank', 'noopener')],
+      collect_claim_evidence: ['Continue in CHI Portal', 'Open Portal', () => window.open('https://portalchiinsurance.up.railway.app/login', '_blank', 'noopener')],
+      compare_renewal_options: ['Continue in CHI Portal', 'Open Portal', () => window.open('https://portalchiinsurance.up.railway.app/login', '_blank', 'noopener')],
+      open_chi_portal: ['Continue in CHI Portal', 'Open Portal', () => window.open('https://portalchiinsurance.up.railway.app/login', '_blank', 'noopener')],
       obtain_verified_policy_evidence: ['Add policy evidence', 'Attach policy wording', openDocumentUpload],
       continue_adviser_conversation: ['Continue with HAL', 'Continue', () => document.getElementById('input')?.focus()]
     };

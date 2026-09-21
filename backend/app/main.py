@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -78,6 +79,11 @@ def health():
         "service": settings.app_name,
         "environment": settings.app_env,
         "ashlar_orchestrator": "active",
+        "post_sale_system_of_record": os.getenv("POST_SALE_SYSTEM_OF_RECORD", "chi_portal"),
+        "chi_portal": {
+            "url": os.getenv("CHI_PORTAL_URL", "https://portalchiinsurance.up.railway.app/login"),
+            "automatic_upload": False,
+        },
         "case_store": __import__("backend.app.core.durable_store", fromlist=["storage_status"]).storage_status(),
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
         "voice_transcription": {

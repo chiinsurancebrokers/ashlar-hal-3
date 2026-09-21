@@ -44,6 +44,15 @@ def plan_next_best_action(
             blocked=True,
         )
 
+    handoff = _first_response_with_status(responses, "handoff")
+    if handoff is not None:
+        return NextBestAction(
+            action="open_chi_portal",
+            owner="chi_portal",
+            reason=handoff.reply or "Continue the post-sale workflow in the CHI Insurance Portal.",
+            blocked=False,
+        )
+
     unavailable = _first_response_with_status(responses, "unavailable")
     if unavailable is not None:
         return NextBestAction(

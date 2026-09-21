@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hmac
+import os
 from datetime import date
 from typing import Annotated, Literal
 from uuid import UUID
@@ -85,6 +86,22 @@ def _require_broker_access(value: str | None) -> None:
         raise HTTPException(status_code=403, detail="Invalid broker credentials.")
 
 
+def _portal_url() -> str:
+    return os.getenv("CHI_PORTAL_URL", "https://portalchiinsurance.up.railway.app/login")
+
+
+def _require_local_post_sale() -> None:
+    if os.getenv("POST_SALE_SYSTEM_OF_RECORD", "chi_portal").casefold() != "ashlar":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "chi_portal_handoff",
+                "message": "Issued policies, permanent documents, claims and renewals are managed in the CHI Insurance Portal.",
+                "portal_url": _portal_url(),
+            },
+        )
+
+
 def _json(payload: dict) -> JSONResponse:
     return JSONResponse(content=payload, headers=_NO_STORE)
 
@@ -158,6 +175,7 @@ def issue_policy(
     req: PolicyIssueRequest,
     x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None,
 ):
+    _require_local_post_sale()
     _require_broker_access(x_admin_password)
     documents = _validated_documents(case_id, req.case_token, req.document_refs)
     if not any(d.role == "issued_policy" for d in documents):
@@ -183,6 +201,7 @@ def policy_wallet(
     case_id: UUID,
     case_token: str = Query(min_length=20, max_length=256),
 ):
+    _require_local_post_sale()
     try:
         payload = get_ashlar_orchestrator().policy_wallet(
             case_id=case_id,
@@ -195,6 +214,7 @@ def policy_wallet(
 
 @router.post("/{case_id}/preauthorisations")
 def open_preauthorisation(case_id: UUID, req: PreauthorisationRequest):
+    _require_local_post_sale()
     _validated_documents(case_id, req.case_token, req.document_refs)
     try:
         payload = get_ashlar_orchestrator().open_preauthorisation(
@@ -213,6 +233,7 @@ def open_preauthorisation(case_id: UUID, req: PreauthorisationRequest):
 
 @router.post("/{case_id}/claims")
 def open_claim(case_id: UUID, req: ClaimOpenRequest):
+    _require_local_post_sale()
     _validated_documents(case_id, req.case_token, req.document_refs)
     try:
         payload = get_ashlar_orchestrator().open_claim(
@@ -231,6 +252,7 @@ def open_claim(case_id: UUID, req: ClaimOpenRequest):
 
 @router.post("/{case_id}/renewal/start")
 def start_renewal(case_id: UUID, req: CaseTokenRequest):
+    _require_local_post_sale()
     try:
         payload = get_ashlar_orchestrator().start_renewal_workflow(
             case_id=case_id,
@@ -245,7 +267,6 @@ from datetime import datetime, timezone
 from dataclasses import asdict
 from io import BytesIO
 import json
-import os
 import zipfile
 from fastapi.responses import Response
 from backend.app.cases.store import CASE_ANALYSIS_STORE
@@ -302,7 +323,14 @@ def workspace(case_id: UUID, req: CaseTokenRequest, x_admin_password: Annotated[
         payload["conflicts"] = [dict(asdict(c), fact_ids=[str(f) for f in c.fact_ids]) for c in FactLedger(case.facts).conflicts()]
         payload["facts"] = [f.model_dump(mode="json") for f in case.facts]
     payload["health_navigation"] = {"mode": "external_handoff", "url": os.getenv("ASKLEPIOS_WEB_URL"), "automatic_clinical_transfer": False}
-    payload["renewal_due_days"] = (date.fromisoformat(case.policy["renewal_date"]) - date.today()).days if case.policy else None
+    payload["portal_handoff"] = {
+        "mode": "authenticated_portal",
+        "url": _portal_url(),
+        "system_of_record": "chi_portal",
+        "automatic_upload": False,
+        "reason": "The CHI Portal owns issued policies, client documents, claims and renewals.",
+    }
+    payload["renewal_due_days"] = None
     return _json(payload)
 
 
@@ -323,6 +351,7 @@ _TRANSITIONS = {
 
 @router.post("/{case_id}/{kind}/{record_id}/transition")
 def transition(case_id: UUID, kind: Literal["claims", "preauthorisations"], record_id: UUID, req: TransitionRequest, x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None):
+    _require_local_post_sale()
     _require_broker_access(x_admin_password)
     docs = _validated_documents(case_id, req.case_token, req.document_refs)
     case = _record(case_id, req.case_token).case
@@ -386,6 +415,7 @@ class IssuedTermRequest(CaseTokenRequest):
 
 @router.post("/{case_id}/policy/terms")
 def reconcile_issued_term(case_id: UUID, req: IssuedTermRequest, x_admin_password: Annotated[str | None, Header(alias="X-Admin-Password")] = None):
+    _require_local_post_sale()
     _require_broker_access(x_admin_password)
     document = _validated_documents(case_id, req.case_token, [req.document_ref])[0]
     case = _record(case_id, req.case_token).case
@@ -417,6 +447,7 @@ class RenewalIntakeRequest(CaseTokenRequest):
 
 @router.post("/{case_id}/renewal/refresh")
 def refresh_renewal(case_id: UUID, req: RenewalIntakeRequest):
+    _require_local_post_sale()
     case = _record(case_id, req.case_token).case
     if not case.renewal:
         raise HTTPException(422, "Start a renewal review first.")
@@ -443,7 +474,15 @@ def handoff_pack(case_id: UUID, req: PackRequest, x_admin_password: Annotated[st
         raise HTTPException(422, "Re-upload older documents to include their original files.")
     buffer = BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        manifest = {"case_id": str(case_id), "application": record.case.application, "policy": record.case.policy, "claims": record.case.claims, "preauthorisations": record.case.preauthorisations, "transmitted_by_ashlar": False}
+        manifest = {
+            "case_id": str(case_id),
+            "selected_plan_key": record.case.selected_plan_key,
+            "application": record.case.application,
+            "proposal": record.case.proposal,
+            "document_count": len(docs),
+            "destination": "chi_portal",
+            "transmitted_by_ashlar": False,
+        }
         archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
         for index, doc in enumerate(docs):
             suffix = ".pdf" if doc.document.filename.lower().endswith(".pdf") else ".txt"
@@ -463,6 +502,7 @@ def download_document(case_id: UUID, document_ref: str, req: CaseTokenRequest, x
 
 @router.post("/{case_id}/policy/wallet")
 def policy_wallet_private(case_id: UUID, req: CaseTokenRequest):
+    _require_local_post_sale()
     return policy_wallet(case_id, req.case_token)
 
 

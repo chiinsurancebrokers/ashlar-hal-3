@@ -51,7 +51,8 @@ def test_handle_records_plan_selection_and_starts_application_without_new_model_
     assert application.next_best_action.action == "complete_application"
 
 
-def test_renewal_intent_uses_same_case_and_quote_engine():
+def test_renewal_intent_hands_off_to_chi_portal(monkeypatch):
+    monkeypatch.delenv("POST_SALE_SYSTEM_OF_RECORD", raising=False)
     application = ApplicationRecord(
         plan_key="carrier:a",
         status=ApplicationStatus.SUBMITTED,
@@ -86,4 +87,8 @@ def test_renewal_intent_uses_same_case_and_quote_engine():
 
     assert result.decision.intent == OrchestrationIntent.RENEWAL
     assert result.case_id == case.case_id
-    assert result.payload["workflow"]["action"] == "refresh_renewal_quotes"
+    assert result.responses[0].status == "handoff"
+    assert result.payload["portal_handoff"]["system_of_record"] == "chi_portal"
+    assert result.payload["portal_handoff"]["automatic_upload"] is False
+    assert result.next_best_action.action == "open_chi_portal"
+    assert result.next_best_action.owner == "chi_portal"

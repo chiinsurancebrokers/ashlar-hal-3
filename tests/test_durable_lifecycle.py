@@ -69,8 +69,22 @@ def seed_document(record, role, text='CT scan covered subject to pre-authorisati
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(get_settings(), 'admin_password', 'test-broker-password')
+    monkeypatch.setenv('POST_SALE_SYSTEM_OF_RECORD', 'ashlar')
     app = FastAPI(); app.include_router(router)
     return TestClient(app)
+
+
+def test_default_post_sale_boundary_points_to_chi_portal(monkeypatch):
+    monkeypatch.delenv('POST_SALE_SYSTEM_OF_RECORD', raising=False)
+    record = CASE_ANALYSIS_STORE.put(case=AshlarCase(), results=[])
+    app = FastAPI(); app.include_router(router)
+    response = TestClient(app).post(
+        f'/journey/{record.case.case_id}/claims',
+        json={'case_token': record.access_token, 'document_refs': []},
+    )
+    assert response.status_code == 409
+    assert response.json()['detail']['code'] == 'chi_portal_handoff'
+    assert response.json()['detail']['portal_url'] == 'https://portalchiinsurance.up.railway.app/login'
 
 
 def test_realistic_lifecycle_boundaries_and_carrier_evidence(client):

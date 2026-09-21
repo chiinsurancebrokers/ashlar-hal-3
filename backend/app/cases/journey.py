@@ -20,12 +20,12 @@ ADVISER_OS_JOURNEY: tuple[dict[str, Any], ...] = (
     {"order": 12, "key": "proposal_pack", "label": "PDF / PowerPoint proposal", "phase": "decide", "owner": "proposal_writer", "implementation": "live"},
     {"order": 13, "key": "plan_selection", "label": "Client selects plan", "phase": "decide", "owner": "ashlar_orchestrator", "implementation": "next"},
     {"order": 14, "key": "application", "label": "Application preparation", "phase": "decide", "owner": "hal_adviser", "implementation": "foundation"},
-    {"order": 15, "key": "policy_issued", "label": "Policy issued", "phase": "policy", "owner": "ashlar_orchestrator", "implementation": "foundation"},
-    {"order": 16, "key": "policy_wallet", "label": "Policy Wallet", "phase": "policy", "owner": "policy_engine", "implementation": "next"},
+    {"order": 15, "key": "policy_issued", "label": "Policy issued", "phase": "policy", "owner": "chi_portal", "implementation": "external_handoff"},
+    {"order": 16, "key": "policy_wallet", "label": "Policy record", "phase": "policy", "owner": "chi_portal", "implementation": "external_handoff"},
     {"order": 17, "key": "health_navigation", "label": "Asklepios health navigation", "phase": "care", "owner": "health_navigator", "implementation": "adapter_ready"},
-    {"order": 18, "key": "pre_authorisation", "label": "Pre-authorisation", "phase": "care", "owner": "health_navigator", "implementation": "future"},
-    {"order": 19, "key": "claims", "label": "Claims", "phase": "care", "owner": "ashlar_orchestrator", "implementation": "foundation"},
-    {"order": 20, "key": "renewal", "label": "Renewal comparison", "phase": "renew", "owner": "ashlar_orchestrator", "implementation": "foundation"},
+    {"order": 18, "key": "pre_authorisation", "label": "Pre-authorisation", "phase": "care", "owner": "chi_portal", "implementation": "external_handoff"},
+    {"order": 19, "key": "claims", "label": "Claims", "phase": "care", "owner": "chi_portal", "implementation": "external_handoff"},
+    {"order": 20, "key": "renewal", "label": "Renewal", "phase": "renew", "owner": "chi_portal", "implementation": "external_handoff"},
 )
 
 PHASES: tuple[dict[str, str], ...] = (

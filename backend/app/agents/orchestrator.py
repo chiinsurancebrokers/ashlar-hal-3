@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from datetime import date, datetime, timezone
 from typing import Any
@@ -666,6 +667,46 @@ class AshlarOrchestrator:
         ctx = dict(context or {})
         decision = classify_orchestration_intent(message)
         has_document_refs = bool(ctx.get("document_refs"))
+
+        if (
+            decision.intent in {
+                OrchestrationIntent.POLICY_WALLET,
+                OrchestrationIntent.PREAUTHORISATION,
+                OrchestrationIntent.CLAIM,
+                OrchestrationIntent.RENEWAL,
+            }
+            and os.getenv("POST_SALE_SYSTEM_OF_RECORD", "chi_portal").casefold() != "ashlar"
+        ):
+            portal_url = os.getenv(
+                "CHI_PORTAL_URL",
+                "https://portalchiinsurance.up.railway.app/login",
+            )
+            return self._finalize(
+                case_id=resolved_case_id,
+                decision=decision,
+                context=ctx,
+                responses=[SpecialistResponse(
+                    specialist=SpecialistName.HAL_ADVISER,
+                    status="handoff",
+                    reply=(
+                        "Continue in the CHI Insurance Portal for issued policies, permanent "
+                        "documents, claims, pre-authorisation and renewals."
+                    ),
+                    payload={
+                        "target": "chi_portal",
+                        "portal_url": portal_url,
+                        "automatic_transfer": False,
+                    },
+                )],
+                payload={
+                    "portal_handoff": {
+                        "mode": "authenticated_portal",
+                        "url": portal_url,
+                        "system_of_record": "chi_portal",
+                        "automatic_upload": False,
+                    },
+                },
+            )
 
         # Context-aware planning: a user can upload documents and simply ask
         # "what do you think?". The orchestrator analyses those server-owned

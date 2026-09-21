@@ -67,6 +67,16 @@ async def upload_carrier_document(
     if record is None:
         raise HTTPException(status_code=404, detail="Active case not found or expired.")
 
+    if role in {"issued_policy", "claim", "preauthorisation", "carrier_response"} and os.getenv("POST_SALE_SYSTEM_OF_RECORD", "chi_portal").casefold() != "ashlar":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "chi_portal_handoff",
+                "message": "Post-sale documents are stored in the CHI Insurance Portal.",
+                "portal_url": os.getenv("CHI_PORTAL_URL", "https://portalchiinsurance.up.railway.app/login"),
+            },
+        )
+
     if role not in {"existing_policy", "application", "claim", "preauthorisation"}:
         expected = get_settings().admin_password
         if not expected:

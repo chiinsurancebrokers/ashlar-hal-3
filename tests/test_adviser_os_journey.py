@@ -25,7 +25,11 @@ def test_model_backed_work_is_owned_only_by_declared_specialist_boundaries():
     # Pricing / evidence / coverage authority stays deterministic.
     assert stage_owner["quote_engine"] == "quote_engine"
     assert stage_owner["conflict_check"] == "fact_ledger"
-    assert stage_owner["policy_wallet"] == "policy_engine"
+    assert stage_owner["policy_issued"] == "chi_portal"
+    assert stage_owner["policy_wallet"] == "chi_portal"
+    assert stage_owner["pre_authorisation"] == "chi_portal"
+    assert stage_owner["claims"] == "chi_portal"
+    assert stage_owner["renewal"] == "chi_portal"
 
 
 def test_journey_snapshot_maps_case_status_to_six_phase_client_experience():

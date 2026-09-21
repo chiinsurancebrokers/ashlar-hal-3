@@ -47,16 +47,16 @@ The client or broker makes the final insurance choice. HAL explains evidence and
 | 12 | PDF/PPTX proposal produced | `proposal_writer` | Live |
 | 13 | Client selects plan | Human decision recorded by AshlarOrchestrator | Live workflow + HAL UI |
 | 14 | Application preparation | deterministic application workflow + HAL guidance | Live checklist foundation; carrier-specific forms next |
-| 15 | Policy issued | broker-authorised policy workflow under AshlarOrchestrator | Live backend workflow |
-| 16 | Policy Wallet | deterministic issued-policy + FactLedger projection | Live backend workflow |
+| 15 | Policy issued | CHI Insurance Portal | External handoff; Portal is system of record |
+| 16 | Policy record and documents | CHI Insurance Portal | Existing Portal policies/documents UI and Postgres |
 | 17 | Asklepios health navigation | `health_navigator` → Asklepios service | Adapter live; external Asklepios endpoint still required |
-| 18 | Pre-authorisation | Policy Engine + deterministic pre-authorisation workflow | Live backend foundation |
-| 19 | Claims | deterministic claim workflow; document analysis added when evidence exists | Live backend foundation |
-| 20 | Renewal comparison | AshlarOrchestrator → renewal workflow + Quote Engine | Live backend foundation |
+| 18 | Pre-authorisation | CHI Insurance Portal | External handoff |
+| 19 | Claims | CHI Insurance Portal | Existing Portal claim record |
+| 20 | Renewal | CHI Insurance Portal | Existing renewal/expiry workflow |
 
 ## Case continuity rule
 
-There must be **one AshlarCase** from step 3 onward.
+There is one **AshlarCase** through application preparation (steps 3–14). After submission, the reviewed handoff pack moves into the matching CHI Portal client record, which owns the post-sale lifecycle.
 
 The same `case_id` follows the client through:
 

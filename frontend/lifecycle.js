@@ -78,7 +78,7 @@
     upload.onchange = async () => { try { const data = JSON.parse(await upload.files[0].text()); if (!/^[0-9a-f-]{36}$/i.test(data.case_id) || typeof data.case_token !== 'string' || data.case_token.length < 20 || data.case_token.length > 256) throw new Error('Invalid access file.'); access = {case_id:data.case_id, case_token:data.case_token}; if (typeof state === 'object') { state._adviser_os_case_id = access.case_id; state._adviser_os_case_token = access.case_token; } document.dispatchEvent(new CustomEvent('ashlar:restore-case', {detail:access})); await refresh(); } catch (e) { status.textContent = e.message; } };
     if (!snapshot) { el('p', 'Create a plan comparison in HAL or restore an existing case.', body); return; }
     el('p', 'Case ' + snapshot.case_id + ' · ' + snapshot.status, body);
-    if(snapshot.storage !== 'encrypted_sqlite') el('p','Temporary staging storage: cases and documents can be lost on restart. Keep original documents.',body);
+    if(snapshot.storage !== 'encrypted_sqlite') el('p','This advice case is temporary. Save the reviewed handoff pack; permanent client documents belong in the CHI Insurance Portal.',body);
     const docs = section('Documents');
     for (const doc of snapshot.documents) for (const ref of doc.refs || []) { button(docs, doc.filename, async () => download(await request('/documents/' + encodeURIComponent(ref) + '/download', {}, true), doc.filename)); if(['application','claim','preauthorisation','carrier_response','issued_policy'].includes(doc.metadata?.role)) button(docs,'Review '+doc.filename,async()=>{const review=await request('/documents/'+encodeURIComponent(ref)+'/analyse');el('p','Extracted candidates — require human verification',docs);el('pre',review.excerpt,docs);el('p','Amounts found: '+review.candidate_amounts.join(', '),docs);el('p','Dates found: '+review.candidate_dates.join(', '),docs);}); }
     let role, file, label;
@@ -91,7 +91,7 @@
       const data = await response.json(); if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Upload failed.');
       await refresh(); status.textContent = 'Document saved. Its contents are not automatically verified.';
     });
-    role = choices(df, 'Document purpose', [['existing_policy','Your existing policy'],['application','Application / signed form'],['claim','Claim evidence'],['preauthorisation','Pre-authorisation evidence'],...(broker ? [['issued_policy','Issued policy schedule'],['carrier_response','Carrier response / payment receipt'],['wording','Policy wording']] : [])]);
+    role = choices(df, 'Document purpose', [['existing_policy','Your existing policy'],['application','Application / signed form']]);
     file = field(df, 'PDF, TXT or HTML', 'file'); file.accept = '.pdf,.txt,.html,.htm';
     if (broker) button(docs, 'Download broker handoff pack', async () => download(await request('/handoff-pack', {document_refs:snapshot.documents.flatMap(d => d.refs || [])}, true), 'ashlar-handoff.zip'));
     const app = section('14 · Application');
@@ -114,57 +114,13 @@
         el('p', 'Send through the carrier’s approved channel first. This action records that submission.', f);
       }
     }
-    if (broker && snapshot.application?.status === 'submitted') {
-      const issue = section('15 · Record issued policy'); let number, provider, start, end, document;
-      const f = form(issue, 'Record carrier issuance', async () => { await request('/policy/issue', {policy_number:number.value,provider:provider.value,start_date:start.value,renewal_date:end.value,document_refs:document.value ? [document.value] : []}); await refresh(); });
-      number = field(f, 'Policy number'); provider = field(f, 'Carrier'); start = field(f, 'Start date', 'date'); end = field(f, 'Renewal date', 'date'); document = docOptions(f);
-    }
-    if (snapshot.policy) {
-      const wallet = section('16 · Policy Wallet');
-      el('p', snapshot.policy.provider + ' · ' + snapshot.policy.policy_number + ' · renewal ' + snapshot.policy.renewal_date, wallet);
-      button(wallet, 'Load verified issued terms', async () => { const data = await request('/policy/wallet'); const w = data.payload.wallet; el('p', w.terms_status === 'issued_terms_unverified' ? 'Issued terms still require broker reconciliation. Brochure benefits are not treated as your issued cover.' : 'Reconciled issued terms', wallet); el('pre', JSON.stringify({core:w.core_facts,benefits:w.verified_benefits,conflicts:w.unresolved_conflicts},null,2), wallet); });
-      if (broker) {
-        let document,key,value,page,quote; const f = form(wallet,'Verify an issued term',async()=>{await request('/policy/terms',{document_ref:document.value,key:key.value,value:value.value,page:Number(page.value),source_quote:quote.value});await refresh();});
-        document=docOptions(f);key=field(f,'Fact key, e.g. annual_limit or benefit.ct_scan');value=field(f,'Exact value including restrictions','textarea');page=field(f,'Source page','number','1');page.min='1';quote=field(f,'Verbatim source passage','textarea');
-      }
-      const health=section('17 · Health navigation');
-      if(snapshot.health_navigation.url){const a=el('a','Open Asklepios',health);a.href=snapshot.health_navigation.url;a.target='_blank';a.rel='noopener noreferrer';}
-      else el('p','Asklepios connection has not been configured.',health);
-      el('p','Health navigation takes place in Asklepios. Case details and clinical documents are not sent automatically.',health);
-      for (const [kind,heading] of [['preauthorisations','18 · Pre-authorisation'],['claims','19 · Claims']]) {
-        const area=section(heading);let service,amount,currency,day,note,doc;
-        const f=form(area,'Open draft',async()=>{const payload=kind==='claims'?{service_date:day.value||null,amount:amount.value?Number(amount.value):null,currency:currency.value||null,note:note.value||null}:{service_key:service.value,planned_date:day.value||null};payload.document_refs=doc.value?[doc.value]:[];await request('/'+kind,payload);await refresh();});
-        if(kind==='claims'){amount=field(f,'Claimed amount','number');amount.required=false;amount.min='0';amount.step='0.01';currency=field(f,'Currency','text','EUR');note=field(f,'Claim notes','textarea');note.required=false;}else service=field(f,'Benefit/service key, e.g. ct_scan');
-        day=field(f,kind==='claims'?'Service date':'Planned date','date');day.required=false;doc=docOptions(f);
-        for(const item of snapshot[kind]) {
-          const id=item.claim_id||item.request_id;el('h3',(item.service_key||'Claim')+' · '+item.status,area);
-          for(const event of item.events||[])el('p',event.at+' · '+event.to+' · '+event.reference,area);
-          if(!broker)continue;
-          const available=kind==='claims'?{draft:['submitted'],submitted:['info_required','approved','partially_approved','declined'],info_required:['submitted'],approved:['paid'],partially_approved:['paid']}:{draft:['submitted'],submitted:['pending','approved','partially_approved','declined'],pending:['approved','partially_approved','declined']};
-          if(!available[item.status])continue;
-          let next,ref,notes,evidence,paid,cur;const tf=form(area,'Record carrier action / response',async()=>{await request('/'+kind+'/'+id+'/transition',{status:next.value,external_reference:ref.value,note:notes.value,document_refs:evidence.value?[evidence.value]:[],paid_amount:paid.value?Number(paid.value):null,currency:cur.value||null});await refresh();});
-          next=choices(tf,'New status',available[item.status].map(x=>[x,x]));ref=field(tf,'Carrier reference');notes=field(tf,'What the carrier confirmed','textarea');evidence=docOptions(tf);paid=field(tf,'Paid amount (only for paid status)','number');paid.required=false;paid.step='0.01';paid.min='0';cur=field(tf,'Payment currency','text','EUR');cur.required=false;
-        }
-      }
-      const renewal=section('20 · Renewal');el('p','Renewal in '+snapshot.renewal_due_days+' days. Current policy remains the baseline.',renewal);
-      if(!snapshot.renewal||snapshot.renewal.status==='completed')button(renewal,'Start renewal review',async()=>{await request('/renewal/start');await refresh();});
-      else if(snapshot.applicant){
-        const inputs={}; let confirm;
-        const f=form(renewal,'Refresh renewal quotes',async()=>{
-          if(!confirm.checked)throw new Error('Confirm the current applicant details.');
-          const applicant={...snapshot.applicant};
-          for(const [key,input] of Object.entries(inputs)) applicant[key]=input.type==='checkbox'?input.checked:input.type==='number'?(input.value===''?null:Number(input.value)):input.value;
-          applicant.dependents=(snapshot.applicant.dependents||[]).map((d,i)=>({...d,age:Number(dependentAges[i].value)}));
-          const data=await request('/renewal/refresh',{applicant,confirmed_current:true});await refresh();
-          status.textContent=data.quotes.length+' registry quotes refreshed. Use HAL to compare your shortlist against the current policy; carrier quotations remain required.';
-        });
-        inputs.age=field(f,'Current age','number',snapshot.applicant.age);inputs.age.min='0';inputs.age.max='120';
-        inputs.residence_country=field(f,'Current residence','text',snapshot.applicant.residence_country);
-        const dependentAges=(snapshot.applicant.dependents||[]).map((d,i)=>{const input=field(f,'Dependent '+(i+1)+' ('+d.relationship+') current age','number',d.age);input.min='0';input.max='120';return input;});
-        inputs.coverage_area=choices(f,'Coverage area',[['area1','Europe'],['area2','Worldwide excluding USA, Singapore, Hong Kong and China'],['area3','Worldwide excluding USA'],['area4','Worldwide including USA']]);inputs.coverage_area.value=snapshot.applicant.coverage_area;el('p','Ask HAL to update household membership or other intake details before confirming if they have changed.',f);
-        inputs.budget_annual=field(f,'Annual budget (optional)','number',snapshot.applicant.budget_annual);inputs.budget_annual.required=false;inputs.budget_annual.min='0';
-        for(const [key,label] of [['outpatient_required','Out-patient'],['maternity_required','Maternity'],['dental_required','Dental'],['mental_health_required','Mental health'],['wellness_required','Wellness'],['optical_required','Optical'],['evacuation_required','Evacuation'],['chronic_required','Chronic conditions']]) {inputs[key]=field(f,label,'checkbox');inputs[key].required=false;inputs[key].checked=!!snapshot.applicant[key];}
-        confirm=field(f,'I confirm the applicant, dependent and cover details are current','checkbox');
+    if (snapshot.application?.status === 'submitted') {
+      const portal = section('Continue in CHI Insurance Portal');
+      el('p','The CHI Portal is the system of record for the issued policy, permanent client documents, claims and renewals.',portal);
+      if (broker) el('p','Download the reviewed handoff pack, then upload it to the correct client record in the Portal. No client document is sent automatically.',portal);
+      if (broker) button(portal,'Download reviewed handoff pack',async()=>download(await request('/handoff-pack',{document_refs:snapshot.documents.flatMap(d=>d.refs||[])},true),'ashlar-application-handoff.zip'));
+      if (snapshot.portal_handoff?.url) {
+        const link=el('a','Open CHI Insurance Portal',portal);link.href=snapshot.portal_handoff.url;link.target='_blank';link.rel='noopener noreferrer';link.style.display='inline-block';link.style.margin='8px 5px';
       }
     }
     if(broker){const conflicts=section('8 · Resolve evidence conflicts');button(conflicts,'Rebuild comparison from verified facts',async()=>{await request('/comparison/reconcile');await refresh();status.textContent='Comparison rebuilt; proposal quality checks still apply.';});for(const c of snapshot.conflicts||[]){el('h3',c.subject+' · '+c.key,conflicts);let choice,note;const verified=(snapshot.facts||[]).filter(f=>c.fact_ids.includes(f.fact_id)&&f.status==='verified');if(!verified.length){el('p','No verified candidate. Obtain source verification first.',conflicts);continue;}const f=form(conflicts,'Record resolution',async()=>{await request('/conflicts/resolve',{winning_fact_id:choice.value,note:note.value});await refresh();});choice=choices(f,'Verified source to retain',verified.map(v=>[v.fact_id,JSON.stringify(v.value)+' — '+(v.source.source_ref||v.source.document_id)+' p.'+(v.source.page||'?')]));note=field(f,'Reason for resolution (minimum 10 characters)','textarea');note.minLength=10;}}
