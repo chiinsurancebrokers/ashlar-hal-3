@@ -62,3 +62,34 @@ def test_looks_like_place_rejects_noise_accepts_real_names():
     assert _looks_like_place(">>>>>>>>") is False
     assert _looks_like_place("Italy") is True
     assert _looks_like_place("Νότια Γαλλία") is True
+
+
+def test_travel_questions_follow_greek():
+    from backend.app.travel.discovery import next_travel_question
+    q = next_travel_question({"trip_type_answered": True}, greek=True)
+    assert q["key"] == "destination" and "ταξιδεύετε" in q["reply"]
+    q = next_travel_question({"trip_type_answered": True, "travel_destination": "ρουμανια", "travel_age": 29}, greek=True)
+    assert all(not any(c.isascii() and c.isalpha() for c in r["value"]) for r in q["quick_replies"])
+
+
+def test_greek_quick_replies_are_parsed():
+    from backend.app.travel.discovery import deterministic_travel_updates
+    assert deterministic_travel_updates("οικονομική", {"travel_pending_question": "cover_preference"})["travel_cover_preference"] == "budget"
+    assert deterministic_travel_updates("Ένα ταξίδι", {"travel_pending_question": "trip_type"})["travel_trip_type"] == "single"
+
+
+def test_romania_is_europe_in_any_script():
+    from backend.app.travel.europesure import destination_scope
+    for d in ("ρουμανια", "Ρουμανία", "ΡΟΥΜΑΝΙΑ", "Romania", "Βουκουρέστι"):
+        assert destination_scope(d) == "europe", d
+    assert destination_scope("Ηνωμένες Πολιτείες") == "usa"
+
+
+async def test_greek_travel_conversation_stays_greek():
+    from backend.app.services.orchestrator import chat_turn
+    r = await chat_turn("travel insurance", {})
+    r = await chat_turn("single trip", r["state"])
+    r = await chat_turn("ρουμανια", r["state"])
+    assert "ταξιδιώτης" in r["reply"]
+    r = await chat_turn("29", r["state"])
+    assert "κάλυψη" in r["reply"]
