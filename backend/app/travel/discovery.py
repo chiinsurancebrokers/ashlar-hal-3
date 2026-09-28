@@ -45,9 +45,9 @@ def deterministic_travel_updates(message: str, state: dict) -> dict:
 
     if pending == "trip_type":
         low = text.lower()
-        if any(x in low for x in ["single", "one trip", "μονό", "μονο ταξιδι"]):
+        if any(x in low for x in ["single", "one trip", "μονό", "μονο", "ένα ταξ", "ενα ταξ"]):
             out.update(travel_trip_type="single", trip_type_answered=True)
-        elif any(x in low for x in ["annual", "multi", "multi-trip", "multi trip", "ετήσιο", "ετησιο"]):
+        elif any(x in low for x in ["annual", "multi", "multi-trip", "multi trip", "ετήσι", "ετησι", "πολλαπλ"]):
             out.update(travel_trip_type="annual", trip_type_answered=True)
 
     elif pending == "destination":
@@ -66,7 +66,7 @@ def deterministic_travel_updates(message: str, state: dict) -> dict:
 
     elif pending == "cover_preference":
         low = text.lower()
-        if any(x in low for x in ["budget", "cheap", "economy", "basic", "φθην"]):
+        if any(x in low for x in ["budget", "cheap", "economy", "basic", "φθην", "οικονομ", "βασικ"]):
             out.update(travel_cover_preference="budget", cover_preference_answered=True)
         elif any(x in low for x in ["highest", "maximum", "premium", "strongest", "μέγιστ", "μεγιστ"]):
             out.update(travel_cover_preference="highest", cover_preference_answered=True)
@@ -78,15 +78,23 @@ def deterministic_travel_updates(message: str, state: dict) -> dict:
     return out
 
 
-def next_travel_question(state: dict) -> dict | None:
+def next_travel_question(state: dict, greek: bool = False) -> dict | None:
+    skip = {"label": "Παράλειψη", "value": "παράλειψη"} if greek else {"label": "Skip", "value": "skip"}
     if not state.get("trip_type_answered"):
+        if greek:
+            return {"key": "trip_type", "reply": "Χρειάζεστε κάλυψη για ένα ταξίδι ή ετήσια κάλυψη για πολλαπλά ταξίδια;",
+                    "quick_replies": [{"label": "Ένα ταξίδι", "value": "μονό ταξίδι"}, {"label": "Ετήσια (πολλαπλά ταξίδια)", "value": "ετήσιο πολλαπλά ταξίδια"}]}
         return {"key": "trip_type", "reply": "Do you need cover for one trip or annual multi-trip cover?",
                 "quick_replies": [{"label": "Single trip", "value": "single trip"}, {"label": "Annual multi-trip", "value": "annual multi-trip"}]}
     if not state.get("travel_destination"):
-        return {"key": "destination", "reply": "Where are you travelling to?", "quick_replies": []}
+        return {"key": "destination", "reply": "Πού ταξιδεύετε;" if greek else "Where are you travelling to?", "quick_replies": []}
     if not state.get("travel_age") and not state.get("age"):
-        return {"key": "age", "reply": "How old is the oldest traveller?", "quick_replies": [{"label": "Skip", "value": "skip"}]}
+        return {"key": "age", "reply": "Πόσων χρονών είναι ο μεγαλύτερος σε ηλικία ταξιδιώτης;" if greek else "How old is the oldest traveller?",
+                "quick_replies": [skip]}
     if not state.get("cover_preference_answered"):
+        if greek:
+            return {"key": "cover_preference", "reply": "Προτιμάτε οικονομική, ισορροπημένη ή τη μέγιστη δυνατή κάλυψη;",
+                    "quick_replies": [{"label": "Οικονομική", "value": "οικονομική"}, {"label": "Ισορροπημένη", "value": "ισορροπημένη"}, {"label": "Μέγιστη κάλυψη", "value": "μέγιστη κάλυψη"}]}
         return {"key": "cover_preference", "reply": "Would you like budget, balanced, or the highest level of cover?",
                 "quick_replies": [{"label": "Budget", "value": "budget"}, {"label": "Balanced", "value": "balanced"}, {"label": "Highest cover", "value": "highest"}]}
     return None

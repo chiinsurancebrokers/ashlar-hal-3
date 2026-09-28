@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -8,10 +9,20 @@ DATA_FILE = Path(__file__).resolve().parents[3] / "data" / "travel" / "europesur
 
 USA_TERMS = ("usa", "u.s.", "united states", "america", "ηνωμένες πολιτείες", "ηνωμενες πολιτειες")
 EUROPE_TERMS = (
-    "europe", "eu ", "europa", "ευρώπη", "ευρωπη", "european union",
-    "greece", "greek", "italy", "italian", "france", "french", "spain", "spanish",
-    "germany", "german", "portugal", "netherlands", "belgium", "austria",
-    "switzerland", "cyprus", "malta", "croatia",
+    "europe", "eu ", "europa", "ευρωπη", "european union", "ευρωπαικη ενωση",
+    "greece", "greek", "ελλαδα", "italy", "italian", "ιταλια", "france", "french", "γαλλια",
+    "spain", "spanish", "ισπανια", "germany", "german", "γερμανια", "portugal", "πορτογαλια",
+    "netherlands", "holland", "ολλανδια", "belgium", "βελγιο", "austria", "αυστρια",
+    "switzerland", "ελβετια", "cyprus", "κυπρο", "malta", "μαλτα", "croatia", "κροατια",
+    "romania", "ρουμανια", "bulgaria", "βουλγαρια", "hungary", "ουγγαρια", "poland", "πολωνια",
+    "czech", "prague", "τσεχια", "πραγα", "slovakia", "σλοβακια", "slovenia", "σλοβενια",
+    "serbia", "σερβια", "albania", "αλβανια", "north macedonia", "βορεια μακεδονια", "skopje", "σκοπια",
+    "montenegro", "μαυροβουνιο", "bosnia", "βοσνια", "united kingdom", "england", "london", "scotland",
+    "αγγλια", "λονδινο", "ηνωμενο βασιλειο", "σκωτια", "ireland", "ιρλανδια", "denmark", "δανια",
+    "sweden", "σουηδια", "norway", "νορβηγια", "finland", "φινλανδια", "iceland", "ισλανδια",
+    "estonia", "εσθονια", "latvia", "λετονια", "lithuania", "λιθουανια", "luxembourg", "λουξεμβουργο",
+    "paris", "παρισι", "rome", "ρωμη", "berlin", "βερολινο", "madrid", "μαδριτη", "barcelona", "βαρκελωνη",
+    "amsterdam", "αμστερνταμ", "vienna", "βιεννη", "bucharest", "βουκουρεστι", "sofia", "σοφια",
 )
 WORLDWIDE_TERMS = ("worldwide", "world wide", "global", "παγκόσμια", "παγκοσμια")
 
@@ -33,15 +44,21 @@ def money(value: int | float) -> str:
     return f"€{value:,.0f}"
 
 
+def _fold(text: str | None) -> str:
+    """Lowercase and strip accents so 'Ρουμανία', 'ρουμανια' and 'ΡΟΥΜΑΝΙΑ' all match."""
+    decomposed = unicodedata.normalize("NFD", (text or "").strip().lower())
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).replace("ς", "σ")
+
+
 def destination_scope(destination: str | None) -> str | None:
-    text = (destination or "").strip().lower()
+    text = _fold(destination)
     if not text:
         return None
-    if any(x in text for x in USA_TERMS):
+    if any(_fold(x) in text for x in USA_TERMS):
         return "usa"
-    if any(x in text for x in EUROPE_TERMS):
+    if any(_fold(x) in text for x in EUROPE_TERMS):
         return "europe"
-    if any(x in text for x in WORLDWIDE_TERMS):
+    if any(_fold(x) in text for x in WORLDWIDE_TERMS):
         return "worldwide"
     return "worldwide"
 

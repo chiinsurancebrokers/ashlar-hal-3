@@ -141,7 +141,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
                 "We can still continue with travel insurance if you'd prefer. "
             )
 
-        next_q = next_travel_question(state)
+        next_q = next_travel_question(state, greek)
         if next_q is not None:
             state["travel_pending_question"] = next_q["key"]
             return {
