@@ -1,16 +1,21 @@
+import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import get_settings
 from backend.app.core.rate_limit import SimpleRateLimitMiddleware
+from backend.app.api.adviser import router as adviser_router
 from backend.app.api.chat import router as chat_router
+from backend.app.api.documents import router as documents_router
 from backend.app.api.quotes import router as quotes_router
 from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
 from backend.app.api.voice import router as voice_router
+from backend.app.api.proposals import router as proposals_router
+from backend.app.api.journey import router as journey_router
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -32,25 +37,37 @@ app.add_middleware(
 
 app.add_middleware(
     SimpleRateLimitMiddleware,
-    limited_prefixes=(f"{settings.api_prefix}/chat", f"{settings.api_prefix}/leads",
-                       f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak"),
+    limited_prefixes=(f"{settings.api_prefix}/adviser", f"{settings.api_prefix}/chat",
+                       f"{settings.api_prefix}/documents", f"{settings.api_prefix}/leads",
+                       f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak",
+                       f"{settings.api_prefix}/proposals", f"{settings.api_prefix}/journey"),
     max_requests=20,
     window_seconds=60,
 )
 
+app.include_router(adviser_router, prefix=settings.api_prefix)
 app.include_router(chat_router, prefix=settings.api_prefix)
+app.include_router(documents_router, prefix=settings.api_prefix)
 app.include_router(quotes_router, prefix=settings.api_prefix)
 app.include_router(leads_router, prefix=settings.api_prefix)
 app.include_router(travel_router, prefix=settings.api_prefix)
 app.include_router(voice_router, prefix=settings.api_prefix)
+app.include_router(proposals_router, prefix=settings.api_prefix)
+app.include_router(journey_router, prefix=settings.api_prefix)
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
     @app.get("/", include_in_schema=False)
     def homepage():
-        return FileResponse(
-            FRONTEND_DIR / "index.html",
+        # Keep the established HAL page intact and inject the Adviser OS bridge
+        # after its existing inline script has created the public UI functions.
+        html = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+        adviser_bridge = FRONTEND_DIR / "adviser-os.js"
+        if adviser_bridge.exists():
+            html = html.replace("</body>", '<script src="/static/adviser-os.js"></script><script src="/static/lifecycle.js"></script>\n</body>')
+        return HTMLResponse(
+            html,
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
         )
 
@@ -61,11 +78,19 @@ def health():
         "status": "ok",
         "service": settings.app_name,
         "environment": settings.app_env,
+        "ashlar_orchestrator": "active",
+        "post_sale_system_of_record": os.getenv("POST_SALE_SYSTEM_OF_RECORD", "chi_portal"),
+        "chi_portal": {
+            "url": os.getenv("CHI_PORTAL_URL", "https://portalchiinsurance.up.railway.app/login"),
+            "automatic_upload": False,
+        },
+        "case_store": __import__("backend.app.core.durable_store", fromlist=["storage_status"]).storage_status(),
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
         "voice_transcription": {
             "primary": "elevenlabs_scribe" if settings.elevenlabs_api_key else "not_configured",
             "fallback": "openai_whisper" if settings.openai_api_key else "not_configured",
         },
+        "proposal_studio": "embedded",
         "deductible_model": "enabled" if settings.deductible_model_enabled else "disabled_default_pricing",
         "family_pricing": "active",
         "quote_validity_days": settings.quote_validity_days,

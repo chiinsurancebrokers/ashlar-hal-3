@@ -18,6 +18,8 @@ class LeadRequest(BaseModel):
     family_members: str = Field(default="", max_length=120)
     budget: str = Field(default="", max_length=80)
     message: str = Field(default="", max_length=2500)
+    applicant_state: dict = Field(default_factory=dict)
+    plan_keys: list[str] = Field(default_factory=list, max_length=4)
     consent: bool
     website: str = Field(default="", max_length=200)  # honeypot
 
@@ -30,6 +32,8 @@ async def create_lead(req: LeadRequest):
         raise HTTPException(status_code=400, detail="Consent is required before sending the enquiry.")
     try:
         return await send_lead(req.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:

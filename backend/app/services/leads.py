@@ -11,6 +11,7 @@ from backend.app.core.config import get_settings, Settings
 from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_current
 from backend.app.schemas.quote import QuoteResult
+from backend.app.services.market_shortlist import public_market_shortlist
 
 
 def _safe(value: object) -> str:
@@ -79,6 +80,11 @@ Coverage area / destination: {payload.get('coverage_area', '')}
 Family / travellers: {payload.get('family_members', '')}
 Approx. budget: {payload.get('budget', '')}
 
+Selected plans (server checked):
+{payload.get('comparison_summary', 'No plans selected')}
+Needs: {payload.get('needs_summary', 'Not supplied')}
+Underwriting review: {payload.get('underwriting_review', 'Not supplied')}
+
 Applicant note:
 {payload.get('message', '')}
 
@@ -92,6 +98,10 @@ Consent recorded: {'Yes' if payload.get('consent') else 'No'}
     <strong>Email:</strong> {_safe(payload.get('email', ''))}<br>
     <strong>Residence:</strong> {_safe(payload.get('residence_country', ''))}<br>
     <strong>Age:</strong> {_safe(payload.get('age', ''))}</p>
+    <p><strong>Selected plans:</strong><br>{_safe(payload.get('comparison_summary', 'No plans selected')).replace(chr(10), '<br>')}</p>
+    <p><strong>Needs:</strong> {_safe(payload.get('needs_summary', 'Not supplied'))}</p>
+    <p><strong>Area / budget / family:</strong> {_safe(payload.get('coverage_area'))} / {_safe(payload.get('budget'))} / {_safe(payload.get('family_members'))}</p>
+    <p><strong>Underwriting review:</strong> {_safe(payload.get('underwriting_review', 'Not supplied'))}</p>
     <p><strong>Note:</strong> {_safe(payload.get('message', ''))}</p>
     </body></html>"""
 
@@ -110,6 +120,26 @@ async def send_lead(payload: dict) -> dict:
     settings = get_settings()
     if not settings.gmail_sender_email or not settings.gmail_lead_recipient:
         raise RuntimeError("Gmail lead delivery is not configured.")
+    payload = dict(payload)
+    if payload.get("plan_keys"):
+        fields = {k: v for k, v in payload.get("applicant_state", {}).items() if k in Applicant.model_fields}
+        applicant = Applicant(**fields)
+        plans = {q.plan_key: q for q in public_market_shortlist(applicant, settings)}
+        keys = payload["plan_keys"]
+        if len(set(keys)) != len(keys) or any(k not in plans for k in keys):
+            raise ValueError("Refresh your comparison: a selected plan is unknown or does not meet your needs.")
+        selected = [plans[k] for k in keys]
+        payload["comparison_summary"] = "\n".join(
+            p.product_name + " — " + (f"Indicative premium: {p.currency} {p.premium:,.2f}" if p.premium is not None else "Personal quotation required")
+            for p in selected
+        )
+        payload["needs_summary"] = ", ".join(applicant.must_have_keys()) or "No additional must-have benefits declared"
+        payload["residence_country"] = applicant.residence_country
+        payload["age"] = str(applicant.age)
+        payload["coverage_area"] = applicant.coverage_area
+        payload["budget"] = str(applicant.budget_annual or "Not stated")
+        payload["family_members"] = str(applicant.family_size())
+        payload["underwriting_review"] = "Required" if applicant.chronic_conditions_disclosed else "No disclosure flagged"
     reference = f"HAL-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:8].upper()}"
     msg = _build_lead_message(payload, reference, settings.gmail_sender_email, settings.gmail_lead_recipient)
     result = await _send_via_gmail(msg)
@@ -131,8 +161,12 @@ def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: S
     fields = {k: v for k, v in (applicant_state or {}).items() if k in Applicant.model_fields}
     applicant = Applicant(**fields)
     all_current = quote_current(applicant, settings)
-    by_key = {q.plan_key: q for q in all_current if q.plan_key}
-    selected = [by_key[k] for k in plan_keys if k in by_key]
+    by_key = {q.plan_key: q for q in all_current if q.plan_key and q.official_rate}
+    if any(k.startswith(("img:gpmi_", "cigna:inspire_")) for k in plan_keys):
+        raise ValueError("A broker-reviewed carrier quotation is required before emailing a priced comparison for GPMI or Inspire.")
+    if any(k not in by_key for k in plan_keys):
+        raise ValueError("A requested plan is unavailable for a current priced comparison.")
+    selected = [by_key[k] for k in plan_keys]
     if not selected:
         raise ValueError("None of the requested plan_keys match a currently eligible plan for this applicant.")
     return selected

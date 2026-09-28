@@ -1,0 +1,212 @@
+{
+  "carrier": "img",
+  "carrier_name": "IMG",
+  "product_family": "Global Prima Medical Insurance",
+  "document_type": "brochure_table_of_benefits",
+  "source": "gpmi-brochure (3).pdf",
+  "source_library_file_id": "libfile_dcd7327e5f6081918d2a959ebadc967b",
+  "version": "0426 / CM0050A2292240228",
+  "plan_codes": [
+    "bronze",
+    "bronze_plus",
+    "silver",
+    "gold",
+    "platinum"
+  ],
+  "benefits": [
+    {
+      "benefit_code": "overall_maximum",
+      "label": "Overall policy limit",
+      "page": 4,
+      "values": {
+        "bronze": "€1,000,000",
+        "bronze_plus": "€2,000,000",
+        "silver": "€3,000,000",
+        "gold": "€4,000,000",
+        "platinum": "€5,000,000"
+      },
+      "status": "verified",
+      "allow_generation": true,
+      "plan_conditions": {
+        "bronze": [
+          "Bronze: no pre-existing condition cover"
+        ]
+      }
+    },
+    {
+      "benefit_code": "outpatient_services_combined",
+      "label": "Overall out-patient limit",
+      "page": 6,
+      "values": {
+        "bronze": "€2,500",
+        "bronze_plus": "€5,000",
+        "silver": "€10,000",
+        "gold": "Up to overall policy limit",
+        "platinum": "Up to overall policy limit"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "outpatient_chronic_conditions",
+      "label": "Out-patient chronic conditions – routine management and palliative treatment",
+      "page": 6,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "Not covered",
+        "silver": "€1,000 each year within overall out-patient limit",
+        "gold": "€5,000 each year",
+        "platinum": "€10,000 each year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "inpatient_psychiatric",
+      "label": "In-patient psychiatric illness",
+      "page": 5,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "15 days each year",
+        "silver": "30 days each year",
+        "gold": "30 days each year",
+        "platinum": "45 days each year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "outpatient_psychiatric",
+      "label": "Out-patient psychiatric illness",
+      "page": 8,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "Not covered",
+        "silver": "Not covered",
+        "gold": "€5,000 each year",
+        "platinum": "€10,000 each year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "optical_glasses",
+      "label": "Prescribed glasses and contact lenses",
+      "page": 8,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "€100 each year within overall out-patient limit",
+        "silver": "€150 each year within overall out-patient limit",
+        "gold": "€250 each year",
+        "platinum": "€250 each year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "wellness_screening",
+      "label": "Well-being benefit",
+      "page": 7,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "€100 each year within overall out-patient limit",
+        "silver": "€250 each year within overall out-patient limit",
+        "gold": "€500 each year",
+        "platinum": "€1,000 each year"
+      },
+      "waiting_period": "10 months",
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "vaccinations",
+      "label": "Vaccinations",
+      "page": 8,
+      "values": {
+        "bronze": "Not covered",
+        "bronze_plus": "€100 each year",
+        "silver": "€150 each year",
+        "gold": "€250 each year",
+        "platinum": "€500 each year"
+      },
+      "status": "verified",
+      "allow_generation": true
+    },
+    {
+      "benefit_code": "routine_dental",
+      "label": "Optional dental treatment",
+      "page": 10,
+      "values": {
+        "bronze": "Optional €1,000 or €2,000 limit",
+        "bronze_plus": "Optional €1,000 or €2,000 limit",
+        "silver": "Optional €1,000 or €2,000 limit",
+        "gold": "Optional €1,000 or €2,000 limit",
+        "platinum": "Optional €1,000 or €2,000 limit"
+      },
+      "waiting_period": "6 months",
+      "status": "verified",
+      "allow_generation": true,
+      "conditions": [
+        "Optional add-on, additional premium required; Class 1: 10% co-insurance, Class 2: 30%, Class 3: 50% within the selected dental limit"
+      ]
+    },
+    {
+      "benefit_code": "normal_maternity",
+      "label": "Optional routine pregnancy & childbirth",
+      "page": 9,
+      "values": {
+        "bronze": "Optional €5,000 / €10,000 / €20,000 per pregnancy",
+        "bronze_plus": "Optional €5,000 / €10,000 / €20,000 per pregnancy",
+        "silver": "Optional €5,000 / €10,000 / €20,000 per pregnancy",
+        "gold": "Optional €5,000 / €10,000 / €20,000 per pregnancy",
+        "platinum": "Optional €5,000 / €10,000 / €20,000 per pregnancy"
+      },
+      "waiting_period": "10 months",
+      "status": "verified",
+      "allow_generation": true,
+      "conditions": [
+        "Optional add-on, additional premium required; for family cover applies to females aged 18–54; maximum 12 pre/postnatal check-ups and 3 scans (one per trimester)"
+      ],
+      "condition_pages": [
+        9,
+        12
+      ]
+    },
+    {
+      "benefit_code": "emergency_out_of_area",
+      "label": "Emergency treatment outside area of cover",
+      "page": 5,
+      "values": {
+        "bronze": "Up to €20,000; trips under 30 days",
+        "bronze_plus": "Up to €20,000; trips under 30 days",
+        "silver": "Up to €30,000; trips under 30 days",
+        "gold": "Up to €40,000; trips under 30 days",
+        "platinum": "Up to €50,000; trips under 30 days"
+      },
+      "status": "verified",
+      "allow_generation": true,
+      "conditions": [
+        "Maximum 30 nights each year; emergency in/day-patient treatment must commence within 24 hours; not routine treatment"
+      ]
+    },
+    {
+      "benefit_code": "organ_transplants",
+      "label": "Organ transplants – lifetime limit",
+      "page": 4,
+      "values": {
+        "bronze": "€100,000",
+        "bronze_plus": "€100,000",
+        "silver": "€250,000",
+        "gold": "€250,000",
+        "platinum": "€500,000"
+      },
+      "status": "verified",
+      "allow_generation": true,
+      "conditions": [
+        "Lifetime limit"
+      ]
+    }
+  ],
+  "currency": "EUR",
+  "evidence_scope": "Published brochure summary; not confirmation of individual cover or underwriting."
+}

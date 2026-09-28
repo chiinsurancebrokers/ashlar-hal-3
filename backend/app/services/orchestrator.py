@@ -4,7 +4,7 @@ from typing import Any
 
 from backend.app.core.config import Settings, get_settings
 from backend.app.schemas.applicant import Applicant
-from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions
+from backend.app.services.market_shortlist import public_market_exclusions, public_market_shortlist
 from backend.app.discovery.flow import apply_discovery_answer, next_discovery_question, discovery_progress
 from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions
@@ -68,14 +68,14 @@ def _quote_payload(state: dict, settings: Settings) -> list[dict]:
     applicant = _applicant_from_state(state)
     if not applicant:
         return []
-    return [q.model_dump(mode="json") for q in quote_shortlist(applicant, settings)]
+    return [q.model_dump(mode="json") for q in public_market_shortlist(applicant, settings)]
 
 
 def _exclusions_payload(state: dict, settings: Settings) -> list[dict]:
     applicant = _applicant_from_state(state)
     if not applicant:
         return []
-    return quote_exclusions(applicant, settings)
+    return public_market_exclusions(applicant, settings)
 
 
 def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) -> str:
@@ -85,33 +85,16 @@ def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) 
     find buried inside a card."""
     if not quotes:
         return ""
-    top = quotes[0]
-    matched = top.get("matched_requirements") or []
-    price = f'{top.get("currency", "EUR")} {top.get("premium", 0):,.2f}'
-
-    if greek:
-        if matched:
-            why = f"γιατί είναι η φθηνότερη επιλογή που καλύπτει επαληθευμένα: {', '.join(matched)}"
-        elif (top.get("evidence_confidence") if top.get("evidence_confidence") is not None else 1.0) < 1.0:
-            why = "γιατί είναι η πιο οικονομική επιλογή· δεν έχουμε ακόμα λεπτομερή στοιχεία παροχών για αυτόν τον ασφαλιστή ώστε να επιβεβαιώσουμε ότι καλύπτει όσα ζητήσατε"
-        else:
-            why = "γιατί είναι η πιο οικονομική επιλογή από τις επιλέξιμες"
-        line = f"Η κορυφαία επιλογή είναι {top.get('product_name')} ({top.get('insurer')}) στα {price}/έτος — {why}."
-        if excluded:
-            names = ", ".join(e.get("product_name", "") for e in excluded[:3])
-            line += f" {len(excluded)} πρόγραμμα{'τα' if len(excluded) != 1 else ''} αποκλείστηκαν επειδή δεν καλύπτουν κάποια από τις απαιτήσεις σας ({names})."
-    else:
-        if matched:
-            why = f"it's the lowest-priced option that verifiably covers: {', '.join(matched)}"
-        elif (top.get("evidence_confidence") if top.get("evidence_confidence") is not None else 1.0) < 1.0:
-            why = "it's the lowest-priced option, though we don't yet hold detailed benefit data for this carrier to confirm it covers everything you asked for"
-        else:
-            why = "it's the lowest-priced eligible option"
-        line = f"HAL's top pick is {top.get('product_name')} ({top.get('insurer')}) at {price}/year — {why}."
-        if excluded:
-            names = ", ".join(e.get("product_name", "") for e in excluded[:3])
-            line += f" {len(excluded)} plan{'s' if len(excluded) != 1 else ''} were excluded because they don't cover something you asked for ({names})."
-    return line
+    priced = [q for q in quotes if q.get("premium") is not None]
+    pending = [q for q in quotes if q.get("premium") is None]
+    line = ("Οι επιλογές παρακάτω βασίζονται στις δηλωμένες ανάγκες σας. " if greek else "These options are based on your stated needs. ")
+    if priced:
+        line += ("Υπάρχουν ενδεικτικά ασφάλιστρα από τον επίσημο πίνακα τιμών. " if greek else "Indicative premiums are available from the official rate table. ")
+    if pending:
+        line += ("Για IMG/Cigna χρειάζεται προσωπική προσφορά και επιβεβαίωση επιλεξιμότητας· οι προαιρετικές ή άγνωστες παροχές επισημαίνονται. " if greek else "IMG/Cigna require personal quotations and eligibility confirmation; optional or unknown benefits are flagged. ")
+    if excluded:
+        line += (f"Αποκλείστηκαν {len(excluded)} επιλογές λόγω κενών στις απαιτούμενες παροχές." if greek else f"{len(excluded)} plans were excluded because they do not cover a stated requirement.")
+    return line.strip()
 
 
 async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
@@ -224,9 +207,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     intro = (f"Τέλεια{', ' + name if name else ''} — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
               if greek else f"Great{', ' + name if name else ''} — I now have enough information. Here is HAL's shortlist.")
     reasoning = _shortlist_reasoning(quotes, excluded, greek)
-    followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
+    followup = ("Ποιες 2–4 επιλογές θέλετε να συγκρίνουμε; Επιλέξτε + Compare για να δείτε τις διαφορές που σχετίζονται με τις ανάγκες σας."
                 if greek else
-                "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+                "Which 2–4 options would you like to compare? Use + Compare to see the differences for your stated needs.")
     reply = f"{intro} {reasoning}".strip()
     return {
         "reply": reply, "followup_message": followup, "state": state, "quotes": quotes, "excluded_plans": excluded,
