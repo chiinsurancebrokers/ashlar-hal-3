@@ -736,7 +736,7 @@ function renderTravelCard(rec){
     </div>
     <div class="q-why">${esc(trText(rec.reason))}</div><div class="q-note">${esc(trText(rec.client_note))}</div>
     ${!rec.eligible_on_legacy_data?`<div class="q-note" style="color:#b3261e">${esc(trText(rec.eligibility_note||''))}</div>`:''}
-    ${alt}<div class="q-actions"><button class="q-primary" type="button" onclick="openSourceViewer(\'${esc(rec.portal_url)}\',\'${esc(t(\'currentEuropesure\'))}\')">${t('currentEuropesure')}</button></div>
+    ${alt}<div class="q-actions"><button class="q-primary" type="button" onclick="openSourceViewer(\'${esc(rec.portal_url)}\',\'${esc(t('currentEuropesure'))}\')">${t('currentEuropesure')}</button></div>
   </div>`;
 }
 
