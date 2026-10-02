@@ -183,24 +183,24 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <div class="split-shell">
   <div class="left-panel">
     <div class="brand-row">ASHLAR ASSURANCE</div>
-    <div class="left-eyebrow">INSURANCE INTELLIGENCE, WITH EVIDENCE</div>
-    <h1 class="left-headline">Meet HAL.<br>Find clarity<br>before you choose.</h1>
-    <p class="left-lead">Tell HAL what you need. It structures your requirements, checks the available rate data and produces an indicative shortlist from verified sources — without letting AI invent the premium.</p>
+    <div class="left-eyebrow" id="uiEyebrow">INSURANCE INTELLIGENCE, WITH EVIDENCE</div>
+    <h1 class="left-headline" id="uiHeadline">Meet HAL.<br>Find clarity<br>before you choose.</h1>
+    <p class="left-lead" id="uiLead">Tell HAL what you need. It structures your requirements, checks the available rate data and produces an indicative shortlist from verified sources — without letting AI invent the premium.</p>
     <div class="product-toggle" style="justify-content:flex-start">
       <button class="product-btn active" id="btnHealth" onclick="setJourney('ipmi')">🏥 Health Insurance</button>
       <button class="product-btn" id="btnTravel" onclick="setJourney('travel')">✈️ Travel Insurance</button>
     </div>
     <ul class="trust-bullets">
-      <li><i class="bullet-dot"></i>Deterministic pricing</li>
-      <li><i class="bullet-dot"></i>Evidence-locked policy claims</li>
-      <li><i class="bullet-dot"></i>Broker review before placement</li>
+      <li><i class="bullet-dot"></i><span id="uiTrustPricing">Deterministic pricing</span></li>
+      <li><i class="bullet-dot"></i><span id="uiTrustEvidence">Evidence-locked policy claims</span></li>
+      <li><i class="bullet-dot"></i><span id="uiTrustBroker">Broker review before placement</span></li>
     </ul>
     <div class="needs-panel">
       <div>
-        <div class="needs-title">Your needs</div>
+        <div class="needs-title" id="uiNeedsTitle">Your needs</div>
         <div id="needsBody" class="needs-empty">Tell HAL what matters to you.</div>
       </div>
-      <button class="edit-link" onclick="openNeedsEditor()">Edit</button>
+      <button class="edit-link" id="uiEditNeeds" onclick="openNeedsEditor()">Edit</button>
     </div>
   </div>
 
@@ -208,10 +208,14 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <div class="chat-card">
       <div class="chat-card-header">
         <div class="hal-dot"></div>
-        <div><div class="chat-card-hal-name">HAL <span class="online-badge">● Online</span></div></div>
+        <div><div class="chat-card-hal-name">HAL <span class="online-badge" id="uiOnline">● Online</span></div></div>
         <div style="flex:1"></div>
+        <div class="lang-toggle" aria-label="Language">
+          <button class="ghost-btn" id="langEN" onclick="setUiLanguage('en')">EN</button>
+          <button class="ghost-btn" id="langEL" onclick="setUiLanguage('el')">ΕΛ</button>
+        </div>
         <button class="ghost-btn" onclick="toggleSpeaker()" id="speakerToggle">🔇 Voice off</button>
-        <button class="ghost-btn" onclick="if(confirm('Start a new conversation? This clears your current answers.'))location.reload()">Start again</button>
+        <button class="ghost-btn" id="restartBtn" onclick="restartConversation()">Start again</button>
       </div>
       <div class="progress-bar">
         <div class="progress-step" id="ps1">1 Understand needs</div>
@@ -227,8 +231,8 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <div class="compare-tray" id="compareTray">
   <span id="compareCount">0 plans selected</span>
   <div style="display:flex;gap:8px">
-    <button onclick="compareSelected.clear();renderState()" style="background:transparent;color:#fff">Clear</button>
-    <button onclick="openCompare()">Compare</button>
+    <button id="compareClearBtn" onclick="compareSelected.clear();renderState()" style="background:transparent;color:#fff">Clear</button>
+    <button id="compareOpenBtn" onclick="openCompare()">Compare</button>
   </div>
 </div>
 
@@ -242,22 +246,22 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <!-- Needs editor modal -->
 <div class="modal-backdrop" id="needsModal" onclick="if(event.target===this)closeModal('needsModal')">
   <div class="modal">
-    <h3>Edit your needs</h3>
-    <label>Age</label><input type="number" id="needAge">
-    <label>Country of residence</label><input id="needResidence" value="Greece">
-    <label>Coverage area</label>
+    <h3 id="needsModalTitle">Edit your needs</h3>
+    <label id="lblNeedAge">Age</label><input type="number" id="needAge">
+    <label id="lblNeedResidence">Country of residence</label><input id="needResidence" value="Greece">
+    <label id="lblNeedArea">Coverage area</label>
     <select id="needArea">
       <option value="area1">Europe</option>
       <option value="area2">Worldwide excl. USA, Singapore, HK, China</option>
       <option value="area3">Worldwide excl. USA</option>
       <option value="area4">Worldwide incl. USA</option>
     </select>
-    <label>Annual budget (optional)</label><input type="number" id="needBudget">
-    <label>Must-haves</label>
+    <label id="lblNeedBudget">Annual budget (optional)</label><input type="number" id="needBudget">
+    <label id="lblMustHaves">Must-haves</label>
     <div class="need-toggle-box" id="needToggleBox"></div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('needsModal')">Cancel</button>
-      <button class="btn-primary" onclick="saveNeeds()">Save & recalculate</button>
+      <button class="btn-secondary" id="needsCancelBtn" onclick="closeModal('needsModal')">Cancel</button>
+      <button class="btn-primary" id="needsSaveBtn" onclick="saveNeeds()">Save & recalculate</button>
     </div>
   </div>
 </div>
@@ -265,11 +269,11 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <!-- Compare modal -->
 <div class="modal-backdrop" id="compareModal" onclick="if(event.target===this)closeModal('compareModal')">
   <div class="modal" style="max-width:760px">
-    <h3>Compare plans</h3>
+    <h3 id="compareModalTitle">Compare plans</h3>
     <div id="compareContent"></div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('compareModal')">Close</button>
-      <button class="btn-primary" onclick="openComparisonEmail()">✉ Send me this comparison</button>
+      <button class="btn-secondary" id="compareCloseBtn" onclick="closeModal('compareModal')">Close</button>
+      <button class="btn-primary" id="compareEmailBtn" onclick="openComparisonEmail()">✉ Send me this comparison</button>
     </div>
   </div>
 </div>
@@ -277,13 +281,13 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <!-- Comparison email modal -->
 <div class="modal-backdrop" id="emailModal" onclick="if(event.target===this)closeModal('emailModal')">
   <div class="modal">
-    <h3>Email me this comparison</h3>
-    <label>Name</label><input id="emailName">
+    <h3 id="emailModalTitle">Email me this comparison</h3>
+    <label id="lblEmailName">Name</label><input id="emailName">
     <label>Email</label><input id="emailAddress" type="email">
-    <p style="font-size:11px;color:var(--muted)">All figures are recalculated by our server before sending — this is always the current, accurate premium.</p>
+    <p id="emailCurrentNote" style="font-size:11px;color:var(--muted)">All figures are recalculated by our server before sending — this is always the current, accurate premium.</p>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
-      <button class="btn-primary" onclick="sendComparisonEmail()">Send</button>
+      <button class="btn-secondary" id="emailCancelBtn" onclick="closeModal('emailModal')">Cancel</button>
+      <button class="btn-primary" id="emailSendBtn" onclick="sendComparisonEmail()">Send</button>
     </div>
   </div>
 </div>
@@ -293,30 +297,30 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
   <div class="modal">
     <h3 id="leadTitle">Request a proposal</h3>
     <p id="leadSubtitle" style="color:var(--muted);font-size:13px">Tell us about you and Ashlar will follow up.</p>
-    <label>First name</label><input id="leadFirstName">
-    <label>Last name</label><input id="leadLastName">
+    <label id="lblLeadFirst">First name</label><input id="leadFirstName">
+    <label id="lblLeadLast">Last name</label><input id="leadLastName">
     <label>Email</label><input id="leadEmail" type="email">
-    <label>Country of residence</label><input id="leadResidence">
-    <label>Age</label><input id="leadAge" type="number">
-    <label>Coverage area / destination</label><input id="leadCoverage">
-    <label>Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
-    <label>Approx. annual budget</label><input id="leadBudget">
-    <label>Anything else you want us to know?</label>
+    <label id="lblLeadResidence">Country of residence</label><input id="leadResidence">
+    <label id="lblLeadAge">Age</label><input id="leadAge" type="number">
+    <label id="lblLeadCoverage">Coverage area / destination</label><input id="leadCoverage">
+    <label id="lblLeadFamily">Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
+    <label id="lblLeadBudget">Approx. annual budget</label><input id="leadBudget">
+    <label id="lblLeadMessage">Anything else you want us to know?</label>
     <textarea id="leadMessage" rows="3" placeholder="Please do not enter detailed medical records or sensitive medical history here."></textarea>
     <input class="honeypot" id="leadWebsite" tabindex="-1" autocomplete="off">
     <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
       <input type="checkbox" id="leadConsent" style="width:auto;margin-top:3px">
-      <span>I agree that Ashlar Assurance may use the information above to contact me about my insurance enquiry. This form is not an insurance application and does not confirm cover.</span>
+      <span id="leadConsentText">I agree that Ashlar Assurance may use the information above to contact me about my insurance enquiry. This form is not an insurance application and does not confirm cover.</span>
     </label>
     <div id="leadStatus" style="font-size:12px;margin-top:8px"></div>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('leadModal')">Cancel</button>
-      <button class="btn-primary" onclick="submitLead()">Send enquiry</button>
+      <button class="btn-secondary" id="leadCancelBtn" onclick="closeModal('leadModal')">Cancel</button>
+      <button class="btn-primary" id="leadSendBtn" onclick="submitLead()">Send enquiry</button>
     </div>
   </div>
 </div>
 
-<div class="footer-disclaimer">HAL is an Ashlar Assurance decision-support tool. Morgan Price quotations use the official 2026 rate workbook; other carriers may still use clearly-labelled legacy rate data. Final eligibility, underwriting, benefits and premium remain subject to the insurer's current terms and confirmation.</div>
+<div class="footer-disclaimer" id="footerDisclaimer">HAL is an Ashlar Assurance decision-support tool. Morgan Price quotations use the official 2026 rate workbook; other carriers may still use clearly-labelled legacy rate data. Final eligibility, underwriting, benefits and premium remain subject to the insurer's current terms and confirmation.</div>
 
 <script>
 const API = '/api/v1';
@@ -327,136 +331,302 @@ let lastQuotes = [];
 let excludedPlans = [];
 const compareSelected = new Set();
 
-const MUST_FIELDS = {
-  outpatient_required:'Outpatient', maternity_required:'Maternity', dental_required:'Dental',
-  mental_health_required:'Mental health', wellness_required:'Wellness', optical_required:'Optical',
-  evacuation_required:'Evacuation', chronic_required:'Chronic cover',
+const I18N = {
+  en: {
+    eyebrow:'INSURANCE INTELLIGENCE, WITH EVIDENCE',
+    headline:'Meet HAL.<br>Find clarity<br>before you choose.',
+    lead:'Tell HAL what you need. It structures your requirements, checks the available rate data and produces an indicative shortlist from verified sources — without letting AI invent the premium.',
+    health:'🏥 Health Insurance', travel:'✈️ Travel Insurance',
+    trustPricing:'Deterministic pricing', trustEvidence:'Evidence-locked policy claims', trustBroker:'Broker review before placement',
+    needs:'Your needs', edit:'Edit', online:'● Online', voiceOn:'🔊 Voice on', voiceOff:'🔇 Voice off',
+    startAgain:'Start again', restartConfirm:'Start a new conversation? This clears your current answers.',
+    step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
+    clear:'Clear', compare:'Compare', send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
+    editNeeds:'Edit your needs', age:'Age', residence:'Country of residence', coverageArea:'Coverage area',
+    annualBudgetOptional:'Annual budget (optional)', mustHaves:'Must-haves', cancel:'Cancel', saveRecalculate:'Save & recalculate',
+    comparePlans:'Compare plans', close:'Close', sendComparison:'✉ Send me this comparison', emailComparison:'Email me this comparison',
+    name:'Name', currentPremiumNote:'All figures are recalculated by our server before sending — this is always the current, accurate premium.',
+    requestProposal:'Request a proposal', proposalSubtitle:'Tell us about you and Ashlar will follow up.',
+    firstName:'First name', lastName:'Last name', coverageDestination:'Coverage area / destination',
+    familyTravellers:'Family / travellers', familyPlaceholder:'e.g. 2 adults + 1 child', approxBudget:'Approx. annual budget',
+    anythingElse:'Anything else you want us to know?', medicalPlaceholder:'Please do not enter detailed medical records or sensitive medical history here.',
+    consent:'I agree that Ashlar Assurance may use the information above to contact me about my insurance enquiry. This form is not an insurance application and does not confirm cover.',
+    sendEnquiry:'Send enquiry',
+    footer:"HAL is an Ashlar Assurance decision-support tool. Morgan Price quotations use the official 2026 rate workbook; other carriers may still use clearly-labelled legacy rate data. Final eligibility, underwriting, benefits and premium remain subject to the insurer's current terms and confirmation.",
+    hello:"Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.",
+    intro:"I'll ask a few questions and then calculate an indicative shortlist from the rate data currently available to me.",
+    askName:"Before we start — what's your name?", skip:'Not sure / Skip',
+    emptyNeeds:'Tell HAL what matters to you.', selectedSingular:'plan selected', selectedPlural:'plans selected',
+    ageChip:'Age', budgetChip:'/yr budget', whyExcluded:'Why were {n} plan{s} excluded?',
+    requestPrivate:'Request a private consultation', getProposal:'Get proposal', tellMore:'Tell me more',
+    recommended:'★ HAL recommends', selected:'✓ Selected', compareAdd:'+ Compare',
+    coverage:'Coverage', deductible:'Deductible', evacuation:'Evacuation', annualLimit:'Annual limit on request',
+    perYear:'/year', perMonth:'/month', people:'people',
+    emergencyMedical:'Emergency medical', cancellation:'Cancellation', baggage:'Baggage', tripType:'Trip type',
+    currentEuropesure:'Get current price in Europesure portal',
+    buildingComparison:'Building your detailed comparison…', annualPremium:'Annual premium', monthly:'Monthly',
+    characteristic:'Feature', shortConclusion:'Short Conclusion', notConfirmed:'Not confirmed',
+    emailRequired:'Please enter an email address.', comparisonSendFail:'Could not send comparison.',
+    comparisonSent:'Sent! Check your inbox for the comparison — the figures were recalculated by our server just now.',
+    proposalIpmi:'Request a proposal', proposalTravel:'Travel insurance enquiry', proposalLocal:'Request a local-vs-international review',
+    proposalTravelSub:'Tell us about your trip and Ashlar will follow up.', proposalLocalSub:'Tell us your priorities and Ashlar will follow up.',
+    fillNameEmail:'Please fill in your name and email.', confirmConsent:'Please confirm consent to proceed.', sending:'Sending...',
+    couldNotSend:'Could not send enquiry.', sentRef:'Sent! Reference: ',
+    thinkingNeeds:'Understanding your needs', thinkingRates:'Checking rates', thinkingMatch:'Matching your must-have benefits', thinkingProviders:'Comparing providers',
+    recording:'🔴 Listening… tap the mic again to stop', transcribing:'Transcribing…', transcriptionReady:'Transcription ready — review it, then press Send.',
+    didntCatch:"I didn't catch that — please try speaking again.", micDenied:'Microphone access was not granted.',
+    genericError:"I couldn't complete that request just now. Please try once more.",
+    area1:'Europe', area2:'Worldwide excl. USA/SG/HK/CN', area3:'Worldwide excl. USA', area4:'Worldwide incl. USA',
+    outpatient:'Outpatient', maternity:'Maternity', dental:'Dental', mental:'Mental health', wellness:'Wellness', optical:'Optical', evac:'Evacuation', chronic:'Chronic cover'
+  },
+  el: {
+    eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΕΥΦΥΪΑ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
+    headline:'Γνωρίστε τον HAL.<br>Βρείτε σαφήνεια<br>πριν επιλέξετε.',
+    lead:'Πείτε στον HAL τι χρειάζεστε. Οργανώνει τις απαιτήσεις σας, ελέγχει τα διαθέσιμα τιμολογιακά δεδομένα και δημιουργεί μια ενδεικτική shortlist από επαληθευμένες πηγές — χωρίς να επιτρέπει στην AI να επινοεί ασφάλιστρα.',
+    health:'🏥 Ασφάλιση Υγείας', travel:'✈️ Ταξιδιωτική Ασφάλιση',
+    trustPricing:'Ντετερμινιστική τιμολόγηση', trustEvidence:'Παροχές μόνο με τεκμηριωμένα στοιχεία', trustBroker:'Έλεγχος από ασφαλιστικό διαμεσολαβητή πριν την τοποθέτηση',
+    needs:'Οι ανάγκες σας', edit:'Επεξεργασία', online:'● Online', voiceOn:'🔊 Φωνή ενεργή', voiceOff:'🔇 Φωνή ανενεργή',
+    startAgain:'Από την αρχή', restartConfirm:'Να ξεκινήσουμε νέα συνομιλία; Οι τρέχουσες απαντήσεις σας θα διαγραφούν.',
+    step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
+    clear:'Καθαρισμός', compare:'Σύγκριση', send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
+    editNeeds:'Επεξεργασία αναγκών', age:'Ηλικία', residence:'Χώρα κατοικίας', coverageArea:'Περιοχή κάλυψης',
+    annualBudgetOptional:'Ετήσιος προϋπολογισμός (προαιρετικό)', mustHaves:'Απαραίτητες παροχές', cancel:'Ακύρωση', saveRecalculate:'Αποθήκευση & επανυπολογισμός',
+    comparePlans:'Σύγκριση προγραμμάτων', close:'Κλείσιμο', sendComparison:'✉ Στείλτε μου τη σύγκριση', emailComparison:'Αποστολή σύγκρισης με email',
+    name:'Όνομα', currentPremiumNote:'Όλα τα ποσά επανυπολογίζονται από τον server πριν την αποστολή — ώστε το ασφάλιστρο να είναι το τρέχον διαθέσιμο.',
+    requestProposal:'Αίτημα πρότασης', proposalSubtitle:'Συμπληρώστε τα στοιχεία σας και η Ashlar θα επικοινωνήσει μαζί σας.',
+    firstName:'Όνομα', lastName:'Επώνυμο', coverageDestination:'Περιοχή κάλυψης / προορισμός',
+    familyTravellers:'Οικογένεια / ταξιδιώτες', familyPlaceholder:'π.χ. 2 ενήλικες + 1 παιδί', approxBudget:'Ενδεικτικός ετήσιος προϋπολογισμός',
+    anythingElse:'Υπάρχει κάτι άλλο που θέλετε να γνωρίζουμε;', medicalPlaceholder:'Μην καταχωρείτε εδώ αναλυτικά ιατρικά αρχεία ή ευαίσθητο ιατρικό ιστορικό.',
+    consent:'Συμφωνώ η Ashlar Assurance να χρησιμοποιήσει τα παραπάνω στοιχεία για να επικοινωνήσει μαζί μου σχετικά με το ασφαλιστικό μου αίτημα. Η φόρμα αυτή δεν αποτελεί αίτηση ασφάλισης και δεν επιβεβαιώνει κάλυψη.',
+    sendEnquiry:'Αποστολή αιτήματος',
+    footer:'Ο HAL είναι εργαλείο υποστήριξης αποφάσεων της Ashlar Assurance. Οι προσφορές Morgan Price χρησιμοποιούν το επίσημο τιμολόγιο 2026· άλλοι πάροχοι μπορεί ακόμη να χρησιμοποιούν σαφώς επισημασμένα παλαιότερα τιμολογιακά δεδομένα. Η τελική επιλεξιμότητα, η ανάληψη κινδύνου, οι παροχές και το ασφάλιστρο υπόκεινται στους ισχύοντες όρους και την επιβεβαίωση της ασφαλιστικής εταιρείας.',
+    hello:'Γεια σας. Είμαι ο HAL, ο βοηθός προσφορών ασφάλισης της Ashlar Assurance.',
+    intro:'Θα σας κάνω μερικές ερωτήσεις και στη συνέχεια θα υπολογίσω μια ενδεικτική shortlist με βάση τα διαθέσιμα τιμολογιακά δεδομένα.',
+    askName:'Πριν ξεκινήσουμε — πώς σας λένε;', skip:'Δεν είμαι σίγουρος / Παράλειψη',
+    emptyNeeds:'Πείτε στον HAL τι είναι σημαντικό για εσάς.', selectedSingular:'πρόγραμμα επιλεγμένο', selectedPlural:'προγράμματα επιλεγμένα',
+    ageChip:'Ηλικία', budgetChip:'/έτος προϋπολογισμός', whyExcluded:'Γιατί αποκλείστηκαν {n} πρόγραμμα{s};',
+    requestPrivate:'Αίτημα ιδιωτικής συμβουλευτικής', getProposal:'Λήψη πρότασης', tellMore:'Πείτε μου περισσότερα',
+    recommended:'★ Ο HAL προτείνει', selected:'✓ Επιλεγμένο', compareAdd:'+ Σύγκριση',
+    coverage:'Κάλυψη', deductible:'Απαλλαγή', evacuation:'Ιατρική διακομιδή', annualLimit:'Ετήσιο όριο κατόπιν προγράμματος',
+    perYear:'/έτος', perMonth:'/μήνα', people:'άτομα',
+    emergencyMedical:'Επείγουσα ιατρική κάλυψη', cancellation:'Ακύρωση ταξιδιού', baggage:'Αποσκευές', tripType:'Τύπος ταξιδιού',
+    currentEuropesure:'Δείτε την τρέχουσα τιμή στο Europesure',
+    buildingComparison:'Δημιουργώ την αναλυτική σύγκριση…', annualPremium:'Ετήσιο ασφάλιστρο', monthly:'Μηνιαίο',
+    characteristic:'Χαρακτηριστικό', shortConclusion:'Σύντομο Συμπέρασμα', notConfirmed:'Δεν έχει επιβεβαιωθεί',
+    emailRequired:'Παρακαλώ εισαγάγετε διεύθυνση email.', comparisonSendFail:'Δεν ήταν δυνατή η αποστολή της σύγκρισης.',
+    comparisonSent:'Εστάλη! Ελέγξτε το email σας — τα ποσά επανυπολογίστηκαν από τον server πριν την αποστολή.',
+    proposalIpmi:'Αίτημα πρότασης', proposalTravel:'Αίτημα ταξιδιωτικής ασφάλισης', proposalLocal:'Αίτημα σύγκρισης τοπικής και διεθνούς κάλυψης',
+    proposalTravelSub:'Πείτε μας για το ταξίδι σας και η Ashlar θα επικοινωνήσει μαζί σας.', proposalLocalSub:'Πείτε μας τις προτεραιότητές σας και η Ashlar θα επικοινωνήσει μαζί σας.',
+    fillNameEmail:'Παρακαλώ συμπληρώστε όνομα, επώνυμο και email.', confirmConsent:'Παρακαλώ επιβεβαιώστε τη συγκατάθεσή σας για να συνεχίσουμε.', sending:'Αποστολή...',
+    couldNotSend:'Δεν ήταν δυνατή η αποστολή του αιτήματος.', sentRef:'Εστάλη! Κωδικός αναφοράς: ',
+    thinkingNeeds:'Κατανοώ τις ανάγκες σας', thinkingRates:'Ελέγχω τα ασφάλιστρα', thinkingMatch:'Αντιστοιχίζω τις απαραίτητες παροχές', thinkingProviders:'Συγκρίνω παρόχους',
+    recording:'🔴 Ακούω… πατήστε ξανά το μικρόφωνο για διακοπή', transcribing:'Μεταγράφω…', transcriptionReady:'Η μεταγραφή είναι έτοιμη — ελέγξτε την και πατήστε Αποστολή.',
+    didntCatch:'Δεν σας άκουσα καθαρά — δοκιμάστε ξανά.', micDenied:'Δεν δόθηκε πρόσβαση στο μικρόφωνο.',
+    genericError:'Δεν μπόρεσα να ολοκληρώσω το αίτημα αυτή τη στιγμή. Δοκιμάστε ξανά.',
+    area1:'Ευρώπη', area2:'Παγκόσμια εκτός ΗΠΑ/Σιγκαπούρης/Χονγκ Κονγκ/Κίνας', area3:'Παγκόσμια εκτός ΗΠΑ', area4:'Παγκόσμια με ΗΠΑ',
+    outpatient:'Εξωνοσοκομειακή', maternity:'Μητρότητα', dental:'Οδοντιατρική', mental:'Ψυχική υγεία', wellness:'Προληπτικός έλεγχος', optical:'Οπτικά', evac:'Ιατρική διακομιδή', chronic:'Χρόνιες παθήσεις'
+  }
 };
 
+const DYNAMIC_EL = {
+  'Out-patient cover':'Εξωνοσοκομειακή κάλυψη','Routine maternity':'Κάλυψη μητρότητας','Routine dental':'Οδοντιατρική κάλυψη',
+  'Mental health':'Ψυχική υγεία','Wellness screening':'Προληπτικός έλεγχος','Optical benefits':'Οπτικές παροχές',
+  'Medical evacuation':'Ιατρική διακομιδή','Chronic condition cover':'Κάλυψη χρόνιων παθήσεων',
+  'Best value':'Καλύτερη αξία','International medical cover':'Διεθνής ιατρική κάλυψη',
+  'See plan schedule':'Δείτε τον πίνακα παροχών','See selected option':'Δείτε την επιλεγμένη απαλλαγή',
+  'Subject to plan terms':'Σύμφωνα με τους όρους του προγράμματος','Subject to current plan terms':'Σύμφωνα με τους ισχύοντες όρους του προγράμματος',
+  'Varies by option':'Εξαρτάται από την επιλογή','Evacuation & repatriation':'Ιατρική διακομιδή & επαναπατρισμός',
+  'International inpatient-focused medical cover':'Διεθνής ιατρική κάλυψη με έμφαση στη νοσοκομειακή περίθαλψη',
+  'Enhanced international inpatient medical cover':'Ενισχυμένη διεθνής νοσοκομειακή κάλυψη',
+  'International hospital and medical protection':'Διεθνής νοσοκομειακή και ιατρική κάλυψη',
+  'Higher-tier international medical protection':'Διεθνής ιατρική κάλυψη υψηλότερου επιπέδου',
+  'Premium international medical protection':'Premium διεθνής ιατρική κάλυψη',
+  'Enhanced international medical protection':'Ενισχυμένη διεθνής ιατρική κάλυψη',
+  'Comprehensive international medical protection':'Ολοκληρωμένη διεθνής ιατρική κάλυψη',
+  'Alternative excess option':'Εναλλακτική επιλογή απαλλαγής',
+  'Lower-cost international medical option.':'Οικονομικότερη επιλογή διεθνούς ιατρικής κάλυψης.',
+  'Current benefits should be confirmed before proposal.':'Οι τρέχουσες παροχές πρέπει να επιβεβαιωθούν πριν την πρόταση.',
+  'Official Morgan Price Europe 2026 rate from the supplied workbook.':'Επίσημο ασφάλιστρο Morgan Price Europe 2026 από το παρεχόμενο τιμολόγιο.',
+  'Final premium and acceptance remain subject to insurer eligibility, underwriting and confirmation.':'Το τελικό ασφάλιστρο και η αποδοχή υπόκεινται στην επιλεξιμότητα, την ανάληψη κινδύνου και την επιβεβαίωση της ασφαλιστικής εταιρείας.',
+  'Indicative quotation using a legacy rate dataset for this carrier.':'Ενδεικτική προσφορά με χρήση παλαιότερου τιμολογιακού αρχείου για τον συγκεκριμένο πάροχο.',
+  "Benefit matching is not scored until this carrier's current official documents are loaded.":'Η αντιστοίχιση παροχών δεν βαθμολογείται έως ότου φορτωθούν τα τρέχοντα επίσημα έγγραφα του παρόχου.',
+  'Full inpatient hospitalisation · Cancer care':'Πλήρης νοσοκομειακή περίθαλψη · Αντικαρκινική θεραπεία',
+  'Full inpatient · Outpatient up to €2,500 · MRI/CT/PET':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €2.500 · MRI/CT/PET',
+  'Full inpatient · Outpatient up to €5,000 · Dental · Mental health':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €5.000 · Οδοντιατρική · Ψυχική υγεία',
+  'Full inpatient · Outpatient up to €10,000 · Dental · Maternity':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €10.000 · Οδοντιατρική · Μητρότητα',
+  'Full inpatient · Full outpatient · Dental · Maternity · Wellness':'Πλήρης νοσοκομειακή · Πλήρης εξωνοσοκομειακή · Οδοντιατρική · Μητρότητα · Πρόληψη',
+  'Essential international inpatient protection.':'Βασική διεθνής νοσοκομειακή προστασία.',
+  'Adds outpatient cover and diagnostic scans.':'Προσθέτει εξωνοσοκομειακή κάλυψη και διαγνωστικές εξετάσεις.',
+  'Broad outpatient and dental protection.':'Ευρεία εξωνοσοκομειακή και οδοντιατρική προστασία.',
+  'Comprehensive plan with routine maternity.':'Ολοκληρωμένο πρόγραμμα με κάλυψη μητρότητας.',
+  'Highest limits and broadest Evolution benefits.':'Υψηλότερα όρια και οι ευρύτερες παροχές Evolution.',
+  'Enhanced entry-level international protection.':'Ενισχυμένη διεθνής προστασία εισαγωγικού επιπέδου.',
+  'Balanced mid-range international option.':'Ισορροπημένη διεθνής επιλογή μεσαίου επιπέδου.',
+  'Broader international protection.':'Ευρύτερη διεθνής προστασία.',
+  'Premium IMG option for broader protection.':'Premium επιλογή IMG για ευρύτερη προστασία.',
+  'Core APRIL international medical option.':'Βασική διεθνής ιατρική επιλογή APRIL.',
+  'Enhanced APRIL international option.':'Ενισχυμένη διεθνής επιλογή APRIL.',
+  'Enhanced APRIL cover with alternative excess structure.':'Ενισχυμένη κάλυψη APRIL με εναλλακτική δομή απαλλαγής.',
+  'Executive-level international protection.':'Διεθνής προστασία επιπέδου Executive.',
+  'Executive cover with alternative excess structure.':'Κάλυψη Executive με εναλλακτική δομή απαλλαγής.',
+  'Premium APRIL international option.':'Premium διεθνής επιλογή APRIL.',
+  'Premium APRIL cover with alternative excess structure.':'Premium κάλυψη APRIL με εναλλακτική δομή απαλλαγής.',
+  'A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.':'Δηλώθηκε προϋπάρχουσα πάθηση — η προσφορά δεν αντικατοπτρίζει απόφαση ανάληψης κινδύνου και απαιτεί έλεγχο από ασφαλιστικό διαμεσολαβητή πριν την υποβολή.'
+};
+
+const MUST_FIELDS = {
+  outpatient_required:'outpatient', maternity_required:'maternity', dental_required:'dental',
+  mental_health_required:'mental', wellness_required:'wellness', optical_required:'optical',
+  evacuation_required:'evac', chronic_required:'chronic',
+};
+
+function lang(){ return state && state.language === 'el' ? 'el' : 'en'; }
+function t(key){ return (I18N[lang()] && I18N[lang()][key]) || I18N.en[key] || key; }
+function trText(value){
+  if(value==null) return value;
+  const s=String(value);
+  if(lang()!=='el') return s;
+  if(DYNAMIC_EL[s]) return DYNAMIC_EL[s];
+  if(s.startsWith('Matches your priorities: ')){
+    const body=s.slice('Matches your priorities: '.length).replace(/\.$/,'').split(', ').map(x=>DYNAMIC_EL[x]||x).join(', ');
+    return 'Ταιριάζει στις προτεραιότητές σας: '+body+'.';
+  }
+  if(s.includes('(legacy definition)')) return s.replace('(legacy definition)','(παλαιότερος ορισμός)');
+  return s;
+}
+
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
+function money(v,c='EUR'){ try { return new Intl.NumberFormat(lang()==='el'?'el-GR':'en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(lang()==='el'?'el-GR':'en-IE'); } }
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
+
+function applyStaticI18n(){
+  const map={
+    uiEyebrow:'eyebrow',uiHeadline:'headline',uiLead:'lead',btnHealth:'health',btnTravel:'travel',
+    uiTrustPricing:'trustPricing',uiTrustEvidence:'trustEvidence',uiTrustBroker:'trustBroker',
+    uiNeedsTitle:'needs',uiEditNeeds:'edit',uiOnline:'online',restartBtn:'startAgain',
+    ps1:'step1',ps2:'step2',ps3:'step3',compareClearBtn:'clear',compareOpenBtn:'compare',
+    sendBtn:'send',needsModalTitle:'editNeeds',lblNeedAge:'age',lblNeedResidence:'residence',
+    lblNeedArea:'coverageArea',lblNeedBudget:'annualBudgetOptional',lblMustHaves:'mustHaves',
+    needsCancelBtn:'cancel',needsSaveBtn:'saveRecalculate',compareModalTitle:'comparePlans',
+    compareCloseBtn:'close',compareEmailBtn:'sendComparison',emailModalTitle:'emailComparison',
+    lblEmailName:'name',emailCurrentNote:'currentPremiumNote',emailCancelBtn:'cancel',emailSendBtn:'send',
+    lblLeadFirst:'firstName',lblLeadLast:'lastName',lblLeadResidence:'residence',lblLeadAge:'age',
+    lblLeadCoverage:'coverageDestination',lblLeadFamily:'familyTravellers',lblLeadBudget:'approxBudget',
+    lblLeadMessage:'anythingElse',leadConsentText:'consent',leadCancelBtn:'cancel',leadSendBtn:'sendEnquiry',
+    footerDisclaimer:'footer'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id); if(!el)return;
+    if(id==='uiHeadline') el.innerHTML=t(key); else el.textContent=t(key);
+  });
+  document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
+  const input=document.getElementById('input'); input.placeholder=t('composer');
+  const mic=document.getElementById('micBtn'); mic.title=t('tapSpeak'); mic.setAttribute('aria-label',t('tapSpeak'));
+  document.getElementById('leadFamily').placeholder=t('familyPlaceholder');
+  document.getElementById('leadMessage').placeholder=t('medicalPlaceholder');
+  const area=document.getElementById('needArea');
+  [...area.options].forEach(o=>{o.textContent=t(o.value);});
+  document.getElementById('langEN').style.fontWeight=lang()==='en'?'800':'500';
+  document.getElementById('langEL').style.fontWeight=lang()==='el'?'800':'500';
+  document.documentElement.lang=lang();
+}
+
+function setUiLanguage(code, resetGreeting=false){
+  state.language=code==='el'?'el':'en';
+  applyStaticI18n();
+  renderState();
+  if(resetGreeting || (!history.length && currentJourney==='ipmi')) showIpmiGreeting();
+}
+
+function restartConversation(){
+  if(confirm(t('restartConfirm'))) location.reload();
+}
 
 function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
-  addMsg("Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.", 'hal');
-  addMsg("I'll ask a few questions and then calculate an indicative shortlist from the rate data currently available to me.", 'hal');
-  addMsg("Before we start — what's your name?", 'hal');
-  updateDynamicInput([{label:'Not sure / Skip', value:'skip'}]);
+  addMsg(t('hello'),'hal');
+  addMsg(t('intro'),'hal');
+  addMsg(t('askName'),'hal');
+  updateDynamicInput([{label:t('skip'),value:'skip'}]);
 }
 
 function setJourney(j){
-  const switching = (j !== currentJourney);
-  currentJourney = j;
-  document.getElementById('btnHealth').classList.toggle('active', j!=='travel');
-  document.getElementById('btnTravel').classList.toggle('active', j==='travel');
-  if (j === 'travel' && switching) {
-    state = {journey: 'travel'};
-    history = [];
-    sendHiddenMessage("I need travel insurance");
-  } else if (j !== 'travel' && switching) {
-    state = {pending_question: 'name'};
-    history = [];
-    showIpmiGreeting();
+  const switching=(j!==currentJourney),language=lang();
+  currentJourney=j;
+  document.getElementById('btnHealth').classList.toggle('active',j!=='travel');
+  document.getElementById('btnTravel').classList.toggle('active',j==='travel');
+  if(j==='travel'&&switching){
+    state={journey:'travel',language}; history=[];
+    sendHiddenMessage(language==='el'?'Χρειάζομαι ταξιδιωτική ασφάλιση':'I need travel insurance');
+  }else if(j!=='travel'&&switching){
+    state={pending_question:'name',language}; history=[]; showIpmiGreeting();
   }
+  applyStaticI18n();
 }
 
 async function sendHiddenMessage(text){
-  // Same as sendMessage(), but the trigger text isn't shown as a user
-  // bubble — used when a UI control (not typing) starts a new journey.
-  history.push({role:'user', content:text});
-  document.getElementById('chat').innerHTML = '';
-  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
+  history.push({role:'user',content:text});document.getElementById('chat').innerHTML='';
+  const phrases=[t('thinkingNeeds'),t('thinkingRates'),t('thinkingMatch'),t('thinkingProviders')];
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
-  try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
-    const d = await r.json();
-    removeThinking();
-    if (!r.ok) throw new Error(d.detail || 'HAL service error');
-    state = d.state || state;
-    currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
-    excludedPlans = d.excluded_plans || [];
-    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
-    if (d.followup_message) addMsg(d.followup_message, 'hal');
-        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
-    updateDynamicInput(d.quick_replies || []);
-    history.push({role:'assistant', content: d.reply || ''});
-  } catch(e) {
-    removeThinking();
-    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
-    updateDynamicInput([]);
-  }
+  try{
+    const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
+    const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    applyStaticI18n();
+    addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
+    if(d.followup_message)addMsg(d.followup_message,'hal');
+    speakText([d.reply,d.followup_message].filter(Boolean).join(' '));updateDynamicInput(d.quick_replies||[]);
+    history.push({role:'assistant',content:d.reply||''});
+  }catch(e){removeThinking();addMsg(lang()==='el'?t('genericError'):e.message,'hal');updateDynamicInput([]);}
 }
 
 function renderState(){
-  // Needs chips
-  const box = document.getElementById('needsBody');
-  const chips = [];
-  if (state.age) chips.push(['Age '+state.age, false]);
-  if (state.residence_country) chips.push([state.residence_country, false]);
-  if (state.coverage_area) chips.push([areaLabel(state.coverage_area), false]);
-  if (state.budget_annual) chips.push([money(state.budget_annual)+'/yr budget', false]);
-  Object.entries(MUST_FIELDS).forEach(([k,label]) => { if (state[k]) chips.push([label, true]); });
-  box.innerHTML = chips.length
-    ? '<div class="need-chips">' + chips.map(([l,must]) => `<span class="need-chip ${must?'must':''}">${esc(l)}</span>`).join('') + '</div>'
-    : 'Tell HAL what matters to you.';
+  applyStaticI18n();
+  const box=document.getElementById('needsBody'),chips=[];
+  if(state.age)chips.push([t('ageChip')+' '+state.age,false]);
+  if(state.residence_country)chips.push([state.residence_country,false]);
+  if(state.coverage_area)chips.push([areaLabel(state.coverage_area),false]);
+  if(state.budget_annual)chips.push([money(state.budget_annual)+t('budgetChip'),false]);
+  Object.entries(MUST_FIELDS).forEach(([k,key])=>{if(state[k])chips.push([t(key),true]);});
+  box.innerHTML=chips.length
+    ?'<div class="need-chips">'+chips.map(([l,m])=>`<span class="need-chip ${m?'must':''}">${esc(l)}</span>`).join('')+'</div>'
+    :t('emptyNeeds');
 
-  // Progress
-  let step = 1;
-  if (lastQuotes.length) step = 2;
-  ['ps1','ps2','ps3'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    el.classList.toggle('active', i+1===step);
-    el.classList.toggle('done', i+1<step);
-  });
-
-  // Compare tray
-  const n = compareSelected.size;
-  document.getElementById('compareCount').textContent = `${n} plan${n===1?'':'s'} selected`;
-  document.getElementById('compareTray').classList.toggle('show', n>=2);
+  let step=lastQuotes.length?2:1;
+  ['ps1','ps2','ps3'].forEach((id,i)=>{const el=document.getElementById(id);el.classList.toggle('active',i+1===step);el.classList.toggle('done',i+1<step);});
+  const n=compareSelected.size;
+  document.getElementById('compareCount').textContent=`${n} ${n===1?t('selectedSingular'):t('selectedPlural')}`;
+  document.getElementById('compareTray').classList.toggle('show',n>=2);
 }
 
-function areaLabel(a){
-  return {area1:'Europe',area2:'Worldwide excl. USA/SG/HK/CN',area3:'Worldwide excl. USA',area4:'Worldwide incl. USA'}[a] || a;
-}
+function areaLabel(a){ return t(a)||a; }
 
-function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickReplies=[], travelRec=null) {
-  const chat = document.getElementById('chat');
-  const box = document.createElement('div');
-  box.className = 'msg ' + who;
-  let html = esc(text).replace(/\n/g,'<br>');
-
-  if (quotes && quotes.length) {
-    html += '<div class="quotes-row">' + quotes.map((q,i) => renderQuoteCard(q,i)).join('') + '</div>';
-    if (excluded && excluded.length) {
-      html += `<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">Why were ${excluded.length} plan${excluded.length===1?'':'s'} excluded?</button>
-        <div class="excluded-list">${excluded.map(e => `<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).join(', '))}</div>`).join('')}</div></div>`;
+function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[],travelRec=null){
+  const chat=document.getElementById('chat'),box=document.createElement('div');
+  box.className='msg '+who;
+  let html=esc(text).replace(/\n/g,'<br>');
+  if(quotes&&quotes.length){
+    html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
+    if(excluded&&excluded.length){
+      const suffix=lang()==='el'?'':'s';
+      const label=t('whyExcluded').replace('{n}',excluded.length).replace('{s}',excluded.length===1?'':suffix);
+      html+=`<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">${esc(label)}</button>
+        <div class="excluded-list">${excluded.map(e=>`<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).map(trText).join(', '))}</div>`).join('')}</div></div>`;
     }
   }
-  if (travelRec) {
-    html += renderTravelCard(travelRec);
+  if(travelRec)html+=renderTravelCard(travelRec);
+  if(leadCta&&leadCta.show){
+    let label=state.client_segment==='hnwi'?t('requestPrivate'):t('requestProposal');
+    html+=`<button class="lead-cta" onclick="openLeadForm('${esc(leadCta.journey)}')">${esc(label)}</button>`;
   }
-  if (leadCta && leadCta.show) {
-    let label = leadCta.label || 'Request a proposal';
-    if (state.client_segment === 'hnwi') label = 'Request a private consultation';
-    html += `<button class="lead-cta" onclick="openLeadForm('${esc(leadCta.journey)}')">${esc(label)}</button>`;
-  }
-  box.innerHTML = html;
-  chat.appendChild(box);
-  box.scrollIntoView({behavior: 'smooth', block: 'start'});
-  renderState();
+  box.innerHTML=html;chat.appendChild(box);box.scrollIntoView({behavior:'smooth',block:'start'});renderState();
 }
 
 function renderBenefitGrid(checklist){
-  if (!checklist || !checklist.length) return '';
-  const items = checklist.map(item => {
-    let cls, icon;
-    if (item.covered === true) { cls = 'covered'; icon = '✓'; }
-    else if (item.covered === false) { cls = 'not-covered'; icon = '–'; }
-    else { cls = 'unconfirmed'; icon = '?'; }
-    return `<span class="benefit-chip ${cls}"><span class="benefit-icon">${icon}</span>${esc(item.label)}</span>`;
+  if(!checklist||!checklist.length)return'';
+  const items=checklist.map(item=>{
+    let cls,icon;if(item.covered===true){cls='covered';icon='✓';}else if(item.covered===false){cls='not-covered';icon='–';}else{cls='unconfirmed';icon='?';}
+    return `<span class="benefit-chip ${cls}"><span class="benefit-icon">${icon}</span>${esc(trText(item.label))}</span>`;
   }).join('');
   return `<div class="benefit-chips">${items}</div>`;
 }
@@ -469,66 +639,51 @@ function logoColor(insurer){
   return '#5a6472';
 }
 
-function renderQuoteCard(q, i) {
-  const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
-  const selected = compareSelected.has(key);
+function renderQuoteCard(q,i){
+  const annual=Number(q.premium||0),monthly=annual/12,key=qkey(q),selected=compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
-    ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
-    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${selected?'✓ Selected':'+ Compare'}</button>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.card_annual_limit||'Annual limit on request')}</div>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.coverage_area_label||'')}</div>
-    <div class="q-head">
-      <div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge || 'PLAN')}</div>
-      <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
-    </div>
-    <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
-    <div class="q-price">${money(annual,q.currency)}<span>/year</span></div>
-    <div class="q-month">${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}</div>
+    ${q.recommended?`<div class="rec-ribbon">${esc(t('recommended'))}</div>`:''}
+    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${esc(selected?t('selected'):t('compareAdd'))}</button>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.card_annual_limit||t('annualLimit')))}</div>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.coverage_area_label||''))}</div>
+    <div class="q-head"><div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge||'PLAN')}</div>
+      <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div></div>
+    <div class="q-badges">${(q.fit_badges||[]).map(b=>`<span class="q-badge">${esc(trText(b))}</span>`).join('')}</div>
+    <div class="q-price">${money(annual,q.currency)}<span>${t('perYear')}</span></div>
+    <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
     <div class="q-divider"></div>
     <div class="q-spec">
-      <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>
-      <div><b>Deductible</b>${esc(q.card_deductible||'—')}</div>
-      <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
+      <div><b>${t('coverage')}</b>${esc(trText(q.card_coverage||'—'))}</div>
+      <div><b>${t('deductible')}</b>${esc(trText(q.card_deductible||'—'))}</div>
+      <div><b>${t('evacuation')}</b>${esc(trText(q.card_evacuation||'—'))}</div>
     </div>
     ${renderBenefitGrid(q.benefit_checklist)}
-    <div class="q-why">${esc(q.card_why||'')}</div>
-    ${q.client_note ? `<div class="q-note">${esc(q.client_note)}</div>` : ''}
-    ${(q.warnings||[]).length ? `<div class="q-warnings">${q.warnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>` : ''}
-    <div class="q-actions">
-      <button class="q-primary" onclick="openLeadForm(currentJourney)">Get proposal</button>
-      <button class="q-secondary" onclick="tellMeMore(${i})">Tell me more</button>
-    </div>
+    <div class="q-why">${esc(trText(q.card_why||''))}</div>
+    ${q.client_note?`<div class="q-note">${esc(trText(q.client_note))}</div>`:''}
+    ${(q.warnings||[]).length?`<div class="q-warnings">${q.warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`:''}
+    <div class="q-actions"><button class="q-primary" onclick="openLeadForm(currentJourney)">${t('getProposal')}</button>
+      <button class="q-secondary" onclick="tellMeMore(${i})">${t('tellMore')}</button></div>
   </div>`;
 }
 
 function renderTravelCard(rec){
-  const alt = (rec.alternatives||[]).map(a => `<div style="font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
-    <strong>${esc(a.name)}</strong> — ${money(a.emergency_medical_eur)} medical, ${money(a.cancellation_eur)} cancellation, ${money(a.baggage_eur)} baggage</div>`).join('');
+  const alt=(rec.alternatives||[]).map(a=>`<div style="font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+    <strong>${esc(a.name)}</strong> — ${money(a.emergency_medical_eur)} ${t('emergencyMedical').toLowerCase()}, ${money(a.cancellation_eur)} ${t('cancellation').toLowerCase()}, ${money(a.baggage_eur)} ${t('baggage').toLowerCase()}</div>`).join('');
   return `<div class="quote-card" style="max-width:420px;margin-top:10px">
-    <div class="q-head"><div class="q-logo">EU</div><div><div class="q-plan">${esc(rec.plan_name)}</div><div class="q-provider">${esc(rec.positioning)}</div></div></div>
+    <div class="q-head"><div class="q-logo">EU</div><div><div class="q-plan">${esc(rec.plan_name)}</div><div class="q-provider">${esc(trText(rec.positioning))}</div></div></div>
     <div class="q-spec" style="margin-top:10px">
-      <div><b>Emergency medical</b>${money(rec.emergency_medical_eur)}</div>
-      <div><b>Cancellation</b>${money(rec.cancellation_eur)}</div>
-      <div><b>Baggage</b>${money(rec.baggage_eur)}</div>
-      <div><b>Trip type</b>${esc(rec.trip_type||'—')}</div>
+      <div><b>${t('emergencyMedical')}</b>${money(rec.emergency_medical_eur)}</div><div><b>${t('cancellation')}</b>${money(rec.cancellation_eur)}</div>
+      <div><b>${t('baggage')}</b>${money(rec.baggage_eur)}</div><div><b>${t('tripType')}</b>${esc(trText(rec.trip_type||'—'))}</div>
     </div>
-    <div class="q-why">${esc(rec.reason)}</div>
-    <div class="q-note">${esc(rec.client_note)}</div>
-    ${!rec.eligible_on_legacy_data ? `<div class="q-note" style="color:#b3261e">${esc(rec.eligibility_note||'')}</div>` : ''}
-    ${alt}
-    <div class="q-actions">
-      <a class="q-primary" style="text-decoration:none;text-align:center;display:block" href="${esc(rec.portal_url)}" target="_blank" rel="noopener">Get current price in Europesure portal</a>
-    </div>
+    <div class="q-why">${esc(trText(rec.reason))}</div><div class="q-note">${esc(trText(rec.client_note))}</div>
+    ${!rec.eligible_on_legacy_data?`<div class="q-note" style="color:#b3261e">${esc(trText(rec.eligibility_note||''))}</div>`:''}
+    ${alt}<div class="q-actions"><a class="q-primary" style="text-decoration:none;text-align:center;display:block" href="${esc(rec.portal_url)}" target="_blank" rel="noopener">${t('currentEuropesure')}</a></div>
   </div>`;
 }
 
-function toggleCompare(key, btn){
-  const nowSelected = !compareSelected.has(key);
-  if (nowSelected) compareSelected.add(key); else compareSelected.delete(key);
-  if (btn) {
-    btn.classList.toggle('selected', nowSelected);
-    btn.textContent = nowSelected ? '✓ Selected' : '+ Compare';
-  }
+function toggleCompare(key,btn){
+  const nowSelected=!compareSelected.has(key);if(nowSelected)compareSelected.add(key);else compareSelected.delete(key);
+  if(btn){btn.classList.toggle('selected',nowSelected);btn.textContent=nowSelected?t('selected'):t('compareAdd');}
   renderState();
 }
 
@@ -570,67 +725,39 @@ async function tellMeMore(i){
 }
 
 async function openCompare(){
-  const content = document.getElementById('compareContent');
-  content.innerHTML = '<p style="color:var(--muted)">Building your detailed comparison…</p>';
+  const content=document.getElementById('compareContent');
+  content.innerHTML=`<p style="color:var(--muted)">${esc(t('buildingComparison'))}</p>`;
   document.getElementById('compareModal').classList.add('open');
-
-  try {
-    const r = await fetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected], language: (state && state.language) || 'en'})});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not build the comparison.');
-    content.innerHTML = renderDetailedCompare(d);
-  } catch(e) {
-    content.innerHTML = `<p style="color:#b3261e">${esc(e.message)}</p>`;
-  }
+  try{
+    const r=await fetch(API+'/quotes/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant_state:state,plan_keys:[...compareSelected],language:lang()})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));content.innerHTML=renderDetailedCompare(d);
+  }catch(e){content.innerHTML=`<p style="color:#b3261e">${esc(lang()==='el'?t('genericError'):e.message)}</p>`;}
 }
 
 function renderDetailedCompare(d){
-  const plans = d.plans, matrix = d.matrix;
-
-  let html = '<div style="display:grid;grid-template-columns:repeat(' + plans.length + ',1fr);gap:10px;margin-bottom:16px">' +
-    plans.map(p => `<div style="background:var(--bg);border-radius:10px;padding:10px">
-      <div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>
-      ${renderBenefitGrid(p.benefit_checklist)}
-    </div>`).join('') + '</div>';
-
-  const summaryRows = [
-    ['Annual premium', p => money(p.premium, p.currency)],
-    ['Monthly', p => money(p.premium/12, p.currency)],
-    ['Coverage area', p => p.coverage_area_label],
-    ['Annual limit', p => p.card_annual_limit],
-    ['Deductible', p => p.card_deductible],
+  const plans=d.plans,matrix=d.matrix;
+  let html='<div style="display:grid;grid-template-columns:repeat('+plans.length+',1fr);gap:10px;margin-bottom:16px">'+
+    plans.map(p=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>${renderBenefitGrid(p.benefit_checklist)}</div>`).join('')+'</div>';
+  const rows=[
+    [t('annualPremium'),p=>money(p.premium,p.currency)],
+    [t('monthly'),p=>money(p.premium/12,p.currency)],
+    [t('coverageArea'),p=>trText(p.coverage_area_label)],
+    [t('annualLimit'),p=>trText(p.card_annual_limit)],
+    [t('deductible'),p=>trText(p.card_deductible)],
   ];
-  html += '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
-    plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
-  summaryRows.forEach(([label,fn]) => {
-    html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';
+  html+=`<table class="compare-table"><tr><th>${t('characteristic')}</th>`+plans.map(p=>`<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('')+'</tr>';
+  rows.forEach(([label,fn])=>{html+=`<tr><td><b>${esc(label)}</b></td>`+plans.map(p=>`<td>${esc(fn(p)||'—')}</td>`).join('')+'</tr>';});
+  matrix.rows.forEach(row=>{
+    html+=`<tr><td>${esc(trText(row.label))}</td>`+plans.map(p=>{const raw=row.values[p.plan_key],v=trText(raw),dim=raw==='Not confirmed'?'style="color:var(--muted)"':'';return `<td ${dim}>${esc(v||'—')}</td>`;}).join('')+'</tr>';
   });
-  matrix.rows.forEach(row => {
-    html += `<tr><td>${esc(row.label)}</td>` + plans.map(p => {
-      const v = row.values[p.plan_key];
-      const dim = (v === 'Not confirmed') ? 'style="color:var(--muted)"' : '';
-      return `<td ${dim}>${esc(v || '—')}</td>`;
-    }).join('') + '</tr>';
-  });
-  html += '</table>';
-
-  if (d.unsupported_note) {
-    html += `<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(d.unsupported_note)}</p>`;
-  }
-  const allWarnings = [...new Set(plans.flatMap(p => p.warnings || []))];
-  if (allWarnings.length) {
-    html += `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${allWarnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>`;
-  }
-  const isGreek = (state && state.language) === 'el';
-  html += `<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px">
-    <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${isGreek ? 'Σύντομο Συμπέρασμα' : 'Short Conclusion'}</div>
-    <div style="font-size:13px">${esc(d.conclusion)}</div>
-  </div>`;
-  html += `<p style="font-size:10px;color:var(--muted);margin-top:12px">
-    ${isGreek
-      ? 'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους/εξαιρέσεις κάθε πλάνου. Υπόκειται σε έγκριση αναδοχής (underwriting approval).'
-      : 'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
+  html+='</table>';
+  if(d.unsupported_note)html+=`<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(trText(d.unsupported_note))}</p>`;
+  const warnings=[...new Set(plans.flatMap(p=>p.warnings||[]))];
+  if(warnings.length)html+=`<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`;
+  html+=`<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px"><div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${t('shortConclusion')}</div><div style="font-size:13px">${esc(d.conclusion)}</div></div>`;
+  html+=`<p style="font-size:10px;color:var(--muted);margin-top:12px">${lang()==='el'
+    ?'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους ή εξαιρέσεις κάθε προγράμματος. Υπόκειται σε έγκριση ανάληψης κινδύνου.'
+    :'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
   return html;
 }
 
@@ -640,52 +767,43 @@ function openComparisonEmail(){
 }
 
 async function sendComparisonEmail(){
-  const name = document.getElementById('emailName').value.trim();
-  const email = document.getElementById('emailAddress').value.trim();
-  if (!email) { alert('Please enter an email address.'); return; }
-  try {
-    const r = await fetch(API+'/leads/comparison', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name, email, applicant_state: state, plan_keys: [...compareSelected]})});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not send comparison.');
-    closeModal('emailModal');
-    addMsg('Sent! Check your inbox for the comparison — the figures were recalculated by our server just now.', 'hal');
-  } catch(e) { alert(e.message); }
+  const name=document.getElementById('emailName').value.trim(),email=document.getElementById('emailAddress').value.trim();
+  if(!email){alert(t('emailRequired'));return;}
+  try{
+    const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected]})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('comparisonSendFail'));
+    closeModal('emailModal');addMsg(t('comparisonSent'),'hal');
+  }catch(e){alert(lang()==='el'?t('comparisonSendFail'):e.message);}
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 
 function openNeedsEditor(){
-  document.getElementById('needAge').value = state.age || '';
-  document.getElementById('needResidence').value = state.residence_country || 'Greece';
-  document.getElementById('needArea').value = state.coverage_area || 'area1';
-  document.getElementById('needBudget').value = state.budget_annual || '';
-  document.getElementById('needToggleBox').innerHTML = Object.entries(MUST_FIELDS).map(([k,label]) =>
-    `<button type="button" class="need-chip ${state[k]?'must':''}" data-field="${k}" onclick="this.classList.toggle('must')">${esc(label)}</button>`
+  applyStaticI18n();
+  document.getElementById('needAge').value=state.age||'';
+  document.getElementById('needResidence').value=state.residence_country||'Greece';
+  document.getElementById('needArea').value=state.coverage_area||'area1';
+  document.getElementById('needBudget').value=state.budget_annual||'';
+  document.getElementById('needToggleBox').innerHTML=Object.entries(MUST_FIELDS).map(([k,key])=>
+    `<button type="button" class="need-chip ${state[k]?'must':''}" data-field="${k}" onclick="this.classList.toggle('must')">${esc(t(key))}</button>`
   ).join('');
   document.getElementById('needsModal').classList.add('open');
 }
 
 async function saveNeeds(){
-  state.age = Number(document.getElementById('needAge').value || 0) || undefined;
-  state.residence_country = document.getElementById('needResidence').value.trim() || 'Greece';
-  state.coverage_area = document.getElementById('needArea').value;
-  const b = Number(document.getElementById('needBudget').value || 0);
-  if (b) state.budget_annual = b; else delete state.budget_annual;
-  Object.keys(MUST_FIELDS).forEach(k => state[k] = false);
-  document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el => state[el.dataset.field] = true);
-  closeModal('needsModal');
-  renderState();
-  if (!state.age || !state.residence_country || !state.coverage_area) return;
-
-  try {
-    const r = await fetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not recalculate.');
-    lastQuotes = d.shortlist || [];
-    excludedPlans = d.exclusions || [];
-    addMsg('I updated the shortlist using your edited needs.', 'hal', lastQuotes, excludedPlans, {show:true, journey:currentJourney, label:'Request a proposal'});
-  } catch(e) { addMsg('I could not recalculate the shortlist just now. Please try again.', 'hal'); }
+  state.age=Number(document.getElementById('needAge').value||0)||undefined;
+  state.residence_country=document.getElementById('needResidence').value.trim()||'Greece';
+  state.coverage_area=document.getElementById('needArea').value;
+  const b=Number(document.getElementById('needBudget').value||0);if(b)state.budget_annual=b;else delete state.budget_annual;
+  Object.keys(MUST_FIELDS).forEach(k=>state[k]=false);
+  document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el=>state[el.dataset.field]=true);
+  closeModal('needsModal');renderState();
+  if(!state.age||!state.residence_country||!state.coverage_area)return;
+  try{
+    const r=await fetch(API+'/quotes/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));lastQuotes=d.shortlist||[];excludedPlans=d.exclusions||[];
+    addMsg(lang()==='el'?'Ενημέρωσα τη shortlist με βάση τις αλλαγμένες ανάγκες σας.':'I updated the shortlist using your edited needs.','hal',lastQuotes,excludedPlans,{show:true,journey:currentJourney,label:t('requestProposal')});
+  }catch(e){addMsg(lang()==='el'?'Δεν μπόρεσα να επανυπολογίσω τη shortlist αυτή τη στιγμή. Δοκιμάστε ξανά.':'I could not recalculate the shortlist just now. Please try again.','hal');}
 }
 
 function sendQuickReply(encodedValue){
@@ -713,57 +831,26 @@ function currentPendingKey(){
 }
 
 function _orTypeLabel(){
-  const el = document.createElement('div');
-  el.className = 'or-type-label';
-  el.textContent = (state && state.language)==='el'
-    ? 'ή γράψτε τη δική σας απάντηση παρακάτω'
-    : 'or type your own answer below';
-  return el;
+  const el=document.createElement('div');el.className='or-type-label';
+  el.textContent=lang()==='el'?'ή γράψτε τη δική σας απάντηση παρακάτω':'or type your own answer below';return el;
 }
 
 function updateDynamicInput(quickReplies){
-  const row = document.getElementById('dynamicInputRow');
-  const composer = document.querySelector('.composer');
-  const key = currentPendingKey();
-  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el => el.remove());
-  composer.style.display = 'flex'; // the text box is ALWAYS available — quick widgets are an addition, never a replacement
-
-  if (quickReplies && quickReplies.length) {
-    const wrap = document.createElement('div');
-    wrap.className = 'pill-row';
-    quickReplies.forEach(r => {
-      if (r.value === 'skip') return; // skip is offered as a small link instead of a pill
-      const b = document.createElement('button');
-      b.className = 'pill-choice';
-      b.textContent = r.label;
-      b.onclick = () => sendQuickReply(encodeURIComponent(r.value));
-      wrap.appendChild(b);
-    });
-    const hasSkip = quickReplies.some(r => r.value === 'skip');
-    if (hasSkip) {
-      const skipReply = quickReplies.find(r => r.value === 'skip');
-      const s = document.createElement('button');
-      s.className = 'pill-choice';
-      s.style.background = 'var(--bg)';
-      s.style.color = 'var(--muted)';
-      s.textContent = (skipReply && skipReply.label) || ((state && state.language)==='el' ? 'Δεν είμαι σίγουρος / Παράλειψη' : 'Not sure / Skip');
-      s.onclick = () => sendQuickReply('skip');
-      wrap.appendChild(s);
+  const row=document.getElementById('dynamicInputRow'),composer=document.querySelector('.composer'),key=currentPendingKey();
+  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el=>el.remove());
+  composer.style.display='flex';
+  if(quickReplies&&quickReplies.length){
+    const wrap=document.createElement('div');wrap.className='pill-row';
+    quickReplies.forEach(r=>{if(r.value==='skip')return;const b=document.createElement('button');b.className='pill-choice';b.textContent=r.label;b.onclick=()=>sendQuickReply(encodeURIComponent(r.value));wrap.appendChild(b);});
+    if(quickReplies.some(r=>r.value==='skip')){
+      const skipReply=quickReplies.find(r=>r.value==='skip'),s=document.createElement('button');s.className='pill-choice';s.style.background='var(--bg)';s.style.color='var(--muted)';s.textContent=(skipReply&&skipReply.label)||t('skip');s.onclick=()=>sendQuickReply('skip');wrap.appendChild(s);
     }
-    row.insertBefore(wrap, composer);
-    row.insertBefore(_orTypeLabel(), composer);
-  } else if (key === 'age' || key === 'travel_age') {
-    const stepper = document.createElement('div');
-    stepper.className = 'stepper-input';
-    stepper.innerHTML = `<input type="number" id="stepperInput" min="0" max="120" placeholder="${(state && state.language)==='el' ? 'Ηλικία' : 'Age'}">
-      <div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;
-    const btn = document.createElement('button');
-    btn.className = 'dynamic-continue';
-    btn.textContent = (state && state.language)==='el' ? 'Συνέχεια' : 'Continue';
-    btn.onclick = submitStepper;
-    row.insertBefore(stepper, composer);
-    row.insertBefore(btn, composer);
-    row.insertBefore(_orTypeLabel(), composer);
+    row.insertBefore(wrap,composer);row.insertBefore(_orTypeLabel(),composer);
+  }else if(key==='age'||key==='travel_age'){
+    const stepper=document.createElement('div');stepper.className='stepper-input';
+    stepper.innerHTML=`<input type="number" id="stepperInput" min="0" max="120" placeholder="${t('age')}"><div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;
+    const btn=document.createElement('button');btn.className='dynamic-continue';btn.textContent=lang()==='el'?'Συνέχεια':'Continue';btn.onclick=submitStepper;
+    row.insertBefore(stepper,composer);row.insertBefore(btn,composer);row.insertBefore(_orTypeLabel(),composer);
   }
 }
 
@@ -790,9 +877,8 @@ document.querySelector('.composer').style.display = 'flex';
 function isGreekText(t){ return /[\u0370-\u03ff]/.test(t||''); }
 
 function toggleSpeaker(){
-  speakerOn = !speakerOn;
-  const btn = document.getElementById('speakerToggle');
-  btn.textContent = speakerOn ? '🔊 Voice on' : '🔇 Voice off';
+  speakerOn=!speakerOn;
+  document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
 }
 
 async function speakText(text){
@@ -809,151 +895,82 @@ async function speakText(text){
 }
 
 async function toggleRecording(){
-  const micBtn = document.getElementById('micBtn');
-  const status = document.getElementById('voiceStatus');
-
-  if (isRecording) {
-    mediaRecorder.stop();
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-    audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstart = () => {
-      isRecording = true;
-      micBtn.textContent = '⏹';
-      micBtn.classList.add('recording');
-      micBtn.title = 'Recording — tap to stop';
-      micBtn.setAttribute('aria-label', 'Recording — tap to stop');
-      status.style.display = 'block';
-      status.textContent = '🔴 Listening… tap the mic again to stop';
-    };
-    mediaRecorder.onstop = async () => {
-      isRecording = false;
-      micBtn.textContent = '🎙';
-      micBtn.classList.remove('recording');
-      micBtn.title = 'Tap to speak';
-      micBtn.setAttribute('aria-label', 'Tap to speak');
-      stream.getTracks().forEach(t => t.stop());
-      status.textContent = 'Transcribing…';
-
-      const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
-      if (blob.size < 2000) {
-        status.textContent = 'I didn\'t catch that — please try speaking again.';
-        setTimeout(() => { status.style.display = 'none'; }, 3000);
-        return;
-      }
-      const form = new FormData();
-      form.append('file', blob, 'audio.webm');
-      form.append('language', (state && state.language) || 'en');
-      try {
-        const r = await fetch(API+'/transcribe', {method:'POST', body: form});
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Could not transcribe audio.');
-        document.getElementById('input').value = d.text;
-        status.textContent = 'Transcription ready — review it, then press Send.';
-        document.getElementById('input').focus();
-        setTimeout(() => { status.style.display = 'none'; }, 4000);
-      } catch(e) {
-        status.textContent = e.message;
-        setTimeout(() => { status.style.display = 'none'; }, 4000);
-      }
+  const micBtn=document.getElementById('micBtn'),status=document.getElementById('voiceStatus');
+  if(isRecording){mediaRecorder.stop();return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});audioChunks=[];mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onstart=()=>{isRecording=true;micBtn.textContent='⏹';micBtn.classList.add('recording');micBtn.title=t('tapSpeak');micBtn.setAttribute('aria-label',t('tapSpeak'));status.style.display='block';status.textContent=t('recording');};
+    mediaRecorder.onstop=async()=>{
+      isRecording=false;micBtn.textContent='🎙';micBtn.classList.remove('recording');micBtn.title=t('tapSpeak');micBtn.setAttribute('aria-label',t('tapSpeak'));stream.getTracks().forEach(x=>x.stop());status.textContent=t('transcribing');
+      const blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+      if(blob.size<2000){status.textContent=t('didntCatch');setTimeout(()=>status.style.display='none',3000);return;}
+      const form=new FormData();form.append('file',blob,'audio.webm');form.append('language',lang());
+      try{
+        const r=await fetch(API+'/transcribe',{method:'POST',body:form}),d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
+        document.getElementById('input').value=d.text;status.textContent=t('transcriptionReady');document.getElementById('input').focus();setTimeout(()=>status.style.display='none',4000);
+      }catch(e){status.textContent=lang()==='el'?t('genericError'):e.message;setTimeout(()=>status.style.display='none',4000);}
     };
     mediaRecorder.start();
-  } catch(e) {
-    status.style.display = 'block';
-    status.textContent = 'Microphone access was not granted.';
-    setTimeout(() => { status.style.display = 'none'; }, 3000);
-  }
+  }catch(e){status.style.display='block';status.textContent=t('micDenied');setTimeout(()=>status.style.display='none',3000);}
 }
 
 async function sendMessage(){
-  const input = document.getElementById('input');
-  const text = input.value.trim();
-  if (!text) return;
-  addMsg(text, 'user');
-  history.push({role:'user', content:text});
-  input.value = '';
-  document.getElementById('sendBtn').disabled = true;
-  document.querySelectorAll('#dynamicInputRow .pill-row, #dynamicInputRow .stepper-input, #dynamicInputRow .dynamic-continue').forEach(el => el.remove());
-  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
-  showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
-
-  try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
-    const d = await r.json();
-    removeThinking();
-    if (!r.ok) throw new Error(d.detail || 'HAL service error');
-    state = d.state || state;
-    currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
-    excludedPlans = d.excluded_plans || [];
-    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
-    if (d.followup_message) addMsg(d.followup_message, 'hal');
-        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
-    updateDynamicInput(d.quick_replies || []);
-    history.push({role:'assistant', content: d.reply || ''});
-  } catch(e) {
-    removeThinking();
-    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
-    updateDynamicInput([]);
-  }
-  document.getElementById('sendBtn').disabled = false;
+  const input=document.getElementById('input'),text=input.value.trim();if(!text)return;
+  addMsg(text,'user');history.push({role:'user',content:text});input.value='';document.getElementById('sendBtn').disabled=true;
+  document.querySelectorAll('#dynamicInputRow .pill-row, #dynamicInputRow .stepper-input, #dynamicInputRow .dynamic-continue').forEach(el=>el.remove());
+  const phrases=[t('thinkingNeeds'),t('thinkingRates'),t('thinkingMatch'),t('thinkingProviders')];showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
+  try{
+    const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
+    const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    applyStaticI18n();
+    addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
+    if(d.followup_message)addMsg(d.followup_message,'hal');
+    speakText([d.reply,d.followup_message].filter(Boolean).join(' '));updateDynamicInput(d.quick_replies||[]);
+    history.push({role:'assistant',content:d.reply||''});
+  }catch(e){removeThinking();addMsg(lang()==='el'?t('genericError'):e.message,'hal');updateDynamicInput([]);}
+  document.getElementById('sendBtn').disabled=false;
 }
 
 function openLeadForm(journey){
-  currentJourney = journey || currentJourney;
-  const titles = {ipmi:['Request a proposal','Tell us about you and Ashlar will follow up.'],
-                   travel:['Travel insurance enquiry','Tell us about your trip and Ashlar will follow up.'],
-                   local_review:['Request a local-vs-international review','Tell us your priorities and Ashlar will follow up.']};
-  const [title, sub] = titles[journey] || titles.ipmi;
-  document.getElementById('leadTitle').textContent = state.client_segment==='hnwi' ? 'Request a private consultation' : title;
-  document.getElementById('leadSubtitle').textContent = sub;
-  if (state.residence_country) document.getElementById('leadResidence').value = state.residence_country;
-  if (state.applicant_name) document.getElementById('leadFirstName').value = state.applicant_name;
-  if (state.age) document.getElementById('leadAge').value = state.age;
-  if (state.coverage_area) document.getElementById('leadCoverage').value = areaLabel(state.coverage_area);
-  if (state.budget_annual) document.getElementById('leadBudget').value = state.budget_annual;
-  document.getElementById('leadStatus').textContent = '';
-  document.getElementById('leadModal').classList.add('open');
+  currentJourney=journey||currentJourney;
+  const titleKey=journey==='travel'?'proposalTravel':journey==='local_review'?'proposalLocal':'proposalIpmi';
+  const subKey=journey==='travel'?'proposalTravelSub':journey==='local_review'?'proposalLocalSub':'proposalSubtitle';
+  document.getElementById('leadTitle').textContent=state.client_segment==='hnwi'?t('requestPrivate'):t(titleKey);
+  document.getElementById('leadSubtitle').textContent=t(subKey);
+  if(state.residence_country)document.getElementById('leadResidence').value=state.residence_country;
+  if(state.applicant_name)document.getElementById('leadFirstName').value=state.applicant_name;
+  if(state.age)document.getElementById('leadAge').value=state.age;
+  if(state.coverage_area)document.getElementById('leadCoverage').value=areaLabel(state.coverage_area);
+  if(state.budget_annual)document.getElementById('leadBudget').value=state.budget_annual;
+  document.getElementById('leadStatus').textContent='';applyStaticI18n();document.getElementById('leadModal').classList.add('open');
 }
 
 async function submitLead(){
-  const payload = {
-    insurance_interest: currentJourney === 'travel' ? 'Travel Insurance' : 'International Health Insurance',
-    first_name: document.getElementById('leadFirstName').value.trim(),
-    last_name: document.getElementById('leadLastName').value.trim(),
-    email: document.getElementById('leadEmail').value.trim(),
-    residence_country: document.getElementById('leadResidence').value.trim(),
-    age: document.getElementById('leadAge').value.trim(),
-    coverage_area: document.getElementById('leadCoverage').value.trim(),
-    family_members: document.getElementById('leadFamily').value.trim(),
-    budget: document.getElementById('leadBudget').value.trim(),
-    message: document.getElementById('leadMessage').value.trim(),
-    consent: document.getElementById('leadConsent').checked,
-    website: document.getElementById('leadWebsite').value,
+  const payload={
+    insurance_interest:currentJourney==='travel'?'Travel Insurance':'International Health Insurance',
+    first_name:document.getElementById('leadFirstName').value.trim(),last_name:document.getElementById('leadLastName').value.trim(),
+    email:document.getElementById('leadEmail').value.trim(),residence_country:document.getElementById('leadResidence').value.trim(),
+    age:document.getElementById('leadAge').value.trim(),coverage_area:document.getElementById('leadCoverage').value.trim(),
+    family_members:document.getElementById('leadFamily').value.trim(),budget:document.getElementById('leadBudget').value.trim(),
+    message:document.getElementById('leadMessage').value.trim(),consent:document.getElementById('leadConsent').checked,website:document.getElementById('leadWebsite').value,
   };
-  const status = document.getElementById('leadStatus');
-  if (!payload.first_name || !payload.last_name || !payload.email) { status.textContent = 'Please fill in your name and email.'; status.style.color = '#b3261e'; return; }
-  if (!payload.consent) { status.textContent = 'Please confirm consent to proceed.'; status.style.color = '#b3261e'; return; }
-  status.textContent = 'Sending...'; status.style.color = 'var(--muted)';
-  try {
-    const r = await fetch(API+'/leads', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not send enquiry.');
-    status.textContent = 'Sent! Reference: ' + (d.reference || ''); status.style.color = 'var(--good)';
-    setTimeout(() => closeModal('leadModal'), 1400);
-  } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; }
+  const status=document.getElementById('leadStatus');
+  if(!payload.first_name||!payload.last_name||!payload.email){status.textContent=t('fillNameEmail');status.style.color='#b3261e';return;}
+  if(!payload.consent){status.textContent=t('confirmConsent');status.style.color='#b3261e';return;}
+  status.textContent=t('sending');status.style.color='var(--muted)';
+  try{
+    const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
+    if(!r.ok)throw new Error(d.detail||t('couldNotSend'));status.textContent=t('sentRef')+(d.reference||'');status.style.color='var(--good)';setTimeout(()=>closeModal('leadModal'),1400);
+  }catch(e){status.textContent=lang()==='el'?t('couldNotSend'):e.message;status.style.color='#b3261e';}
 }
 
 // Initial state: HAL greets immediately and asks for the applicant's name
 // first (with a friendly, personalised follow-up into age) — no separate
 // "tap to begin" step.
-state = {pending_question: 'name'};
+state = {pending_question:'name', language:(navigator.language||'').toLowerCase().startsWith('el')?'el':'en'};
+applyStaticI18n();
 showIpmiGreeting();
 renderState();
 </script>
