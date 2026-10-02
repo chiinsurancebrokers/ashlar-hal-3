@@ -137,3 +137,15 @@ def test_plan_explanation_prompt_demands_complete_sentences():
     q = _sample_quote()
     instr = build_explain_plan_instructions(q, greek=True)
     assert "Never stop mid-sentence" in instr
+
+
+@pytest.mark.asyncio
+async def test_comparison_conclusion_falls_back_when_model_output_is_truncated(monkeypatch):
+    import backend.app.services.adviser as adviser
+    async def cut_off(**_kwargs):
+        return "Το πρόγραμμα έχει ισχυρή νοσοκομειακή κάλυψη αλλά η εξωνοσοκομειακή"
+    monkeypatch.setattr(adviser, "adviser_response", cut_off)
+    rows = [{"label": "Outpatient", "values": {"a": "Covered", "b": "Not confirmed"}}]
+    labels = {"a": "Plan A", "b": "Plan B"}
+    text = await adviser.comparison_conclusion(rows, labels, greek=True)
+    assert not text.endswith("εξωνοσοκομειακή")
