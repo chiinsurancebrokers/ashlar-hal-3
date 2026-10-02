@@ -109,6 +109,11 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .current-policy-summary{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px}
 .current-policy-summary strong{display:block;margin-bottom:4px}
 .current-policy-meta{font-size:11px;color:var(--muted);line-height:1.5}
+.comparison-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.55fr);gap:10px;margin-top:12px}
+.comparison-primary-cta{border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;padding:13px 16px;cursor:pointer;box-shadow:0 8px 20px rgba(82,63,224,.18)}
+.comparison-primary-cta:hover{filter:brightness(.97)}
+@media(max-width:560px){.comparison-actions{grid-template-columns:1fr}.comparison-primary-cta{width:100%}}
+
 .source-viewer-modal .modal{max-width:1100px;width:96vw;height:88vh;display:flex;flex-direction:column}
 .source-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .source-viewer-frame{width:100%;flex:1;border:1px solid var(--border);border-radius:12px;background:#fff}
@@ -382,7 +387,7 @@ const I18N = {
     needs:'Your needs', edit:'Edit', online:'● Online', voiceOn:'🔊 Voice on', voiceOff:'🔇 Voice off',
     startAgain:'Start again', restartConfirm:'Start a new conversation? This clears your current answers.',
     step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
-    clear:'Clear', compare:'Compare', send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
+    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
     editNeeds:'Edit your needs', age:'Age', residence:'Country of residence', coverageArea:'Coverage area',
     annualBudgetOptional:'Annual budget (optional)', mustHaves:'Must-haves', cancel:'Cancel', saveRecalculate:'Save & recalculate',
     comparePlans:'Compare plans', close:'Close', sendComparison:'✉ Send me this comparison', emailComparison:'Email me this comparison',
@@ -436,7 +441,7 @@ const I18N = {
     needs:'Οι ανάγκες σας', edit:'Επεξεργασία', online:'● Online', voiceOn:'🔊 Φωνή ενεργή', voiceOff:'🔇 Φωνή ανενεργή',
     startAgain:'Από την αρχή', restartConfirm:'Να ξεκινήσουμε νέα συνομιλία; Οι τρέχουσες απαντήσεις σας θα διαγραφούν.',
     step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
-    clear:'Καθαρισμός', compare:'Σύγκριση', send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
+    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
     editNeeds:'Επεξεργασία αναγκών', age:'Ηλικία', residence:'Χώρα κατοικίας', coverageArea:'Περιοχή κάλυψης',
     annualBudgetOptional:'Ετήσιος προϋπολογισμός (προαιρετικό)', mustHaves:'Απαραίτητες παροχές', cancel:'Ακύρωση', saveRecalculate:'Αποθήκευση & επανυπολογισμός',
     comparePlans:'Σύγκριση προγραμμάτων', close:'Κλείσιμο', sendComparison:'✉ Στείλτε μου τη σύγκριση', emailComparison:'Αποστολή σύγκρισης με email',
@@ -663,9 +668,11 @@ function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[
   let html=esc(text).replace(/\n/g,'<br>');
   if(quotes&&quotes.length){
     html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
+    html+=`<div class="comparison-actions">`;
     html+=currentPolicy
       ? `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
       : `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()">${esc(t('uploadCurrentPolicy'))}</button>`;
+    html+=`<button class="comparison-primary-cta" onclick="openCompareWithGuard()">${esc(t('compareNow'))}</button></div>`;
     if(excluded&&excluded.length){
       const suffix=lang()==='el'?'':'s';
       const label=t('whyExcluded').replace('{n}',excluded.length).replace('{s}',excluded.length===1?'':suffix);
@@ -809,9 +816,18 @@ function currentPolicyDisplayValue(value){
   return String(value);
 }
 
-function currentPolicyBenefitForLabel(label){
+function currentPolicyBenefitForRow(row){
   if(!currentPolicy) return t('notConfirmed');
-  const benefits=currentPolicy.benefits||{}, low=(label||'').toLowerCase();
+  const detailed=currentPolicy.benefit_rows||[];
+  const match=detailed.find(x=>x&&x.code===row.benefit_code);
+  if(match){
+    const status=(match.status||'').toLowerCase();
+    if(status==='not_covered') return lang()==='el'?'Δεν καλύπτεται':'Not covered';
+    if(status==='optional_not_confirmed') return lang()==='el'?'Προαιρετικό — δεν έχει επιβεβαιωθεί':'Optional — not confirmed selected';
+    if(status==='confirmed' && match.value) return currentPolicyDisplayValue(match.value);
+  }
+
+  const benefits=currentPolicy.benefits||{}, low=(row.label||'').toLowerCase();
   const pairs=[
     [['outpatient','out-patient'], 'outpatient'],
     [['inpatient','in-patient','hospitalisation','hospitalization'], 'inpatient'],
@@ -825,8 +841,21 @@ function currentPolicyBenefitForLabel(label){
     [['preventive','wellness','screening'], 'preventive'],
     [['evacuation','repatriation'], 'evacuation_repatriation'],
   ];
-  for(const [needles,key] of pairs){if(needles.some(n=>low.includes(n))) return currentPolicyDisplayValue(benefits[key]);}
+  for(const [needles,key] of pairs){
+    if(needles.some(n=>low.includes(n))) return currentPolicyDisplayValue(benefits[key]);
+  }
   return t('notConfirmed');
+}
+
+function openCompareWithGuard(){
+  const minimum=currentPolicy?1:2;
+  if(compareSelected.size<minimum){
+    alert(currentPolicy
+      ? t('policySelectPlan')
+      : (lang()==='el'?'Επιλέξτε τουλάχιστον δύο προγράμματα για σύγκριση.':'Select at least two plans to compare.'));
+    return;
+  }
+  openCompare();
 }
 
 async function uploadCurrentPolicy(file){
@@ -906,7 +935,7 @@ function renderDetailedCompare(d){
   });
   matrix.rows.forEach(row=>{
     html+=`<tr><td>${esc(trText(row.label))}</td>`;
-    if(hasPolicy) html+=`<td>${esc(currentPolicyBenefitForLabel(row.label))}</td>`;
+    if(hasPolicy) html+=`<td>${esc(currentPolicyBenefitForRow(row))}</td>`;
     html+=plans.map(p=>{const raw=row.values[p.plan_key],v=trText(raw),dim=raw==='Not confirmed'?'style="color:var(--muted)"':'';return `<td ${dim}>${esc(v||'—')}</td>`;}).join('')+'</tr>';
   });
   html+='</table></div>';
@@ -960,7 +989,14 @@ async function sendComparisonEmail(){
     const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected],current_policy_token:currentPolicyToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('comparisonSendFail'));
     closeModal('emailModal');addMsg(t('comparisonSent'),'hal');
-  }catch(e){alert(e.message||t('comparisonSendFail'));}
+  }catch(e){
+    const msg=String(e.message||'');
+    if(msg.includes('invalid_grant')){
+      alert(lang()==='el'
+        ?'Η σύνδεση αποστολής email της Ashlar με τη Google χρειάζεται επανασύνδεση. Η σύγκριση έχει δημιουργηθεί κανονικά, αλλά το email δεν μπορεί να σταλεί μέχρι να ανανεωθεί η εξουσιοδότηση Gmail.'
+        :'Ashlar’s Google email connection needs to be re-authorized. Your comparison was created correctly, but email cannot be sent until Gmail authorization is renewed.');
+    }else alert(msg||t('comparisonSendFail'));
+  }
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
