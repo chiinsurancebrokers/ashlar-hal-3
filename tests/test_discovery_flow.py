@@ -98,6 +98,7 @@ def test_name_step_is_first_and_feeds_a_personalised_age_prompt():
 
 
 def test_greek_quick_replies_are_localised_but_machine_values_stay_stable():
+    # Eligibility identity step has already been completed; this test targets coverage quick replies.
     state = {"name_asked": True, "age": 51, "residence_country": "Greece", "nationality_answered": True}
     q = next_discovery_question(state, greek=True)
     assert q["key"] == "coverage_area"
