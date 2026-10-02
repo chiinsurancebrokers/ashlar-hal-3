@@ -76,22 +76,17 @@ def test_shortlist_is_deduplicated_by_carrier_and_marks_recommended():
 
 
 def test_recommended_pick_never_outranks_on_price_alone_when_unverified_against_a_stated_must_have():
-    # Regression: a real reported bug — IMG Bronze (cheaper, but no loaded
-    # Table of Benefits) was being shown as "HAL's top pick" even though
-    # the applicant explicitly required outpatient cover, which IMG's fit
-    # against is entirely unverified. A verified Morgan Price match must
-    # always outrank an unverified-but-cheaper plan once a must-have is
-    # stated — price alone must never win that comparison.
+    # Regression: IMG Bronze is cheaper but HAL now has explicit evidence
+    # that this tier is inpatient-focused and does not include outpatient.
+    # A stated outpatient MUST-HAVE therefore hard-excludes Bronze; price
+    # must never restore a plan that fails a verified mandatory requirement.
     applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1", outpatient_required=True)
     shortlist = quote_shortlist(applicant, _settings(), limit=5)
     top = shortlist[0]
-    assert top.insurer.startswith("Morgan Price"), "the verified match must be recommended, not the cheaper unverified IMG Bronze"
+    assert top.insurer.startswith("Morgan Price"), "a verified outpatient match must be recommended"
     assert top.evidence_confidence == 1.0
     assert "Out-patient cover" in top.matched_requirements
-
-    img_bronze = next(q for q in shortlist if q.product_name == "IMG Bronze")
-    assert img_bronze.premium < top.premium, "sanity check: IMG Bronze really is cheaper — the fix must still hold despite that"
-    assert img_bronze.recommended is False
+    assert all(q.product_name != "IMG Bronze" for q in shortlist), "IMG Bronze must be hard-excluded when outpatient is required"
 
 
 def test_card_metadata_present_on_every_quote_current_result_not_just_shortlist():
@@ -117,9 +112,12 @@ def test_benefit_checklist_present_and_honest_on_every_quote():
     checklist_p = {item["field"]: item["covered"] for item in premium.benefit_checklist}
     assert checklist_p["maternity_required"] is True
 
-    img = next(q for q in quotes if q.insurer.startswith("IMG"))
+    img = next(q for q in quotes if q.insurer.startswith("IMG") and q.product_code == "bronze")
     checklist_img = {item["field"]: item["covered"] for item in img.benefit_checklist}
-    assert all(v is None for v in checklist_img.values()), "no TOB evidence for IMG -> every item must be honestly 'not confirmed', never guessed"
+    assert checklist_img["outpatient_required"] is False, "Bronze outpatient absence is an explicit catalogue fact"
+    assert all(
+        v is None for field, v in checklist_img.items() if field != "outpatient_required"
+    ), "IMG benefits not explicitly evidenced must remain 'not confirmed', never guessed"
 
 
 def test_unsupported_residence_returns_no_quotes():

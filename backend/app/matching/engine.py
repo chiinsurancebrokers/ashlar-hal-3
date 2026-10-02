@@ -3,8 +3,9 @@ from dataclasses import dataclass
 
 from backend.app.schemas.applicant import Applicant
 from backend.app.evidence.morgan_price_2026 import covered
+from backend.app.evidence.plan_capabilities import plan_capability
 
-# Applicant boolean field -> (client-facing label, Table-of-Benefits check)
+# Applicant boolean field -> (client-facing label, Morgan Price Table-of-Benefits check)
 REQUIREMENT_CHECKS = {
     "outpatient_required": ("Out-patient cover", lambda code: code in {"standard_plus", "comprehensive", "premium", "elite"}),
     "maternity_required": ("Routine maternity", lambda code: covered(code, "normal_maternity")),
@@ -22,17 +23,34 @@ CHECKLIST_ORDER = [
 ]
 
 
+def _verified_capability(carrier: str, product_code: str, field: str) -> bool | None:
+    """Return a hard benefit verdict only when HAL has explicit evidence.
+
+    Morgan Price uses its loaded Table of Benefits. Other carriers use the
+    carrier-neutral capability registry. Unknown remains None — never guess.
+    """
+    if carrier == "morgan_price":
+        _label, check = REQUIREMENT_CHECKS[field]
+        return bool(check(product_code))
+    return plan_capability(carrier, product_code, field)
+
+
 def benefit_checklist(carrier: str, product_code: str) -> list[dict]:
-    """A fixed, always-the-same-order checklist for every quote card — the
-    fast-scan pattern (green check / grey dash / '?'), but never a guess:
-    if we hold no TOB evidence for this carrier, every item is explicitly
-    'not confirmed' rather than a fabricated tick or cross."""
-    has_evidence = carrier == "morgan_price"
+    """Fixed-order checklist for every quote card.
+
+    True/False means HAL has explicit evidence. None means not confirmed.
+    This allows known carrier facts (for example an inpatient-only tier) to
+    be shown honestly without pretending the rest of that carrier's benefits
+    are fully verified.
+    """
     items = []
     for field in CHECKLIST_ORDER:
-        label, check = REQUIREMENT_CHECKS[field]
-        covered_status = bool(check(product_code)) if has_evidence else None
-        items.append({"field": field, "label": label, "covered": covered_status})
+        label, _check = REQUIREMENT_CHECKS[field]
+        items.append({
+            "field": field,
+            "label": label,
+            "covered": _verified_capability(carrier, product_code, field),
+        })
     return items
 
 
@@ -41,36 +59,25 @@ class RequirementResult:
     label: str
     required: bool
     met: bool
-    evidence_confidence: float  # 1.0 = verified against loaded Table of Benefits; <1.0 = not yet verifiable
+    evidence_confidence: float
 
 
 @dataclass(frozen=True)
 class MatchOutcome:
-    """The single source of truth for whether a plan may appear in the
-    shortlist at all. `eligible` is a HARD boolean, never a score."""
+    """Single source of truth for whether a plan may appear in the shortlist."""
     eligible: bool
-    requirements_score: float | None   # fraction of MUST-HAVEs met, for ranking only among eligible plans
+    requirements_score: float | None
     evidence_confidence: float
     matched: list[str]
     unmatched: list[str]
 
 
 def score_requirements(results: list[RequirementResult]) -> tuple[float, float]:
-    """Pure function: given per-requirement results, return
-    (requirements_score, overall_evidence_confidence).
-
-    A single unmet MUST-HAVE zeroes the score outright — this is the
-    behaviour the v8 audit called for explicitly (routine maternity example):
-    a plan that fails one mandatory requirement must never look like a
-    partial match, it must look like a rejection.
-    """
     if not results:
         return 1.0, 1.0
-    if any((not r.met) for r in results):
-        confidence = min(r.evidence_confidence for r in results)
-        return 0.0, confidence
-    confidence = min(r.evidence_confidence for r in results)
-    return 1.0, confidence
+    if any(not r.met for r in results):
+        return 0.0, min(r.evidence_confidence for r in results)
+    return 1.0, min(r.evidence_confidence for r in results)
 
 
 def evaluate_requirements(applicant: Applicant, carrier: str, product_code: str) -> MatchOutcome:
@@ -80,36 +87,53 @@ def evaluate_requirements(applicant: Applicant, carrier: str, product_code: str)
             selected.append((field, label))
 
     if not selected:
-        # No must-haves selected at all: every plan is "eligible" on
-        # requirements grounds (price/other criteria decide ranking).
-        return MatchOutcome(eligible=True, requirements_score=None, evidence_confidence=1.0, matched=[], unmatched=[])
+        return MatchOutcome(
+            eligible=True, requirements_score=None, evidence_confidence=1.0,
+            matched=[], unmatched=[],
+        )
 
-    if carrier != "morgan_price":
-        # We do not yet hold verified benefit-level evidence for other
-        # carriers, so we can never HARD-exclude them on a must-have — that
-        # would be excluding a plan based on data we don't actually have.
-        # Instead they are marked low-confidence and ranked below verified
-        # matches, never silently promoted above them.
-        return MatchOutcome(eligible=True, requirements_score=None, evidence_confidence=0.0, matched=[], unmatched=[])
+    known: list[RequirementResult] = []
+    unknown_labels: list[str] = []
 
-    results: list[RequirementResult] = []
     for field, label in selected:
-        _label, check = REQUIREMENT_CHECKS[field]
-        results.append(RequirementResult(label=label, required=True, met=bool(check(product_code)), evidence_confidence=1.0))
+        verdict = _verified_capability(carrier, product_code, field)
+        if verdict is None:
+            unknown_labels.append(label)
+        else:
+            known.append(RequirementResult(
+                label=label, required=True, met=verdict, evidence_confidence=1.0
+            ))
 
-    score, confidence = score_requirements(results)
-    matched = [r.label for r in results if r.met]
-    unmatched = [r.label for r in results if not r.met]
+    matched = [r.label for r in known if r.met]
+    unmatched = [r.label for r in known if not r.met]
 
-    # THE hard rule: a verified failed must-have removes the plan from
-    # eligibility outright. Confidence==1.0 means we are certain about this
-    # verdict (it comes from the loaded, verified Table of Benefits).
-    eligible = not (confidence == 1.0 and score == 0.0)
+    # HARD RULE: one explicitly verified failed must-have removes the plan.
+    if unmatched:
+        return MatchOutcome(
+            eligible=False,
+            requirements_score=0.0,
+            evidence_confidence=1.0,
+            matched=matched,
+            unmatched=unmatched,
+        )
 
+    # All requested requirements are explicitly verified as present.
+    if not unknown_labels:
+        return MatchOutcome(
+            eligible=True,
+            requirements_score=1.0,
+            evidence_confidence=1.0,
+            matched=matched,
+            unmatched=[],
+        )
+
+    # Some requirements are genuinely unknown. Keep the plan as an
+    # unverified alternative, rank it below fully verified matches, and never
+    # claim that the unknown requirement is covered.
     return MatchOutcome(
-        eligible=eligible,
-        requirements_score=score,
-        evidence_confidence=confidence,
+        eligible=True,
+        requirements_score=None,
+        evidence_confidence=0.0,
         matched=matched,
-        unmatched=unmatched,
+        unmatched=[],
     )

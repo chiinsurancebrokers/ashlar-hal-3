@@ -6,7 +6,7 @@ from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions, quote_current
 from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_to_dict
 from backend.app.evidence.carrier_profile import carrier_profile
-from backend.app.services.adviser import comparison_conclusion
+from backend.app.services.adviser import comparison_conclusion, explain_plan
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
@@ -23,6 +23,39 @@ async def preview(applicant: Applicant):
         "shortlist": [q.model_dump(mode="json") for q in shortlist],
         "quotes": [q.model_dump(mode="json") for q in shortlist],
         "exclusions": excluded,
+    }
+
+
+class ExplainPlanRequest(BaseModel):
+    applicant_state: dict = Field(default_factory=dict)
+    plan_key: str
+    question: str = "Tell me more about this plan."
+    language: str = Field(default="en", pattern="^(en|el)$")
+
+
+@router.post("/explain")
+async def explain(req: ExplainPlanRequest):
+    """Explain one currently eligible plan without rebuilding the shortlist."""
+    settings = get_settings()
+    try:
+        fields = {k: v for k, v in req.applicant_state.items() if k in Applicant.model_fields}
+        applicant = Applicant(**fields)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid applicant_state: {str(exc)[:180]}") from exc
+
+    current = quote_current(applicant, settings)
+    quote = next((q for q in current if q.plan_key == req.plan_key), None)
+    if quote is None:
+        raise HTTPException(status_code=404, detail="That plan is not currently eligible for this applicant.")
+
+    answer = await explain_plan(quote, req.question, greek=(req.language == "el"))
+    return {
+        "plan_key": quote.plan_key,
+        "product_name": quote.product_name,
+        "insurer": quote.insurer,
+        "answer": answer,
+        "source_documents": quote.source_documents,
+        "verified_facts": quote.verified_facts,
     }
 
 

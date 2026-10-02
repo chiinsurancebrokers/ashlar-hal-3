@@ -232,3 +232,16 @@ def test_default_english_voice_is_a_british_male_voice(monkeypatch):
         assert pick_voice_id("en") == "JBFqnCBsd6RMkjVDRZzb"
     finally:
         config_module.get_settings.cache_clear()
+
+
+def test_greek_voice_falls_back_to_multilingual_english_library_voice(monkeypatch):
+    from backend.app.core import config as config_module
+    config_module.get_settings.cache_clear()
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID", raising=False)
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID_EL", raising=False)
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID_EN", raising=False)
+    config_module.get_settings.cache_clear()
+    try:
+        assert pick_voice_id("el") == "JBFqnCBsd6RMkjVDRZzb"
+    finally:
+        config_module.get_settings.cache_clear()

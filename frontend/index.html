@@ -380,7 +380,7 @@ async function sendHiddenMessage(text){
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
-    speakText(d.reply || '');
+        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
     updateDynamicInput(d.quick_replies || []);
     history.push({role:'assistant', content: d.reply || ''});
   } catch(e) {
@@ -532,11 +532,41 @@ function toggleCompare(key, btn){
   renderState();
 }
 
-function tellMeMore(i){
+async function tellMeMore(i){
   const q = lastQuotes[i];
   if (!q) return;
-  const facts = (q.verified_facts||[]).slice(0,6).map(f => '• '+f).join('\n') || 'No additional verified facts loaded for this plan yet.';
-  addMsg(`${q.product_name} (${q.insurer})\n\n${facts}`, 'hal');
+  showThinking((state && state.language)==='el' ? 'Αναλύω το πρόγραμμα' : 'Reviewing the plan evidence');
+  try {
+    const r = await fetch(API+'/quotes/explain', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        applicant_state: state,
+        plan_key: qkey(q),
+        question: (state && state.language)==='el'
+          ? 'Εξήγησέ μου αυτό το πρόγραμμα πιο αναλυτικά.'
+          : 'Tell me more about this plan.',
+        language: (state && state.language) || 'en'
+      })
+    });
+    const d = await r.json();
+    removeThinking();
+    if (!r.ok) throw new Error(d.detail || 'Could not explain this plan.');
+    let text = d.answer || '';
+    const docs = (d.source_documents || []).filter(Boolean);
+    if (docs.length) {
+      text += ((state && state.language)==='el' ? '\n\nΕπίσημα έγγραφα:' : '\n\nOfficial documents:');
+      docs.slice(0,3).forEach((u,idx) => { text += `\n${idx+1}. ${u}`; });
+    }
+    addMsg(text, 'hal');
+    speakText(d.answer || '');
+    history.push({role:'assistant', content:d.answer || ''});
+  } catch(e) {
+    removeThinking();
+    addMsg((state && state.language)==='el'
+      ? 'Δεν μπόρεσα να αναλύσω το πρόγραμμα αυτή τη στιγμή. Δοκιμάστε ξανά.'
+      : 'I could not analyse that plan just now. Please try again.', 'hal');
+  }
 }
 
 async function openCompare(){
@@ -685,7 +715,9 @@ function currentPendingKey(){
 function _orTypeLabel(){
   const el = document.createElement('div');
   el.className = 'or-type-label';
-  el.textContent = 'or type your own answer below';
+  el.textContent = (state && state.language)==='el'
+    ? 'ή γράψτε τη δική σας απάντηση παρακάτω'
+    : 'or type your own answer below';
   return el;
 }
 
@@ -709,11 +741,12 @@ function updateDynamicInput(quickReplies){
     });
     const hasSkip = quickReplies.some(r => r.value === 'skip');
     if (hasSkip) {
+      const skipReply = quickReplies.find(r => r.value === 'skip');
       const s = document.createElement('button');
       s.className = 'pill-choice';
       s.style.background = 'var(--bg)';
       s.style.color = 'var(--muted)';
-      s.textContent = 'Not sure / Skip';
+      s.textContent = (skipReply && skipReply.label) || ((state && state.language)==='el' ? 'Δεν είμαι σίγουρος / Παράλειψη' : 'Not sure / Skip');
       s.onclick = () => sendQuickReply('skip');
       wrap.appendChild(s);
     }
@@ -722,11 +755,11 @@ function updateDynamicInput(quickReplies){
   } else if (key === 'age' || key === 'travel_age') {
     const stepper = document.createElement('div');
     stepper.className = 'stepper-input';
-    stepper.innerHTML = `<input type="number" id="stepperInput" min="0" max="120" placeholder="Age">
+    stepper.innerHTML = `<input type="number" id="stepperInput" min="0" max="120" placeholder="${(state && state.language)==='el' ? 'Ηλικία' : 'Age'}">
       <div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;
     const btn = document.createElement('button');
     btn.className = 'dynamic-continue';
-    btn.textContent = 'Continue';
+    btn.textContent = (state && state.language)==='el' ? 'Συνέχεια' : 'Continue';
     btn.onclick = submitStepper;
     row.insertBefore(stepper, composer);
     row.insertBefore(btn, composer);
@@ -861,7 +894,7 @@ async function sendMessage(){
     excludedPlans = d.excluded_plans || [];
     addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
     if (d.followup_message) addMsg(d.followup_message, 'hal');
-    speakText(d.reply || '');
+        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
     updateDynamicInput(d.quick_replies || []);
     history.push({role:'assistant', content: d.reply || ''});
   } catch(e) {
