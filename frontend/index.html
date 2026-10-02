@@ -449,7 +449,29 @@ const DYNAMIC_EL = {
   'Official Morgan Price Europe 2026 rate from the supplied workbook.':'Επίσημο ασφάλιστρο Morgan Price Europe 2026 από το παρεχόμενο τιμολόγιο.',
   'Final premium and acceptance remain subject to insurer eligibility, underwriting and confirmation.':'Το τελικό ασφάλιστρο και η αποδοχή υπόκεινται στην επιλεξιμότητα, την ανάληψη κινδύνου και την επιβεβαίωση της ασφαλιστικής εταιρείας.',
   'Indicative quotation using a legacy rate dataset for this carrier.':'Ενδεικτική προσφορά με χρήση παλαιότερου τιμολογιακού αρχείου για τον συγκεκριμένο πάροχο.',
-  "Benefit matching is not scored until this carrier's current official documents are loaded.":'Η αντιστοίχιση παροχών δεν βαθμολογείται έως ότου φορτωθούν τα τρέχοντα επίσημα έγγραφα του παρόχου.'
+  "Benefit matching is not scored until this carrier's current official documents are loaded.":'Η αντιστοίχιση παροχών δεν βαθμολογείται έως ότου φορτωθούν τα τρέχοντα επίσημα έγγραφα του παρόχου.',
+  'Full inpatient hospitalisation · Cancer care':'Πλήρης νοσοκομειακή περίθαλψη · Αντικαρκινική θεραπεία',
+  'Full inpatient · Outpatient up to €2,500 · MRI/CT/PET':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €2.500 · MRI/CT/PET',
+  'Full inpatient · Outpatient up to €5,000 · Dental · Mental health':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €5.000 · Οδοντιατρική · Ψυχική υγεία',
+  'Full inpatient · Outpatient up to €10,000 · Dental · Maternity':'Πλήρης νοσοκομειακή · Εξωνοσοκομειακή έως €10.000 · Οδοντιατρική · Μητρότητα',
+  'Full inpatient · Full outpatient · Dental · Maternity · Wellness':'Πλήρης νοσοκομειακή · Πλήρης εξωνοσοκομειακή · Οδοντιατρική · Μητρότητα · Πρόληψη',
+  'Essential international inpatient protection.':'Βασική διεθνής νοσοκομειακή προστασία.',
+  'Adds outpatient cover and diagnostic scans.':'Προσθέτει εξωνοσοκομειακή κάλυψη και διαγνωστικές εξετάσεις.',
+  'Broad outpatient and dental protection.':'Ευρεία εξωνοσοκομειακή και οδοντιατρική προστασία.',
+  'Comprehensive plan with routine maternity.':'Ολοκληρωμένο πρόγραμμα με κάλυψη μητρότητας.',
+  'Highest limits and broadest Evolution benefits.':'Υψηλότερα όρια και οι ευρύτερες παροχές Evolution.',
+  'Enhanced entry-level international protection.':'Ενισχυμένη διεθνής προστασία εισαγωγικού επιπέδου.',
+  'Balanced mid-range international option.':'Ισορροπημένη διεθνής επιλογή μεσαίου επιπέδου.',
+  'Broader international protection.':'Ευρύτερη διεθνής προστασία.',
+  'Premium IMG option for broader protection.':'Premium επιλογή IMG για ευρύτερη προστασία.',
+  'Core APRIL international medical option.':'Βασική διεθνής ιατρική επιλογή APRIL.',
+  'Enhanced APRIL international option.':'Ενισχυμένη διεθνής επιλογή APRIL.',
+  'Enhanced APRIL cover with alternative excess structure.':'Ενισχυμένη κάλυψη APRIL με εναλλακτική δομή απαλλαγής.',
+  'Executive-level international protection.':'Διεθνής προστασία επιπέδου Executive.',
+  'Executive cover with alternative excess structure.':'Κάλυψη Executive με εναλλακτική δομή απαλλαγής.',
+  'Premium APRIL international option.':'Premium διεθνής επιλογή APRIL.',
+  'Premium APRIL cover with alternative excess structure.':'Premium κάλυψη APRIL με εναλλακτική δομή απαλλαγής.',
+  'A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.':'Δηλώθηκε προϋπάρχουσα πάθηση — η προσφορά δεν αντικατοπτρίζει απόφαση ανάληψης κινδύνου και απαιτεί έλεγχο από ασφαλιστικό διαμεσολαβητή πριν την υποβολή.'
 };
 
 const MUST_FIELDS = {
@@ -513,7 +535,6 @@ function setUiLanguage(code, resetGreeting=false){
   state.language=code==='el'?'el':'en';
   applyStaticI18n();
   renderState();
-  updateDynamicInput([]);
   if(resetGreeting || (!history.length && currentJourney==='ipmi')) showIpmiGreeting();
 }
 
