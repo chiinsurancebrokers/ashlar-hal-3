@@ -172,7 +172,7 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
                 "greece": "Greece", "hellas": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece",
                 "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
                 "usa": "United States", "united states": "United States", "america": "United States",
-                "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus",
+                "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus", "κύπρο": "Cyprus", "κυπρο": "Cyprus",
                 "germany": "Germany", "france": "France", "italy": "Italy", "spain": "Spain",
                 "malta": "Malta", "uae": "United Arab Emirates", "dubai": "United Arab Emirates",
                 "singapore": "Singapore", "switzerland": "Switzerland", "portugal": "Portugal",
