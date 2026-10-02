@@ -9,6 +9,7 @@ from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion, explain_plan
 from backend.app.services.current_policy_token import create_current_policy_token
+from backend.app.services.policy_analyst_agent import analyze_current_policy
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
@@ -28,14 +29,9 @@ async def preview(applicant: Applicant):
     }
 
 
-
 @router.post("/current-policy")
 async def current_policy(file: UploadFile = File(...)):
-    """Secure proxy to Proposal Studio for applicant current-policy analysis.
-
-    The browser uploads only to HAL. HAL forwards the bytes server-to-server
-    with the internal Proposal Studio key, then returns structured facts.
-    """
+    """Secure proxy to Proposal Studio plus an evidence-locked policy audit."""
     settings = get_settings()
     if not settings.proposal_studio_api_url or not settings.proposal_studio_api_key:
         raise HTTPException(status_code=503, detail="Current-policy analysis is not configured.")
@@ -63,8 +59,10 @@ async def current_policy(file: UploadFile = File(...)):
     if response.status_code >= 400:
         raise HTTPException(status_code=502, detail=str(body.get("detail") or "Current policy could not be analyzed."))
 
+    policy_audit = analyze_current_policy(body)
     return {
         "current_policy": body,
+        "policy_analysis": policy_audit.model_dump(mode="json"),
         "current_policy_token": create_current_policy_token(body),
     }
 
@@ -111,10 +109,7 @@ class CompareRequest(BaseModel):
 
 @router.post("/compare")
 async def compare(req: CompareRequest):
-    """Detailed benefit-by-benefit comparison, in the style of the Ashlar
-    comparison PDFs. Like /leads/comparison, this NEVER trusts a plan's
-    identity or premium from the client beyond its plan_key — everything is
-    recomputed server-side against the real shortlist first."""
+    """Detailed benefit-by-benefit comparison using server-recomputed eligible plans."""
     settings = get_settings()
     try:
         fields = {k: v for k, v in req.applicant_state.items() if k in Applicant.model_fields}
@@ -141,9 +136,7 @@ async def compare(req: CompareRequest):
     ]
     matrix = build_comparison_matrix(plans_for_matrix)
     matrix_dict = matrix_to_dict(matrix)
-
     conclusion = await comparison_conclusion(matrix_dict["rows"], matrix_dict["plan_labels"], greek=(req.language == "el"))
-
     carrier_meta = {q.plan_key: carrier_profile(q.plan_key.split(":")[0]) for q in selected}
 
     return {
