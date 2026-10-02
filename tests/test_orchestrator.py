@@ -225,3 +225,19 @@ def test_post_shortlist_greece_healthcare_question_is_context_intent():
     from backend.app.services.orchestrator import _post_shortlist_intent
     assert _post_shortlist_intent("What about Greece's public healthcare system?") == "greece_healthcare"
     assert _post_shortlist_intent("Πες μου για το δημόσιο σύστημα υγείας") == "greece_healthcare"
+
+
+def test_greek_language_stays_sticky_when_localised_button_sends_english_machine_value():
+    from backend.app.services.orchestrator import _resolve_language
+    state = {"language": "el"}
+    assert _resolve_language("Europe only", state) is True
+    assert state["language"] == "el"
+    assert _resolve_language("Yes", state) is True
+    assert state["language"] == "el"
+
+
+def test_real_english_sentence_can_explicitly_switch_from_greek():
+    from backend.app.services.orchestrator import _resolve_language
+    state = {"language": "el"}
+    assert _resolve_language("Please continue in English", state) is False
+    assert state["language"] == "en"
