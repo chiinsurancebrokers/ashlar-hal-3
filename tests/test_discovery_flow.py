@@ -95,3 +95,27 @@ def test_name_step_is_first_and_feeds_a_personalised_age_prompt():
     q2 = next_discovery_question({"name_asked": True, "applicant_name": "Christos"})
     assert q2["key"] == "age"
     assert "Christos" in q2["reply"]
+
+
+def test_greek_quick_replies_are_localised_but_machine_values_stay_stable():
+    state = {"name_asked": True, "age": 51, "residence_country": "Greece"}
+    q = next_discovery_question(state, greek=True)
+    assert q["key"] == "coverage_area"
+    labels = [r["label"] for r in q["quick_replies"]]
+    values = [r["value"] for r in q["quick_replies"]]
+    assert "Ευρώπη" in labels
+    assert "Δεν είμαι σίγουρος / Παράλειψη" in labels
+    assert "Europe only" in values
+    assert "skip" in values
+
+
+def test_greek_outpatient_choices_are_not_shown_in_english():
+    state = {
+        "name_asked": True, "age": 51, "residence_country": "Greece",
+        "coverage_area": "area1", "deductible_answered": True,
+    }
+    q = next_discovery_question(state, greek=True)
+    assert q["key"] == "outpatient"
+    labels = [r["label"] for r in q["quick_replies"]]
+    assert "Μόνο νοσοκομειακή" in labels
+    assert "Με εξωνοσοκομειακή κάλυψη" in labels
