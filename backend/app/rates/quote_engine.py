@@ -8,6 +8,7 @@ from backend.app.rates.registry import load_rates, load_card_meta, RateRecord
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
 from backend.app.matching.engine import evaluate_requirements, benefit_checklist
+from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
 from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest
 
 SUPPORTED_RESIDENCE = {"greece", "gr", "hellas", "ελλάδα", "ellada"}
@@ -85,6 +86,10 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             member_rows.append(match)
         if any(m is None for m in member_rows):
             continue
+
+        eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
+        if eligibility.status == "ineligible":
+            continue  # product-specific eligibility hard exclusion
 
         outcome = evaluate_requirements(applicant, carrier, product_code)
         if not outcome.eligible:
@@ -217,11 +222,23 @@ def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | 
         return []
     out = []
     for carrier, product_code in _distinct_products(applicant.coverage_area):
-        outcome = evaluate_requirements(applicant, carrier, product_code)
-        if outcome.eligible or outcome.evidence_confidence != 1.0:
-            continue
         rows = _rows_for(carrier, product_code, applicant.coverage_area)
         if not rows:
+            continue
+
+        eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
+        if eligibility.status == "ineligible":
+            out.append({
+                "plan_key": f"{carrier}:{product_code}",
+                "insurer": rows[0].carrier_name,
+                "product_name": rows[0].product_name,
+                "gaps": ["Eligibility criteria"],
+                "eligibility_reason": eligibility.reason,
+            })
+            continue
+
+        outcome = evaluate_requirements(applicant, carrier, product_code)
+        if outcome.eligible or outcome.evidence_confidence != 1.0:
             continue
         out.append({
             "plan_key": f"{carrier}:{product_code}",
