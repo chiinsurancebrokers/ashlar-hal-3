@@ -717,67 +717,39 @@ async function tellMeMore(i){
 }
 
 async function openCompare(){
-  const content = document.getElementById('compareContent');
-  content.innerHTML = '<p style="color:var(--muted)">Building your detailed comparison…</p>';
+  const content=document.getElementById('compareContent');
+  content.innerHTML=`<p style="color:var(--muted)">${esc(t('buildingComparison'))}</p>`;
   document.getElementById('compareModal').classList.add('open');
-
-  try {
-    const r = await fetch(API+'/quotes/compare', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({applicant_state: state, plan_keys: [...compareSelected], language: (state && state.language) || 'en'})});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not build the comparison.');
-    content.innerHTML = renderDetailedCompare(d);
-  } catch(e) {
-    content.innerHTML = `<p style="color:#b3261e">${esc(e.message)}</p>`;
-  }
+  try{
+    const r=await fetch(API+'/quotes/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant_state:state,plan_keys:[...compareSelected],language:lang()})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));content.innerHTML=renderDetailedCompare(d);
+  }catch(e){content.innerHTML=`<p style="color:#b3261e">${esc(lang()==='el'?t('genericError'):e.message)}</p>`;}
 }
 
 function renderDetailedCompare(d){
-  const plans = d.plans, matrix = d.matrix;
-
-  let html = '<div style="display:grid;grid-template-columns:repeat(' + plans.length + ',1fr);gap:10px;margin-bottom:16px">' +
-    plans.map(p => `<div style="background:var(--bg);border-radius:10px;padding:10px">
-      <div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>
-      ${renderBenefitGrid(p.benefit_checklist)}
-    </div>`).join('') + '</div>';
-
-  const summaryRows = [
-    ['Annual premium', p => money(p.premium, p.currency)],
-    ['Monthly', p => money(p.premium/12, p.currency)],
-    ['Coverage area', p => p.coverage_area_label],
-    ['Annual limit', p => p.card_annual_limit],
-    ['Deductible', p => p.card_deductible],
+  const plans=d.plans,matrix=d.matrix;
+  let html='<div style="display:grid;grid-template-columns:repeat('+plans.length+',1fr);gap:10px;margin-bottom:16px">'+
+    plans.map(p=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>${renderBenefitGrid(p.benefit_checklist)}</div>`).join('')+'</div>';
+  const rows=[
+    [t('annualPremium'),p=>money(p.premium,p.currency)],
+    [t('monthly'),p=>money(p.premium/12,p.currency)],
+    [t('coverageArea'),p=>trText(p.coverage_area_label)],
+    [t('annualLimit'),p=>trText(p.card_annual_limit)],
+    [t('deductible'),p=>trText(p.card_deductible)],
   ];
-  html += '<table class="compare-table"><tr><th>Χαρακτηριστικό</th>' +
-    plans.map(p => `<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('') + '</tr>';
-  summaryRows.forEach(([label,fn]) => {
-    html += `<tr><td><b>${label}</b></td>` + plans.map(p => `<td>${esc(fn(p)||'—')}</td>`).join('') + '</tr>';
+  html+=`<table class="compare-table"><tr><th>${t('characteristic')}</th>`+plans.map(p=>`<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('')+'</tr>';
+  rows.forEach(([label,fn])=>{html+=`<tr><td><b>${esc(label)}</b></td>`+plans.map(p=>`<td>${esc(fn(p)||'—')}</td>`).join('')+'</tr>';});
+  matrix.rows.forEach(row=>{
+    html+=`<tr><td>${esc(trText(row.label))}</td>`+plans.map(p=>{const raw=row.values[p.plan_key],v=trText(raw),dim=raw==='Not confirmed'?'style="color:var(--muted)"':'';return `<td ${dim}>${esc(v||'—')}</td>`;}).join('')+'</tr>';
   });
-  matrix.rows.forEach(row => {
-    html += `<tr><td>${esc(row.label)}</td>` + plans.map(p => {
-      const v = row.values[p.plan_key];
-      const dim = (v === 'Not confirmed') ? 'style="color:var(--muted)"' : '';
-      return `<td ${dim}>${esc(v || '—')}</td>`;
-    }).join('') + '</tr>';
-  });
-  html += '</table>';
-
-  if (d.unsupported_note) {
-    html += `<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(d.unsupported_note)}</p>`;
-  }
-  const allWarnings = [...new Set(plans.flatMap(p => p.warnings || []))];
-  if (allWarnings.length) {
-    html += `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${allWarnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>`;
-  }
-  const isGreek = (state && state.language) === 'el';
-  html += `<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px">
-    <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${isGreek ? 'Σύντομο Συμπέρασμα' : 'Short Conclusion'}</div>
-    <div style="font-size:13px">${esc(d.conclusion)}</div>
-  </div>`;
-  html += `<p style="font-size:10px;color:var(--muted);margin-top:12px">
-    ${isGreek
-      ? 'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους/εξαιρέσεις κάθε πλάνου. Υπόκειται σε έγκριση αναδοχής (underwriting approval).'
-      : 'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
+  html+='</table>';
+  if(d.unsupported_note)html+=`<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(trText(d.unsupported_note))}</p>`;
+  const warnings=[...new Set(plans.flatMap(p=>p.warnings||[]))];
+  if(warnings.length)html+=`<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`;
+  html+=`<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px"><div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${t('shortConclusion')}</div><div style="font-size:13px">${esc(d.conclusion)}</div></div>`;
+  html+=`<p style="font-size:10px;color:var(--muted);margin-top:12px">${lang()==='el'
+    ?'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους ή εξαιρέσεις κάθε προγράμματος. Υπόκειται σε έγκριση ανάληψης κινδύνου.'
+    :'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
   return html;
 }
 
@@ -787,28 +759,25 @@ function openComparisonEmail(){
 }
 
 async function sendComparisonEmail(){
-  const name = document.getElementById('emailName').value.trim();
-  const email = document.getElementById('emailAddress').value.trim();
-  if (!email) { alert('Please enter an email address.'); return; }
-  try {
-    const r = await fetch(API+'/leads/comparison', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name, email, applicant_state: state, plan_keys: [...compareSelected]})});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not send comparison.');
-    closeModal('emailModal');
-    addMsg('Sent! Check your inbox for the comparison — the figures were recalculated by our server just now.', 'hal');
-  } catch(e) { alert(e.message); }
+  const name=document.getElementById('emailName').value.trim(),email=document.getElementById('emailAddress').value.trim();
+  if(!email){alert(t('emailRequired'));return;}
+  try{
+    const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected]})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('comparisonSendFail'));
+    closeModal('emailModal');addMsg(t('comparisonSent'),'hal');
+  }catch(e){alert(lang()==='el'?t('comparisonSendFail'):e.message);}
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 
 function openNeedsEditor(){
-  document.getElementById('needAge').value = state.age || '';
-  document.getElementById('needResidence').value = state.residence_country || 'Greece';
-  document.getElementById('needArea').value = state.coverage_area || 'area1';
-  document.getElementById('needBudget').value = state.budget_annual || '';
-  document.getElementById('needToggleBox').innerHTML = Object.entries(MUST_FIELDS).map(([k,label]) =>
-    `<button type="button" class="need-chip ${state[k]?'must':''}" data-field="${k}" onclick="this.classList.toggle('must')">${esc(label)}</button>`
+  applyStaticI18n();
+  document.getElementById('needAge').value=state.age||'';
+  document.getElementById('needResidence').value=state.residence_country||'Greece';
+  document.getElementById('needArea').value=state.coverage_area||'area1';
+  document.getElementById('needBudget').value=state.budget_annual||'';
+  document.getElementById('needToggleBox').innerHTML=Object.entries(MUST_FIELDS).map(([k,key])=>
+    `<button type="button" class="need-chip ${state[k]?'must':''}" data-field="${k}" onclick="this.classList.toggle('must')">${esc(t(key))}</button>`
   ).join('');
   document.getElementById('needsModal').classList.add('open');
 }
@@ -860,57 +829,26 @@ function currentPendingKey(){
 }
 
 function _orTypeLabel(){
-  const el = document.createElement('div');
-  el.className = 'or-type-label';
-  el.textContent = (state && state.language)==='el'
-    ? 'ή γράψτε τη δική σας απάντηση παρακάτω'
-    : 'or type your own answer below';
-  return el;
+  const el=document.createElement('div');el.className='or-type-label';
+  el.textContent=lang()==='el'?'ή γράψτε τη δική σας απάντηση παρακάτω':'or type your own answer below';return el;
 }
 
 function updateDynamicInput(quickReplies){
-  const row = document.getElementById('dynamicInputRow');
-  const composer = document.querySelector('.composer');
-  const key = currentPendingKey();
-  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el => el.remove());
-  composer.style.display = 'flex'; // the text box is ALWAYS available — quick widgets are an addition, never a replacement
-
-  if (quickReplies && quickReplies.length) {
-    const wrap = document.createElement('div');
-    wrap.className = 'pill-row';
-    quickReplies.forEach(r => {
-      if (r.value === 'skip') return; // skip is offered as a small link instead of a pill
-      const b = document.createElement('button');
-      b.className = 'pill-choice';
-      b.textContent = r.label;
-      b.onclick = () => sendQuickReply(encodeURIComponent(r.value));
-      wrap.appendChild(b);
-    });
-    const hasSkip = quickReplies.some(r => r.value === 'skip');
-    if (hasSkip) {
-      const skipReply = quickReplies.find(r => r.value === 'skip');
-      const s = document.createElement('button');
-      s.className = 'pill-choice';
-      s.style.background = 'var(--bg)';
-      s.style.color = 'var(--muted)';
-      s.textContent = (skipReply && skipReply.label) || ((state && state.language)==='el' ? 'Δεν είμαι σίγουρος / Παράλειψη' : 'Not sure / Skip');
-      s.onclick = () => sendQuickReply('skip');
-      wrap.appendChild(s);
+  const row=document.getElementById('dynamicInputRow'),composer=document.querySelector('.composer'),key=currentPendingKey();
+  row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el=>el.remove());
+  composer.style.display='flex';
+  if(quickReplies&&quickReplies.length){
+    const wrap=document.createElement('div');wrap.className='pill-row';
+    quickReplies.forEach(r=>{if(r.value==='skip')return;const b=document.createElement('button');b.className='pill-choice';b.textContent=r.label;b.onclick=()=>sendQuickReply(encodeURIComponent(r.value));wrap.appendChild(b);});
+    if(quickReplies.some(r=>r.value==='skip')){
+      const skipReply=quickReplies.find(r=>r.value==='skip'),s=document.createElement('button');s.className='pill-choice';s.style.background='var(--bg)';s.style.color='var(--muted)';s.textContent=(skipReply&&skipReply.label)||t('skip');s.onclick=()=>sendQuickReply('skip');wrap.appendChild(s);
     }
-    row.insertBefore(wrap, composer);
-    row.insertBefore(_orTypeLabel(), composer);
-  } else if (key === 'age' || key === 'travel_age') {
-    const stepper = document.createElement('div');
-    stepper.className = 'stepper-input';
-    stepper.innerHTML = `<input type="number" id="stepperInput" min="0" max="120" placeholder="${(state && state.language)==='el' ? 'Ηλικία' : 'Age'}">
-      <div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;
-    const btn = document.createElement('button');
-    btn.className = 'dynamic-continue';
-    btn.textContent = (state && state.language)==='el' ? 'Συνέχεια' : 'Continue';
-    btn.onclick = submitStepper;
-    row.insertBefore(stepper, composer);
-    row.insertBefore(btn, composer);
-    row.insertBefore(_orTypeLabel(), composer);
+    row.insertBefore(wrap,composer);row.insertBefore(_orTypeLabel(),composer);
+  }else if(key==='age'||key==='travel_age'){
+    const stepper=document.createElement('div');stepper.className='stepper-input';
+    stepper.innerHTML=`<input type="number" id="stepperInput" min="0" max="120" placeholder="${t('age')}"><div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;
+    const btn=document.createElement('button');btn.className='dynamic-continue';btn.textContent=lang()==='el'?'Συνέχεια':'Continue';btn.onclick=submitStepper;
+    row.insertBefore(stepper,composer);row.insertBefore(btn,composer);row.insertBefore(_orTypeLabel(),composer);
   }
 }
 
@@ -937,9 +875,8 @@ document.querySelector('.composer').style.display = 'flex';
 function isGreekText(t){ return /[\u0370-\u03ff]/.test(t||''); }
 
 function toggleSpeaker(){
-  speakerOn = !speakerOn;
-  const btn = document.getElementById('speakerToggle');
-  btn.textContent = speakerOn ? '🔊 Voice on' : '🔇 Voice off';
+  speakerOn=!speakerOn;
+  document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
 }
 
 async function speakText(text){
@@ -956,65 +893,24 @@ async function speakText(text){
 }
 
 async function toggleRecording(){
-  const micBtn = document.getElementById('micBtn');
-  const status = document.getElementById('voiceStatus');
-
-  if (isRecording) {
-    mediaRecorder.stop();
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-    audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-    mediaRecorder.onstart = () => {
-      isRecording = true;
-      micBtn.textContent = '⏹';
-      micBtn.classList.add('recording');
-      micBtn.title = 'Recording — tap to stop';
-      micBtn.setAttribute('aria-label', 'Recording — tap to stop');
-      status.style.display = 'block';
-      status.textContent = '🔴 Listening… tap the mic again to stop';
-    };
-    mediaRecorder.onstop = async () => {
-      isRecording = false;
-      micBtn.textContent = '🎙';
-      micBtn.classList.remove('recording');
-      micBtn.title = 'Tap to speak';
-      micBtn.setAttribute('aria-label', 'Tap to speak');
-      stream.getTracks().forEach(t => t.stop());
-      status.textContent = 'Transcribing…';
-
-      const blob = new Blob(audioChunks, {type: mediaRecorder.mimeType || 'audio/webm'});
-      if (blob.size < 2000) {
-        status.textContent = 'I didn\'t catch that — please try speaking again.';
-        setTimeout(() => { status.style.display = 'none'; }, 3000);
-        return;
-      }
-      const form = new FormData();
-      form.append('file', blob, 'audio.webm');
-      form.append('language', (state && state.language) || 'en');
-      try {
-        const r = await fetch(API+'/transcribe', {method:'POST', body: form});
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || 'Could not transcribe audio.');
-        document.getElementById('input').value = d.text;
-        status.textContent = 'Transcription ready — review it, then press Send.';
-        document.getElementById('input').focus();
-        setTimeout(() => { status.style.display = 'none'; }, 4000);
-      } catch(e) {
-        status.textContent = e.message;
-        setTimeout(() => { status.style.display = 'none'; }, 4000);
-      }
+  const micBtn=document.getElementById('micBtn'),status=document.getElementById('voiceStatus');
+  if(isRecording){mediaRecorder.stop();return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});audioChunks=[];mediaRecorder=new MediaRecorder(stream);
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+    mediaRecorder.onstart=()=>{isRecording=true;micBtn.textContent='⏹';micBtn.classList.add('recording');micBtn.title=t('tapSpeak');micBtn.setAttribute('aria-label',t('tapSpeak'));status.style.display='block';status.textContent=t('recording');};
+    mediaRecorder.onstop=async()=>{
+      isRecording=false;micBtn.textContent='🎙';micBtn.classList.remove('recording');micBtn.title=t('tapSpeak');micBtn.setAttribute('aria-label',t('tapSpeak'));stream.getTracks().forEach(x=>x.stop());status.textContent=t('transcribing');
+      const blob=new Blob(audioChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+      if(blob.size<2000){status.textContent=t('didntCatch');setTimeout(()=>status.style.display='none',3000);return;}
+      const form=new FormData();form.append('file',blob,'audio.webm');form.append('language',lang());
+      try{
+        const r=await fetch(API+'/transcribe',{method:'POST',body:form}),d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
+        document.getElementById('input').value=d.text;status.textContent=t('transcriptionReady');document.getElementById('input').focus();setTimeout(()=>status.style.display='none',4000);
+      }catch(e){status.textContent=lang()==='el'?t('genericError'):e.message;setTimeout(()=>status.style.display='none',4000);}
     };
     mediaRecorder.start();
-  } catch(e) {
-    status.style.display = 'block';
-    status.textContent = 'Microphone access was not granted.';
-    setTimeout(() => { status.style.display = 'none'; }, 3000);
-  }
+  }catch(e){status.style.display='block';status.textContent=t('micDenied');setTimeout(()=>status.style.display='none',3000);}
 }
 
 async function sendMessage(){
