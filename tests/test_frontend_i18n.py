@@ -54,12 +54,13 @@ def test_localized_validation_and_voice_status_use_dictionary():
     ]:
         assert expression in html
 
-def test_plan_documents_render_as_clickable_pdf_cards_not_raw_urls():
+def test_plan_documents_render_inside_embedded_ashlar_viewer():
     html = _html()
     assert 'class="plan-doc-link"' in html
-    assert "target=\"_blank\"" in html
-    assert "rel=\"noopener noreferrer\"" in html
-    assert "openPdf" in html
+    assert "openSourceViewer(" in html
+    assert 'id="sourceViewerModal"' in html
+    assert 'id="sourceViewerFrame"' in html
+    assert "target=\"_blank\"" not in html
     assert "Table of Benefits" in html
     assert "Πίνακας Παροχών" in html
 
@@ -107,3 +108,28 @@ def test_current_policy_email_sends_signed_token_not_browser_policy_object():
     assert "let currentPolicyToken = null" in html
     assert "currentPolicyToken=d.current_policy_token||null" in html
     assert "current_policy_token:currentPolicyToken" in html
+
+
+def test_primary_healthcare_country_and_context_are_exposed_in_ui():
+    html = _html()
+    assert "primary_healthcare_country" in html
+    assert "Main healthcare country" in html
+    assert "Κύρια χώρα περίθαλψης" in html
+    assert "renderHealthcareContext" in html
+    assert "API+'/healthcare/context" in html or "/healthcare/context?country=" in html
+
+
+def test_current_policy_supporting_documents_use_embedded_viewer():
+    html = _html()
+    assert "supporting_documents" in html
+    assert "policy_wording_status" in html
+    assert "policyWordings" in html
+    assert "policyWordingMissing" in html
+
+
+def test_comparison_email_prefills_real_applicant_name_and_preserves_error_detail():
+    html = _html()
+    assert "state.applicant_name||''" in html
+    assert 'autocomplete="name"' in html
+    assert 'autocomplete="email"' in html
+    assert "alert(e.message||t('comparisonSendFail'))" in html
