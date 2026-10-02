@@ -9,6 +9,7 @@ from backend.app.discovery.flow import apply_discovery_answer, next_discovery_qu
 from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions, explain_plan
 from backend.app.services.anthropic_client import claude_response as adviser_response
+from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
@@ -356,10 +357,38 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
                 if greek else
                 "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
     reply = f"{intro} {reasoning}".strip()
+
+    verification = await verify_shortlist(
+        state, quotes, excluded,
+        rendered_reply=reply,
+        expected_greek=greek,
+        settings=settings,
+    )
+    verification_payload = verification.model_dump(mode="json")
+
+    if verification.verdict == "BLOCK":
+        blocked_reply = (
+            "Ο HAL εντόπισε ασυνέπεια μεταξύ των απαιτήσεών σας και του αποτελέσματος της σύγκρισης, "
+            "οπότε δεν θα εμφανίσει το shortlist μέχρι να επανελεγχθούν τα δεδομένα. Έχει σημανθεί για έλεγχο."
+            if greek else
+            "HAL detected a consistency issue between your requirements and the comparison output, "
+            "so it has withheld the shortlist until the data is rechecked. It has been flagged for review."
+        )
+        return {
+            "reply": blocked_reply, "followup_message": "", "state": state, "quotes": [], "excluded_plans": excluded,
+            "ai_status": "verifier_blocked_shortlist", "journey": journey if journey != "undetermined" else "ipmi",
+            "lead_cta": {"show": True, "journey": "ipmi", "label": label},
+            "open_application_form": False, "quick_replies": [],
+            "discovery": discovery_progress(state),
+            "verification": verification_payload,
+        }
+
     return {
         "reply": reply, "followup_message": followup, "state": state, "quotes": quotes, "excluded_plans": excluded,
-        "ai_status": "deterministic_shortlist", "journey": journey if journey != "undetermined" else "ipmi",
+        "ai_status": "verified_shortlist" if verification.model_used else "deterministic_shortlist",
+        "journey": journey if journey != "undetermined" else "ipmi",
         "lead_cta": {"show": True, "journey": "ipmi", "label": label},
         "open_application_form": False, "quick_replies": [],
         "discovery": discovery_progress(state),
+        "verification": verification_payload,
     }
