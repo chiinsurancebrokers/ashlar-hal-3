@@ -254,6 +254,12 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         claude_ack = intake.get("acknowledgement", "")
 
     journey = classify_journey(message, state)
+    # Once discovery has established an IPMI journey, short follow-ups such as
+    # "yes" / "ναι" must not erase that context by being classified as
+    # undetermined. Keep the established journey sticky unless the applicant
+    # clearly switches product.
+    if journey == "undetermined" and previous_journey in valid:
+        journey = previous_journey
     state["journey"] = journey
 
     if state.get("discovery_complete") and journey == "ipmi":

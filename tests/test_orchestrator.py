@@ -242,3 +242,43 @@ def test_real_english_sentence_can_explicitly_switch_from_greek():
     state = {"language": "el"}
     assert _resolve_language("Please continue in English", state) is False
     assert state["language"] == "en"
+
+
+@pytest.mark.asyncio
+async def test_post_shortlist_yes_keeps_ipmi_context_and_explains_instead_of_rebuilding(monkeypatch):
+    import backend.app.services.orchestrator as orch
+
+    async def fake_explain(_quote, _message, _greek):
+        return "EXPLAINED"
+
+    monkeypatch.setattr(orch, "explain_plan", fake_explain)
+    state = {
+        "journey": "ipmi", "discovery_complete": True,
+        "age": 40, "residence_country": "Greece", "coverage_area": "area1",
+        "language": "en",
+    }
+    result = await orch.chat_turn("yes", state, [])
+    assert result["journey"] == "ipmi"
+    assert result["ai_status"] == "evidence_locked_plan_explanation"
+    assert result["reply"] == "EXPLAINED"
+    assert result["quotes"] == []
+
+
+@pytest.mark.asyncio
+async def test_post_shortlist_nai_keeps_ipmi_context_and_explains_in_greek(monkeypatch):
+    import backend.app.services.orchestrator as orch
+
+    async def fake_explain(_quote, _message, greek):
+        assert greek is True
+        return "ΑΝΑΛΥΣΗ"
+
+    monkeypatch.setattr(orch, "explain_plan", fake_explain)
+    state = {
+        "journey": "ipmi", "discovery_complete": True,
+        "age": 40, "residence_country": "Greece", "coverage_area": "area1",
+        "language": "el",
+    }
+    result = await orch.chat_turn("ναι", state, [])
+    assert result["ai_status"] == "evidence_locked_plan_explanation"
+    assert result["reply"] == "ΑΝΑΛΥΣΗ"
+    assert result["quotes"] == []
