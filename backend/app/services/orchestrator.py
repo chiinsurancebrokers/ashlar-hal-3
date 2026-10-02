@@ -15,7 +15,7 @@ from backend.app.travel.discovery import deterministic_travel_updates, next_trav
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
 APPLICANT_STATE_KEYS = {
-    "age", "residence_country", "nationality", "coverage_area", "currency", "deductible",
+    "age", "residence_country", "nationality", "primary_healthcare_country", "coverage_area", "currency", "deductible",
     "deductible_preference", "budget_annual", "client_segment", "chronic_conditions_note",
     "outpatient_required", "maternity_required", "dental_required", "mental_health_required",
     "wellness_required", "optical_required", "evacuation_required", "chronic_required",
@@ -261,6 +261,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "age": {"age"},
             "residence": {"residence_country"},
             "nationality": {"nationality"},
+            "primary_healthcare_country": {"primary_healthcare_country"},
             "coverage_area": {"coverage_area"},
             "deductible": {"deductible", "deductible_preference"},
             "outpatient": {"outpatient_required"},
