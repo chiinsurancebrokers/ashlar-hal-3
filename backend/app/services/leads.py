@@ -11,6 +11,7 @@ from backend.app.core.config import get_settings, Settings
 from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_current
 from backend.app.schemas.quote import QuoteResult
+from backend.app.services.current_policy_token import verify_current_policy_token
 
 
 def _safe(value: object) -> str:
@@ -138,16 +139,50 @@ def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: S
     return selected
 
 
-def _build_comparison_message(name: str, email: str, plans: list[QuoteResult], sender: str, bcc: str | None) -> EmailMessage:
+def _build_comparison_message(
+    name: str,
+    email: str,
+    plans: list[QuoteResult],
+    sender: str,
+    bcc: str | None,
+    current_policy: dict | None = None,
+) -> EmailMessage:
     top = plans[0]
-    rows = "".join(f"""<tr>
+    rows = ""
+    plain_lines = ["Your Ashlar health insurance comparison", ""]
+
+    if current_policy:
+        premium = current_policy.get("premium") or {}
+        cp_amount = premium.get("amount")
+        cp_currency = premium.get("currency") or ""
+        cp_premium = f"{cp_currency} {float(cp_amount):,.2f}" if cp_amount not in (None, "") else "Not confirmed"
+        cp_limit = current_policy.get("annual_limit") or "Not confirmed"
+        cp_name = current_policy.get("plan_name") or "Current policy"
+        cp_provider = current_policy.get("provider") or "Current insurer"
+        cp_area = current_policy.get("area_of_cover") or "Not confirmed"
+        cp_deductible = current_policy.get("deductible_or_excess") or "Not confirmed"
+        rows += f"""<tr style='background:#f7f8fa'>
+          <td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>Current policy: {_safe(cp_name)}</strong><br><span>{_safe(cp_provider)}</span></td>
+          <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_premium)}</td>
+          <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_limit)}</td>
+          <td style='padding:12px;border-bottom:1px solid #e7ebef'>Area: {_safe(cp_area)}<br>Deductible: {_safe(cp_deductible)}</td>
+        </tr>"""
+        plain_lines += [
+            f"Current policy: {cp_name} — {cp_provider}",
+            f"Annual premium: {cp_premium}",
+            f"Area: {cp_area}",
+            f"Annual limit: {cp_limit}",
+            f"Deductible: {cp_deductible}",
+            "",
+        ]
+
+    rows += "".join(f"""<tr>
       <td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>{_safe(p.product_name)}</strong><br><span>{_safe(p.insurer)}</span></td>
       <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.currency)} {p.premium:,.2f}</td>
       <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_annual_limit)}</td>
       <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_why)}</td>
     </tr>""" for p in plans)
 
-    plain_lines = ["Your Ashlar health insurance comparison", ""]
     for i, p in enumerate(plans, 1):
         plain_lines += [f"{i}. {p.product_name} — {p.insurer}", f"Annual premium: {p.currency} {p.premium:,.2f}", ""]
 
@@ -177,17 +212,34 @@ def _build_comparison_message(name: str, email: str, plans: list[QuoteResult], s
     return msg
 
 
-async def send_comparison_email(name: str, email: str, applicant_state: dict, plan_keys: list[str]) -> dict:
+async def send_comparison_email(
+    name: str,
+    email: str,
+    applicant_state: dict,
+    plan_keys: list[str],
+    current_policy_token: str | None = None,
+) -> dict:
     settings = get_settings()
 
-    # THE re-verification step — this is the whole point of this function.
-    # Done BEFORE checking mail config, so a forged/unknown plan_key always
-    # surfaces as a clear 400 regardless of whether Gmail is configured.
+    # Re-verify plan prices and eligibility server-side. Current-policy facts
+    # are accepted only from HAL's signed token created immediately after
+    # Proposal Studio analysis; arbitrary browser-edited policy data is ignored.
     plans = _verified_plans_for(applicant_state, plan_keys, settings)
+    current_policy = None
+    if current_policy_token:
+        current_policy = verify_current_policy_token(current_policy_token)
 
     if not settings.gmail_sender_email:
         raise RuntimeError("Gmail delivery is not configured.")
 
-    msg = _build_comparison_message(name, email, plans, settings.gmail_sender_email, settings.gmail_lead_recipient)
+    msg = _build_comparison_message(
+        name, email, plans, settings.gmail_sender_email,
+        settings.gmail_lead_recipient, current_policy=current_policy,
+    )
     result = await _send_via_gmail(msg)
-    return {"status": "sent", "gmail_message_id": result.get("id"), "plans_sent": [p.plan_key for p in plans]}
+    return {
+        "status": "sent",
+        "gmail_message_id": result.get("id"),
+        "plans_sent": [p.plan_key for p in plans],
+        "current_policy_included": bool(current_policy),
+    }

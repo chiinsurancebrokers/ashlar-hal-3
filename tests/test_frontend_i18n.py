@@ -82,7 +82,7 @@ def test_voice_controller_stops_previous_audio_and_tts_request():
 def test_plan_cards_keep_readable_minimum_width_instead_of_three_squeezed_columns():
     html = _html()
     assert "grid-auto-columns:minmax(280px,320px)" in html
-    assert "@media(min-width:1180px)" in html
+    assert "@media(min-width:900px)" in html
     assert "word-break:normal" in html
 
 
@@ -93,3 +93,17 @@ def test_current_policy_upload_is_bilingual_and_server_proxied():
     assert "API+'/quotes/current-policy'" in html
     assert "let currentPolicy = null" in html
     assert "currentPolicyBenefitForLabel" in html
+
+
+def test_quote_cards_never_switch_to_squeezed_three_column_layout():
+    html = _html()
+    assert "@media(min-width:1180px){.quotes-row" not in html
+    assert "grid-template-columns:repeat(3,minmax(0,1fr))" not in html
+    assert "grid-auto-columns:minmax(300px,340px)" in html
+
+
+def test_current_policy_email_sends_signed_token_not_browser_policy_object():
+    html = _html()
+    assert "let currentPolicyToken = null" in html
+    assert "currentPolicyToken=d.current_policy_token||null" in html
+    assert "current_policy_token:currentPolicyToken" in html

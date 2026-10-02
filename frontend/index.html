@@ -61,7 +61,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .quotes-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,320px);gap:14px;overflow-x:auto;overflow-y:hidden;padding:14px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin}
 .quote-card{scroll-snap-align:start;min-width:0;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
 @media(max-width:640px){.quotes-row{grid-auto-columns:minmax(260px,86vw)}}
-@media(min-width:1180px){.quotes-row{grid-auto-columns:minmax(300px,1fr);grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row;overflow-x:visible}}
+@media(min-width:900px){.quotes-row{grid-auto-columns:minmax(300px,340px)}}
 .quote-card.recommended{border-color:var(--accent);box-shadow:0 10px 28px rgba(87,71,232,.14)}
 .rec-ribbon{position:absolute;top:-11px;left:16px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.02em}
 .q-stat-line{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:2px}
@@ -346,6 +346,7 @@ let currentJourney = 'ipmi';
 let lastQuotes = [];
 let excludedPlans = [];
 let currentPolicy = null;
+let currentPolicyToken = null;
 const compareSelected = new Set();
 
 const I18N = {
@@ -799,6 +800,7 @@ async function uploadCurrentPolicy(file){
     const d=await r.json();removeThinking();
     if(!r.ok) throw new Error(d.detail||t('policyFailed'));
     currentPolicy=d.current_policy||null;
+    currentPolicyToken=d.current_policy_token||null;
     addMsg(`${t('policyReady')}: ${currentPolicy?.plan_name||file.name}.`,'hal');
     renderState();
   }catch(e){
@@ -871,7 +873,7 @@ async function sendComparisonEmail(){
   const name=document.getElementById('emailName').value.trim(),email=document.getElementById('emailAddress').value.trim();
   if(!email){alert(t('emailRequired'));return;}
   try{
-    const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected]})});
+    const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected],current_policy_token:currentPolicyToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('comparisonSendFail'));
     closeModal('emailModal');addMsg(t('comparisonSent'),'hal');
   }catch(e){alert(lang()==='el'?t('comparisonSendFail'):e.message);}

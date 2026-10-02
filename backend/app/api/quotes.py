@@ -8,6 +8,7 @@ from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions, qu
 from backend.app.evidence.compare_matrix import build_comparison_matrix, matrix_to_dict
 from backend.app.evidence.carrier_profile import carrier_profile
 from backend.app.services.adviser import comparison_conclusion, explain_plan
+from backend.app.services.current_policy_token import create_current_policy_token
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
 
@@ -62,7 +63,10 @@ async def current_policy(file: UploadFile = File(...)):
     if response.status_code >= 400:
         raise HTTPException(status_code=502, detail=str(body.get("detail") or "Current policy could not be analyzed."))
 
-    return {"current_policy": body}
+    return {
+        "current_policy": body,
+        "current_policy_token": create_current_policy_token(body),
+    }
 
 
 class ExplainPlanRequest(BaseModel):

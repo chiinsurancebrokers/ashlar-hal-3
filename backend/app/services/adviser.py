@@ -249,9 +249,10 @@ async def comparison_conclusion(matrix_rows: list[dict], plan_labels: dict[str, 
     try:
         text = await adviser_response(
             instructions=build_comparison_conclusion_instructions(matrix_rows, plan_labels, greek),
-            message="Write the comparison conclusion.", max_tokens=300,
+            message="Write the comparison conclusion in complete sentences. If space is tight, omit lower-priority details rather than cutting off mid-sentence.",
+            max_tokens=650,
         )
-        if fairness_check(text) or _language_mismatch(text, greek):
+        if fairness_check(text) or _language_mismatch(text, greek) or _looks_truncated(text):
             return _deterministic_comparison_conclusion(matrix_rows, plan_labels, greek)
         return text
     except Exception:
