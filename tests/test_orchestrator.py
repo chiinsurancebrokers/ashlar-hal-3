@@ -77,6 +77,7 @@ async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     r = await turn("Christos")
     r = await turn("51")
     r = await turn("Greece")
+    r = await turn("Greek")   # nationality / eligibility
     r = await turn("Worldwide excluding USA")
     r = await turn("skip")   # deductible
     r = await turn("include outpatient")
