@@ -103,6 +103,13 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .excluded-item{padding:6px 0;border-bottom:1px solid var(--border)}
 
 .lead-cta{display:block;width:100%;background:var(--accent);color:var(--white);border:none;border-radius:10px;padding:12px;font-weight:700;margin-top:10px;cursor:pointer}
+.current-policy-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--white);color:var(--navy);border:1px dashed var(--accent);border-radius:10px;padding:12px;font-weight:700;margin:10px 0;cursor:pointer}
+.current-policy-cta:hover{background:var(--accent-soft)}
+.current-policy-chip{display:inline-flex;align-items:center;gap:6px;background:#eaf7ef;color:var(--good);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}
+.current-policy-summary{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px}
+.current-policy-summary strong{display:block;margin-bottom:4px}
+.current-policy-meta{font-size:11px;color:var(--muted);line-height:1.5}
+
 
 .compare-tray{position:fixed;bottom:90px;left:0;right:0;background:var(--navy);color:var(--white);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:40}
 .compare-tray.show{display:flex}
@@ -243,6 +250,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <button id="compareOpenBtn" onclick="openCompare()">Compare</button>
   </div>
 </div>
+<input id="currentPolicyFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html" style="display:none" onchange="uploadCurrentPolicy(this.files && this.files[0])">
 
 <div class="composer" style="display:none">
   <button id="micBtn" class="mic-btn" onclick="toggleRecording()" title="Tap to speak" aria-label="Tap to speak">🎙</button>
@@ -337,6 +345,7 @@ let history = [];
 let currentJourney = 'ipmi';
 let lastQuotes = [];
 let excludedPlans = [];
+let currentPolicy = null;
 const compareSelected = new Set();
 
 const I18N = {
@@ -386,7 +395,11 @@ const I18N = {
     genericError:"I couldn't complete that request just now. Please try once more.",
     area1:'Europe', area2:'Worldwide excl. USA/SG/HK/CN', area3:'Worldwide excl. USA', area4:'Worldwide incl. USA',
     outpatient:'Outpatient', maternity:'Maternity', dental:'Dental', mental:'Mental health', wellness:'Wellness', optical:'Optical', evac:'Evacuation', chronic:'Chronic cover',
-    officialDocs:'Official plan documents', openPdf:'Open PDF', tableBenefits:'Table of Benefits', policyWording:'Policy Wording', brochure:'Plan brochure'
+    officialDocs:'Official plan documents', openPdf:'Open PDF', tableBenefits:'Table of Benefits', policyWording:'Policy Wording', brochure:'Plan brochure',
+    uploadCurrentPolicy:'📄 Compare with your current policy', currentPolicy:'Current policy', policyUploading:'Analysing your current policy…',
+    policyReady:'Current policy ready for comparison', policyFailed:'I could not analyse that policy. Please try another PDF or document.',
+    policySelectPlan:'Select at least one plan to compare with your current policy.', replacePolicy:'Replace current policy',
+    confidence:'Confidence', limitations:'Key limitations'
   },
   el: {
     eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΕΥΦΥΪΑ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
@@ -434,7 +447,11 @@ const I18N = {
     genericError:'Δεν μπόρεσα να ολοκληρώσω το αίτημα αυτή τη στιγμή. Δοκιμάστε ξανά.',
     area1:'Ευρώπη', area2:'Παγκόσμια εκτός ΗΠΑ/Σιγκαπούρης/Χονγκ Κονγκ/Κίνας', area3:'Παγκόσμια εκτός ΗΠΑ', area4:'Παγκόσμια με ΗΠΑ',
     outpatient:'Εξωνοσοκομειακή', maternity:'Μητρότητα', dental:'Οδοντιατρική', mental:'Ψυχική υγεία', wellness:'Προληπτικός έλεγχος', optical:'Οπτικά', evac:'Ιατρική διακομιδή', chronic:'Χρόνιες παθήσεις',
-    officialDocs:'Επίσημα έντυπα προγράμματος', openPdf:'Άνοιγμα PDF', tableBenefits:'Πίνακας Παροχών', policyWording:'Όροι Ασφάλισης', brochure:'Έντυπο προγράμματος'
+    officialDocs:'Επίσημα έντυπα προγράμματος', openPdf:'Άνοιγμα PDF', tableBenefits:'Πίνακας Παροχών', policyWording:'Όροι Ασφάλισης', brochure:'Έντυπο προγράμματος',
+    uploadCurrentPolicy:'📄 Σύγκρινε με το τρέχον συμβόλαιό σου', currentPolicy:'Τρέχον συμβόλαιο', policyUploading:'Αναλύω το τρέχον συμβόλαιό σας…',
+    policyReady:'Το τρέχον συμβόλαιο είναι έτοιμο για σύγκριση', policyFailed:'Δεν μπόρεσα να αναλύσω αυτό το συμβόλαιο. Δοκιμάστε άλλο PDF ή έγγραφο.',
+    policySelectPlan:'Επιλέξτε τουλάχιστον ένα πρόγραμμα για σύγκριση με το τρέχον συμβόλαιό σας.', replacePolicy:'Αντικατάσταση συμβολαίου',
+    confidence:'Βεβαιότητα', limitations:'Βασικοί περιορισμοί'
   }
 };
 
@@ -605,8 +622,8 @@ function renderState(){
   let step=lastQuotes.length?2:1;
   ['ps1','ps2','ps3'].forEach((id,i)=>{const el=document.getElementById(id);el.classList.toggle('active',i+1===step);el.classList.toggle('done',i+1<step);});
   const n=compareSelected.size;
-  document.getElementById('compareCount').textContent=`${n} ${n===1?t('selectedSingular'):t('selectedPlural')}`;
-  document.getElementById('compareTray').classList.toggle('show',n>=2);
+  document.getElementById('compareCount').textContent=`${n} ${n===1?t('selectedSingular'):t('selectedPlural')}` + (currentPolicy ? ` · ${t('currentPolicy')}` : '');
+  document.getElementById('compareTray').classList.toggle('show',n>=2 || (currentPolicy && n>=1));
 }
 
 function areaLabel(a){ return t(a)||a; }
@@ -617,6 +634,9 @@ function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[
   let html=esc(text).replace(/\n/g,'<br>');
   if(quotes&&quotes.length){
     html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
+    html+=currentPolicy
+      ? `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
+      : `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()">${esc(t('uploadCurrentPolicy'))}</button>`;
     if(excluded&&excluded.length){
       const suffix=lang()==='el'?'':'s';
       const label=t('whyExcluded').replace('{n}',excluded.length).replace('{s}',excluded.length===1?'':suffix);
@@ -742,40 +762,103 @@ async function tellMeMore(i){
   }
 }
 
+function currentPolicyDisplayValue(value){
+  if(value==null || value==='' || value==='Not specified' || value==='Not mentioned') return t('notConfirmed');
+  return String(value);
+}
+
+function currentPolicyBenefitForLabel(label){
+  if(!currentPolicy) return t('notConfirmed');
+  const benefits=currentPolicy.benefits||{}, low=(label||'').toLowerCase();
+  const pairs=[
+    [['outpatient','out-patient'], 'outpatient'],
+    [['inpatient','in-patient','hospitalisation','hospitalization'], 'inpatient'],
+    [['cancer','oncology'], 'cancer'],
+    [['chronic'], 'chronic_conditions'],
+    [['mental','psychiatric'], 'mental_health'],
+    [['maternity','pregnancy','childbirth'], 'maternity'],
+    [['dental'], 'dental'],
+    [['optical','vision','eye'], 'optical'],
+    [['diagnostic','mri','ct','pet','imaging'], 'diagnostics_imaging'],
+    [['preventive','wellness','screening'], 'preventive'],
+    [['evacuation','repatriation'], 'evacuation_repatriation'],
+  ];
+  for(const [needles,key] of pairs){if(needles.some(n=>low.includes(n))) return currentPolicyDisplayValue(benefits[key]);}
+  return t('notConfirmed');
+}
+
+async function uploadCurrentPolicy(file){
+  const input=document.getElementById('currentPolicyFile');
+  if(!file) return;
+  if(file.size>20*1024*1024){addMsg(lang()==='el'?'Το αρχείο είναι μεγαλύτερο από 20 MB.':'The file is larger than 20 MB.','hal');input.value='';return;}
+  stopSpeech();
+  showThinking(t('policyUploading'));
+  const form=new FormData();form.append('file',file,file.name);
+  try{
+    const r=await fetch(API+'/quotes/current-policy',{method:'POST',body:form});
+    const d=await r.json();removeThinking();
+    if(!r.ok) throw new Error(d.detail||t('policyFailed'));
+    currentPolicy=d.current_policy||null;
+    addMsg(`${t('policyReady')}: ${currentPolicy?.plan_name||file.name}.`,'hal');
+    renderState();
+  }catch(e){
+    removeThinking();addMsg(lang()==='el'?t('policyFailed'):(e.message||t('policyFailed')),'hal');
+  }finally{input.value='';}
+}
+
 async function openCompare(){
   const content=document.getElementById('compareContent');
   content.innerHTML=`<p style="color:var(--muted)">${esc(t('buildingComparison'))}</p>`;
   document.getElementById('compareModal').classList.add('open');
   try{
-    const r=await fetch(API+'/quotes/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant_state:state,plan_keys:[...compareSelected],language:lang()})});
+    const r=await fetch(API+'/quotes/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant_state:state,plan_keys:[...compareSelected],language:lang(),has_current_policy:!!currentPolicy})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));content.innerHTML=renderDetailedCompare(d);
   }catch(e){content.innerHTML=`<p style="color:#b3261e">${esc(lang()==='el'?t('genericError'):e.message)}</p>`;}
 }
 
 function renderDetailedCompare(d){
-  const plans=d.plans,matrix=d.matrix;
-  let html='<div style="display:grid;grid-template-columns:repeat('+plans.length+',1fr);gap:10px;margin-bottom:16px">'+
+  const plans=d.plans,matrix=d.matrix,hasPolicy=!!currentPolicy;
+  let html='';
+  if(hasPolicy){
+    const cp=currentPolicy;
+    const premium=cp.premium||{};
+    html+=`<div class="current-policy-summary"><strong>📄 ${esc(t('currentPolicy'))}: ${esc(cp.plan_name||cp.filename||'')}</strong><div class="current-policy-meta">${esc(cp.provider||'')} · ${esc(t('confidence'))}: ${esc(cp.confidence||'—')}</div></div>`;
+  }
+  html+='<div style="display:grid;grid-template-columns:repeat('+Math.max(plans.length,1)+',minmax(180px,1fr));gap:10px;margin-bottom:16px;overflow-x:auto">'+
     plans.map(p=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>${renderBenefitGrid(p.benefit_checklist)}</div>`).join('')+'</div>';
+
+  const cpPremium=currentPolicy?.premium||{};
   const rows=[
-    [t('annualPremium'),p=>money(p.premium,p.currency)],
-    [t('monthly'),p=>money(p.premium/12,p.currency)],
-    [t('coverageArea'),p=>trText(p.coverage_area_label)],
-    [t('annualLimit'),p=>trText(p.card_annual_limit)],
-    [t('deductible'),p=>trText(p.card_deductible)],
+    [t('annualPremium'),p=>money(p.premium,p.currency),()=>cpPremium.amount?money(cpPremium.amount,cpPremium.currency||'EUR'):t('notConfirmed')],
+    [t('monthly'),p=>money(p.premium/12,p.currency),()=>cpPremium.amount?money(Number(cpPremium.amount)/12,cpPremium.currency||'EUR'):t('notConfirmed')],
+    [t('coverageArea'),p=>trText(p.coverage_area_label),()=>currentPolicyDisplayValue(currentPolicy?.area_of_cover)],
+    [t('annualLimit'),p=>trText(p.card_annual_limit),()=>currentPolicyDisplayValue(currentPolicy?.annual_limit)],
+    [t('deductible'),p=>trText(p.card_deductible),()=>currentPolicyDisplayValue(currentPolicy?.deductible_or_excess)],
   ];
-  html+=`<table class="compare-table"><tr><th>${t('characteristic')}</th>`+plans.map(p=>`<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('')+'</tr>';
-  rows.forEach(([label,fn])=>{html+=`<tr><td><b>${esc(label)}</b></td>`+plans.map(p=>`<td>${esc(fn(p)||'—')}</td>`).join('')+'</tr>';});
-  matrix.rows.forEach(row=>{
-    html+=`<tr><td>${esc(trText(row.label))}</td>`+plans.map(p=>{const raw=row.values[p.plan_key],v=trText(raw),dim=raw==='Not confirmed'?'style="color:var(--muted)"':'';return `<td ${dim}>${esc(v||'—')}</td>`;}).join('')+'</tr>';
+  html+=`<div style="overflow-x:auto"><table class="compare-table"><tr><th>${t('characteristic')}</th>`;
+  if(hasPolicy) html+=`<th>${esc(t('currentPolicy'))}<br><small>${esc(currentPolicy?.provider||'')}</small></th>`;
+  html+=plans.map(p=>`<th>${esc(p.product_name)}<br><small>${esc(p.insurer)}</small></th>`).join('')+'</tr>';
+  rows.forEach(([label,fn,cpfn])=>{
+    html+=`<tr><td><b>${esc(label)}</b></td>`;
+    if(hasPolicy) html+=`<td>${esc(cpfn())}</td>`;
+    html+=plans.map(p=>`<td>${esc(fn(p)||'—')}</td>`).join('')+'</tr>';
   });
-  html+='</table>';
+  matrix.rows.forEach(row=>{
+    html+=`<tr><td>${esc(trText(row.label))}</td>`;
+    if(hasPolicy) html+=`<td>${esc(currentPolicyBenefitForLabel(row.label))}</td>`;
+    html+=plans.map(p=>{const raw=row.values[p.plan_key],v=trText(raw),dim=raw==='Not confirmed'?'style="color:var(--muted)"':'';return `<td ${dim}>${esc(v||'—')}</td>`;}).join('')+'</tr>';
+  });
+  html+='</table></div>';
+  if(hasPolicy && (currentPolicy.critical_limitations||[]).length){
+    html+=`<div class="current-policy-summary" style="margin-top:12px"><strong>${esc(t('limitations'))}</strong>${currentPolicy.critical_limitations.slice(0,5).map(x=>`<div class="current-policy-meta">• ${esc(x.detail||x.topic||'')}</div>`).join('')}</div>`;
+  }
   if(d.unsupported_note)html+=`<p style="font-size:12px;color:#a15c00;margin-top:10px">${esc(trText(d.unsupported_note))}</p>`;
   const warnings=[...new Set(plans.flatMap(p=>p.warnings||[]))];
   if(warnings.length)html+=`<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">${warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`;
   html+=`<div style="background:var(--accent-soft);border-radius:10px;padding:12px;margin-top:14px"><div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:4px">${t('shortConclusion')}</div><div style="font-size:13px">${esc(d.conclusion)}</div></div>`;
   html+=`<p style="font-size:10px;color:var(--muted);margin-top:12px">${lang()==='el'
-    ?'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους ή εξαιρέσεις κάθε προγράμματος. Υπόκειται σε έγκριση ανάληψης κινδύνου.'
-    :'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations. It is not a contractual document and does not replace the full terms/exclusions of each plan. Subject to underwriting approval.'}</p>`;
+    ?'Ashlar Assurance | By CHI Insurance Brokers — Το παρόν αποτελεί σύνοψη ενδεικτικών προσφορών και στοιχείων που εξήχθησαν από το έγγραφο που ανεβάσατε. Δεν αποτελεί συμβατικό έγγραφο και δεν υποκαθιστά τους πλήρεις όρους ή εξαιρέσεις κάθε προγράμματος.'
+    :'Ashlar Assurance | By CHI Insurance Brokers — This is a summary of indicative quotations and facts extracted from the document you uploaded. It is not a contractual document and does not replace the full terms/exclusions of each plan.'}</p>`;
   return html;
 }
 
