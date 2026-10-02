@@ -109,6 +109,18 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .current-policy-summary{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px}
 .current-policy-summary strong{display:block;margin-bottom:4px}
 .current-policy-meta{font-size:11px;color:var(--muted);line-height:1.5}
+.source-viewer-modal .modal{max-width:1100px;width:96vw;height:88vh;display:flex;flex-direction:column}
+.source-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.source-viewer-frame{width:100%;flex:1;border:1px solid var(--border);border-radius:12px;background:#fff}
+.healthcare-context{margin-top:16px;border:1px solid var(--border);border-radius:14px;padding:14px;background:#fbfcfd}
+.healthcare-context h4{margin:0 0 6px;font-size:14px}
+.healthcare-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:12px 0}
+.healthcare-metric{background:white;border:1px solid var(--border);border-radius:10px;padding:10px}
+.healthcare-metric strong{display:block;font-size:18px;color:var(--navy)}
+.healthcare-metric small{display:block;color:var(--muted);margin-top:3px;line-height:1.35}
+.source-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.source-btn{border:1px solid var(--border);background:white;border-radius:10px;padding:8px 10px;font-weight:700;font-size:11px;cursor:pointer;color:var(--accent)}
+
 
 
 .compare-tray{position:fixed;bottom:90px;left:0;right:0;background:var(--navy);color:var(--white);padding:10px 20px;display:none;align-items:center;justify-content:space-between;z-index:40}
@@ -282,6 +294,17 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
   </div>
 </div>
 
+<!-- Embedded source/document viewer -->
+<div class="modal-backdrop source-viewer-modal" id="sourceViewerModal" onclick="if(event.target===this)closeSourceViewer()">
+  <div class="modal">
+    <div class="source-viewer-head">
+      <h3 id="sourceViewerTitle">Source</h3>
+      <button class="btn-secondary" onclick="closeSourceViewer()">×</button>
+    </div>
+    <iframe id="sourceViewerFrame" class="source-viewer-frame" title="Ashlar source viewer" referrerpolicy="no-referrer"></iframe>
+  </div>
+</div>
+
 <!-- Compare modal -->
 <div class="modal-backdrop" id="compareModal" onclick="if(event.target===this)closeModal('compareModal')">
   <div class="modal" style="max-width:760px">
@@ -400,7 +423,9 @@ const I18N = {
     uploadCurrentPolicy:'📄 Compare with your current policy', currentPolicy:'Current policy', policyUploading:'Analysing your current policy…',
     policyReady:'Current policy ready for comparison', policyFailed:'I could not analyse that policy. Please try another PDF or document.',
     policySelectPlan:'Select at least one plan to compare with your current policy.', replacePolicy:'Replace current policy',
-    confidence:'Confidence', limitations:'Key limitations'
+    confidence:'Confidence', limitations:'Key limitations',
+    healthcareCountry:'Main healthcare country', healthcareContext:'Healthcare context', source:'Source', policyWordings:'Supporting policy documents',
+    policyWordingMissing:'No supporting policy wording is attached in Proposal Studio yet.', oecdAverage:'OECD avg', viewInsideAshlar:'View inside Ashlar'
   },
   el: {
     eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΕΥΦΥΪΑ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
@@ -452,7 +477,9 @@ const I18N = {
     uploadCurrentPolicy:'📄 Σύγκρινε με το τρέχον συμβόλαιό σου', currentPolicy:'Τρέχον συμβόλαιο', policyUploading:'Αναλύω το τρέχον συμβόλαιό σας…',
     policyReady:'Το τρέχον συμβόλαιο είναι έτοιμο για σύγκριση', policyFailed:'Δεν μπόρεσα να αναλύσω αυτό το συμβόλαιο. Δοκιμάστε άλλο PDF ή έγγραφο.',
     policySelectPlan:'Επιλέξτε τουλάχιστον ένα πρόγραμμα για σύγκριση με το τρέχον συμβόλαιό σας.', replacePolicy:'Αντικατάσταση συμβολαίου',
-    confidence:'Βεβαιότητα', limitations:'Βασικοί περιορισμοί'
+    confidence:'Βεβαιότητα', limitations:'Βασικοί περιορισμοί',
+    healthcareCountry:'Κύρια χώρα περίθαλψης', healthcareContext:'Πλαίσιο περίθαλψης', source:'Πηγή', policyWordings:'Υποστηρικτικά ασφαλιστικά έντυπα',
+    policyWordingMissing:'Δεν έχει συνδεθεί ακόμη υποστηρικτικό policy wording στο Proposal Studio.', oecdAverage:'Μ.Ο. ΟΟΣΑ', viewInsideAshlar:'Προβολή μέσα στην Ashlar'
   }
 };
 
@@ -613,6 +640,7 @@ function renderState(){
   const box=document.getElementById('needsBody'),chips=[];
   if(state.age)chips.push([t('ageChip')+' '+state.age,false]);
   if(state.residence_country)chips.push([state.residence_country,false]);
+  if(state.primary_healthcare_country)chips.push([`${t('healthcareCountry')}: ${state.primary_healthcare_country}`,false]);
   if(state.coverage_area)chips.push([areaLabel(state.coverage_area),false]);
   if(state.budget_annual)chips.push([money(state.budget_annual)+t('budgetChip'),false]);
   Object.entries(MUST_FIELDS).forEach(([k,key])=>{if(state[k])chips.push([t(key),true]);});
@@ -718,6 +746,19 @@ function toggleCompare(key,btn){
   renderState();
 }
 
+function openSourceViewer(url,title){
+  if(!/^https?:\/\//i.test(url||'')) return;
+  const modal=document.getElementById('sourceViewerModal');
+  document.getElementById('sourceViewerTitle').textContent=title||t('source');
+  document.getElementById('sourceViewerFrame').src=url;
+  modal.classList.add('open');
+}
+function closeSourceViewer(){
+  const modal=document.getElementById('sourceViewerModal');
+  modal.classList.remove('open');
+  document.getElementById('sourceViewerFrame').src='about:blank';
+}
+
 function documentLabel(url){
   const low=(url||'').toLowerCase();
   if(low.includes('tob')||low.includes('table')||low.includes('benefit')) return t('tableBenefits');
@@ -733,7 +774,7 @@ function addPlanExplanationMsg(answer, docs){
   if(valid.length){
     html+=`<div class="plan-docs"><div class="plan-docs-title">${esc(t('officialDocs'))}</div><div class="plan-doc-grid">`;
     valid.forEach(u=>{
-      html+=`<a class="plan-doc-link" href="${esc(u)}" target="_blank" rel="noopener noreferrer"><strong>📄 ${esc(documentLabel(u))}</strong><span>${esc(t('openPdf'))} ↗</span></a>`;
+      html+=`<button class="plan-doc-link" type="button" onclick="openSourceViewer('${esc(u)}','${esc(documentLabel(u))}')"><strong>📄 ${esc(documentLabel(u))}</strong><span>${esc(t('viewInsideAshlar'))}</span></button>`;
     });
     html+='</div></div>';
   }
@@ -801,7 +842,8 @@ async function uploadCurrentPolicy(file){
     if(!r.ok) throw new Error(d.detail||t('policyFailed'));
     currentPolicy=d.current_policy||null;
     currentPolicyToken=d.current_policy_token||null;
-    addMsg(`${t('policyReady')}: ${currentPolicy?.plan_name||file.name}.`,'hal');
+    const wordingNote=currentPolicy?.policy_wording_status==='attached' ? '' : ' '+t('policyWordingMissing');
+    addMsg(`${t('policyReady')}: ${currentPolicy?.plan_name||file.name}.${wordingNote}`,'hal');
     renderState();
   }catch(e){
     removeThinking();addMsg(lang()==='el'?t('policyFailed'):(e.message||t('policyFailed')),'hal');
@@ -814,7 +856,15 @@ async function openCompare(){
   document.getElementById('compareModal').classList.add('open');
   try{
     const r=await fetch(API+'/quotes/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({applicant_state:state,plan_keys:[...compareSelected],language:lang(),has_current_policy:!!currentPolicy})});
-    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));content.innerHTML=renderDetailedCompare(d);
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    content.innerHTML=renderDetailedCompare(d);
+    if(state.primary_healthcare_country){
+      try{
+        const hc=await fetch(API+'/healthcare/context?country='+encodeURIComponent(state.primary_healthcare_country)+'&language='+lang());
+        const hcd=await hc.json();
+        content.insertAdjacentHTML('beforeend',renderHealthcareContext(hcd));
+      }catch(_){}
+    }
   }catch(e){content.innerHTML=`<p style="color:#b3261e">${esc(lang()==='el'?t('genericError'):e.message)}</p>`;}
 }
 
@@ -824,7 +874,16 @@ function renderDetailedCompare(d){
   if(hasPolicy){
     const cp=currentPolicy;
     const premium=cp.premium||{};
-    html+=`<div class="current-policy-summary"><strong>📄 ${esc(t('currentPolicy'))}: ${esc(cp.plan_name||cp.filename||'')}</strong><div class="current-policy-meta">${esc(cp.provider||'')} · ${esc(t('confidence'))}: ${esc(cp.confidence||'—')}</div></div>`;
+    html+=`<div class="current-policy-summary"><strong>📄 ${esc(t('currentPolicy'))}: ${esc(cp.plan_name||cp.filename||'')}</strong><div class="current-policy-meta">${esc(cp.provider||'')} · ${esc(t('confidence'))}: ${esc(cp.confidence||'—')}</div>`;
+    const support=(cp.supporting_documents||[]).filter(x=>x&&x.url);
+    if(support.length){
+      html+=`<div class="source-buttons"><span style="font-size:11px;font-weight:700;width:100%">${esc(t('policyWordings'))}</span>`;
+      support.slice(0,4).forEach(doc=>{html+=`<button type="button" class="source-btn" onclick="openSourceViewer('${esc(doc.url)}','${esc(doc.filename||doc.doc_type||t('policyWording'))}')">📄 ${esc(doc.doc_type||documentLabel(doc.filename||''))}</button>`;});
+      html+='</div>';
+    }else if(cp.policy_wording_status==='not_attached'){
+      html+=`<div class="current-policy-meta" style="margin-top:8px">${esc(t('policyWordingMissing'))}</div>`;
+    }
+    html+='</div>';
   }
   html+='<div style="display:grid;grid-template-columns:repeat('+Math.max(plans.length,1)+',minmax(180px,1fr));gap:10px;margin-bottom:16px;overflow-x:auto">'+
     plans.map(p=>`<div style="background:var(--bg);border-radius:10px;padding:10px"><div style="font-weight:700;font-size:12px;margin-bottom:6px">${esc(p.product_name)}</div>${renderBenefitGrid(p.benefit_checklist)}</div>`).join('')+'</div>';
@@ -864,8 +923,33 @@ function renderDetailedCompare(d){
   return html;
 }
 
+function renderHealthcareContext(d){
+  if(!d) return '';
+  if(!d.available){
+    return `<div class="healthcare-context"><h4>${esc(d.title||t('healthcareContext'))}</h4><div style="font-size:12px;color:var(--muted)">${esc(d.message||'')}</div></div>`;
+  }
+  let html=`<div class="healthcare-context"><h4>${esc(d.title||t('healthcareContext'))}</h4><div style="font-size:12px;color:var(--muted);line-height:1.5">${esc(d.intro||'')}</div>`;
+  if((d.metrics||[]).length){
+    html+='<div class="healthcare-metrics">';
+    d.metrics.forEach(m=>{
+      html+=`<div class="healthcare-metric"><strong>${esc(m.country_value)}%</strong><small>${esc(m.label)}<br>${esc(t('oecdAverage'))}: ${esc(m.comparator_value)}%</small></div>`;
+    });
+    html+='</div>';
+  }
+  if(d.balanced) html+=`<div style="font-size:12px;line-height:1.55">${esc(d.balanced)}</div>`;
+  if((d.sources||[]).length){
+    html+='<div class="source-buttons">';
+    d.sources.forEach(s=>{html+=`<button type="button" class="source-btn" onclick="openSourceViewer('${esc(s.url)}','${esc(s.label)}')">${esc(s.label)}</button>`;});
+    html+='</div>';
+  }
+  return html+'</div>';
+}
+
 function openComparisonEmail(){
   document.getElementById('compareModal').classList.remove('open');
+  const nameEl=document.getElementById('emailName'),emailEl=document.getElementById('emailAddress');
+  if(!nameEl.value) nameEl.value=state.applicant_name||'';
+  if(!emailEl.value && state.email) emailEl.value=state.email;
   document.getElementById('emailModal').classList.add('open');
 }
 
@@ -876,7 +960,7 @@ async function sendComparisonEmail(){
     const r=await fetch(API+'/leads/comparison',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,applicant_state:state,plan_keys:[...compareSelected],current_policy_token:currentPolicyToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('comparisonSendFail'));
     closeModal('emailModal');addMsg(t('comparisonSent'),'hal');
-  }catch(e){alert(lang()==='el'?t('comparisonSendFail'):e.message);}
+  }catch(e){alert(e.message||t('comparisonSendFail'));}
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
