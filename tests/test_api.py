@@ -95,12 +95,23 @@ def test_quotes_compare_returns_detailed_matrix_and_conclusion():
     assert body["unsupported_note"] is None
 
 
-def test_quotes_compare_rejects_single_plan():
+def test_quotes_compare_rejects_single_plan_without_current_policy():
     r = client.post("/api/v1/quotes/compare", json={
         "applicant_state": {"age": 40, "residence_country": "Greece", "coverage_area": "area1"},
         "plan_keys": ["morgan_price:standard"],
+        "has_current_policy": False,
     })
-    assert r.status_code == 422  # min_length=2 on plan_keys
+    assert r.status_code == 400
+
+
+def test_quotes_compare_accepts_single_plan_when_current_policy_is_present():
+    r = client.post("/api/v1/quotes/compare", json={
+        "applicant_state": {"age": 40, "residence_country": "Greece", "coverage_area": "area1"},
+        "plan_keys": ["morgan_price:standard"],
+        "has_current_policy": True,
+    })
+    assert r.status_code == 200
+    assert len(r.json()["plans"]) == 1
 
 
 def test_speak_returns_503_when_elevenlabs_not_configured():
