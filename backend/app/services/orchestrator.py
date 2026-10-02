@@ -241,7 +241,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         }
 
     prior_pending = state.get("pending_question")
-    state = _merge(state, apply_discovery_answer(message, state))
+    deterministic_updates = apply_discovery_answer(message, state)
+    state = _merge(state, deterministic_updates)
 
     if detect_hnwi(message) and not state.get("client_segment"):
         state["client_segment"] = "hnwi"
@@ -251,7 +252,30 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if (settings.anthropic_api_key and provisional not in {"travel", "local_review"}
             and not state.get("discovery_complete") and prior_pending != "name"):
         intake = await intake_analysis(message, state, history, greek)
-        state = _merge(state, intake.get("applicant_updates", {}))
+        ai_updates = dict(intake.get("applicant_updates", {}) or {})
+        # Deterministic answers to the actual pending question are authoritative.
+        # The LLM may enrich other facts from the same sentence, but it must
+        # never overwrite the field the applicant just explicitly confirmed.
+        protected_by_question = {
+            "age": {"age"},
+            "residence": {"residence_country"},
+            "nationality": {"nationality"},
+            "coverage_area": {"coverage_area"},
+            "deductible": {"deductible", "deductible_preference"},
+            "outpatient": {"outpatient_required"},
+            "chronic": {"chronic_required", "chronic_conditions_disclosed"},
+            "maternity": {"maternity_required"},
+            "dental": {"dental_required"},
+            "mental_health": {"mental_health_required"},
+            "wellness": {"wellness_required"},
+            "optical": {"optical_required"},
+            "evacuation": {"evacuation_required"},
+            "budget": {"budget_annual"},
+        }
+        for key in protected_by_question.get(prior_pending, set()):
+            if key in deterministic_updates:
+                ai_updates.pop(key, None)
+        state = _merge(state, ai_updates)
         claude_ack = intake.get("acknowledgement", "")
 
     journey = classify_journey(message, state)
