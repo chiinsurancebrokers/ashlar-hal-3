@@ -143,3 +143,32 @@ def test_greek_outpatient_choices_are_not_shown_in_english():
     labels = [r["label"] for r in q["quick_replies"]]
     assert "Μόνο νοσοκομειακή" in labels
     assert "Με εξωνοσοκομειακή κάλυψη" in labels
+
+
+def test_new_guided_flow_asks_permanent_residence_then_nationality():
+    state = {"name_asked": True, "age": 40}
+    q1 = next_discovery_question(state, greek=True)
+    assert q1["key"] == "residence"
+    assert "μόνιμης κατοικίας" in q1["reply"]
+
+    state["residence_country"] = "Greece"
+    q2 = next_discovery_question(state, greek=True)
+    assert q2["key"] == "nationality"
+    assert "υπηκοότητά" in q2["reply"]
+
+
+def test_nationality_answer_is_parsed_independently_from_residence():
+    state = {"pending_question": "nationality"}
+    out = apply_discovery_answer("Είμαι Έλληνας", state)
+    assert out["nationality"] == "Greece"
+    assert out["nationality_answered"] is True
+
+
+def test_legacy_session_with_coverage_area_is_not_forced_back_to_nationality():
+    state = {
+        "name_asked": True, "age": 40, "residence_country": "Greece",
+        "coverage_area": "area1", "deductible_answered": True,
+        "outpatient_answered": True,
+    }
+    q = next_discovery_question(state)
+    assert q["key"] == "chronic"
