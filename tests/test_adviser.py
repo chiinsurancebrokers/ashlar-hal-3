@@ -1,4 +1,5 @@
 from datetime import date
+import pytest
 
 from backend.app.services.adviser import (
     clean_applicant_updates, build_intake_instructions, build_explain_plan_instructions,
