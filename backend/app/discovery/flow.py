@@ -274,8 +274,12 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
         return _q("name",
             "Hi, I'm HAL. Before we start — what's your name?" if not greek else "Γεια σας, είμαι ο HAL. Πριν ξεκινήσουμε — πώς σας λένε;")
     if not state.get("age"):
-        greeting = f"Nice to meet you, {state['applicant_name']}. " if state.get("applicant_name") else ""
-        return _q("age", f"{greeting}How old are you?" if not greek else f"{greeting}Πόσων χρονών είστε;", skippable=False)
+        if state.get("applicant_name"):
+            greeting = (f"Χάρηκα, {state['applicant_name']}. " if greek
+                        else f"Nice to meet you, {state['applicant_name']}. ")
+        else:
+            greeting = ""
+        return _q("age", f"{greeting}Πόσων χρονών είστε;" if greek else f"{greeting}How old are you?", skippable=False)
     if not state.get("residence_country"):
         return _q("residence", "Which country do you live in?" if not greek else "Σε ποια χώρα μένετε;", skippable=False)
     if not state.get("coverage_area"):
