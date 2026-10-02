@@ -67,3 +67,29 @@ def test_plan_documents_render_as_clickable_pdf_cards_not_raw_urls():
 def test_chat_messages_wrap_long_content_instead_of_forcing_horizontal_overflow():
     html = _html()
     assert "overflow-wrap:anywhere" in html
+
+
+def test_voice_controller_stops_previous_audio_and_tts_request():
+    html = _html()
+    assert "let activeSpeechAudio = null" in html
+    assert "let activeSpeechController = null" in html
+    assert "function stopSpeech()" in html
+    assert "activeSpeechAudio.pause()" in html
+    assert "activeSpeechController.abort()" in html
+    assert "stopSpeech();\n  document.getElementById('input').value" in html
+
+
+def test_plan_cards_keep_readable_minimum_width_instead_of_three_squeezed_columns():
+    html = _html()
+    assert "grid-auto-columns:minmax(280px,320px)" in html
+    assert "@media(min-width:1180px)" in html
+    assert "word-break:normal" in html
+
+
+def test_current_policy_upload_is_bilingual_and_server_proxied():
+    html = _html()
+    assert "Compare with your current policy" in html
+    assert "Σύγκρινε με το τρέχον συμβόλαιό σου" in html
+    assert "API+'/quotes/current-policy'" in html
+    assert "let currentPolicy = null" in html
+    assert "currentPolicyBenefitForLabel" in html
