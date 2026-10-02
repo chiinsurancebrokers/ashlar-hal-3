@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     openai_verifier_enabled: bool = True
     openai_verifier_max_output_tokens: int = 900
     openai_verifier_timeout_seconds: int = 25
+
+    # Quote & Matching Agent: explains deterministic shortlist facts only.
+    openai_matching_agent_enabled: bool = True
+    openai_matching_agent_max_output_tokens: int = 900
     max_audio_upload_mb: int = 20
 
     elevenlabs_api_key: str | None = None
