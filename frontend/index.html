@@ -477,28 +477,70 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&am
 function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
 
+function applyStaticI18n(){
+  const map={
+    uiEyebrow:'eyebrow',uiHeadline:'headline',uiLead:'lead',btnHealth:'health',btnTravel:'travel',
+    uiTrustPricing:'trustPricing',uiTrustEvidence:'trustEvidence',uiTrustBroker:'trustBroker',
+    uiNeedsTitle:'needs',uiEditNeeds:'edit',uiOnline:'online',restartBtn:'startAgain',
+    ps1:'step1',ps2:'step2',ps3:'step3',compareClearBtn:'clear',compareOpenBtn:'compare',
+    sendBtn:'send',needsModalTitle:'editNeeds',lblNeedAge:'age',lblNeedResidence:'residence',
+    lblNeedArea:'coverageArea',lblNeedBudget:'annualBudgetOptional',lblMustHaves:'mustHaves',
+    needsCancelBtn:'cancel',needsSaveBtn:'saveRecalculate',compareModalTitle:'comparePlans',
+    compareCloseBtn:'close',compareEmailBtn:'sendComparison',emailModalTitle:'emailComparison',
+    lblEmailName:'name',emailCurrentNote:'currentPremiumNote',emailCancelBtn:'cancel',emailSendBtn:'send',
+    lblLeadFirst:'firstName',lblLeadLast:'lastName',lblLeadResidence:'residence',lblLeadAge:'age',
+    lblLeadCoverage:'coverageDestination',lblLeadFamily:'familyTravellers',lblLeadBudget:'approxBudget',
+    lblLeadMessage:'anythingElse',leadConsentText:'consent',leadCancelBtn:'cancel',leadSendBtn:'sendEnquiry',
+    footerDisclaimer:'footer'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id); if(!el)return;
+    if(id==='uiHeadline') el.innerHTML=t(key); else el.textContent=t(key);
+  });
+  document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
+  const input=document.getElementById('input'); input.placeholder=t('composer');
+  const mic=document.getElementById('micBtn'); mic.title=t('tapSpeak'); mic.setAttribute('aria-label',t('tapSpeak'));
+  document.getElementById('leadFamily').placeholder=t('familyPlaceholder');
+  document.getElementById('leadMessage').placeholder=t('medicalPlaceholder');
+  const area=document.getElementById('needArea');
+  [...area.options].forEach(o=>{o.textContent=t(o.value);});
+  document.getElementById('langEN').style.fontWeight=lang()==='en'?'800':'500';
+  document.getElementById('langEL').style.fontWeight=lang()==='el'?'800':'500';
+  document.documentElement.lang=lang();
+}
+
+function setUiLanguage(code, resetGreeting=false){
+  state.language=code==='el'?'el':'en';
+  applyStaticI18n();
+  renderState();
+  updateDynamicInput([]);
+  if(resetGreeting || (!history.length && currentJourney==='ipmi')) showIpmiGreeting();
+}
+
+function restartConversation(){
+  if(confirm(t('restartConfirm'))) location.reload();
+}
+
 function showIpmiGreeting(){
   document.getElementById('chat').innerHTML = '';
-  addMsg("Hello. I'm HAL, Ashlar Assurance's insurance quotation assistant.", 'hal');
-  addMsg("I'll ask a few questions and then calculate an indicative shortlist from the rate data currently available to me.", 'hal');
-  addMsg("Before we start — what's your name?", 'hal');
-  updateDynamicInput([{label:'Not sure / Skip', value:'skip'}]);
+  addMsg(t('hello'),'hal');
+  addMsg(t('intro'),'hal');
+  addMsg(t('askName'),'hal');
+  updateDynamicInput([{label:t('skip'),value:'skip'}]);
 }
 
 function setJourney(j){
-  const switching = (j !== currentJourney);
-  currentJourney = j;
-  document.getElementById('btnHealth').classList.toggle('active', j!=='travel');
-  document.getElementById('btnTravel').classList.toggle('active', j==='travel');
-  if (j === 'travel' && switching) {
-    state = {journey: 'travel'};
-    history = [];
-    sendHiddenMessage("I need travel insurance");
-  } else if (j !== 'travel' && switching) {
-    state = {pending_question: 'name'};
-    history = [];
-    showIpmiGreeting();
+  const switching=(j!==currentJourney),language=lang();
+  currentJourney=j;
+  document.getElementById('btnHealth').classList.toggle('active',j!=='travel');
+  document.getElementById('btnTravel').classList.toggle('active',j==='travel');
+  if(j==='travel'&&switching){
+    state={journey:'travel',language}; history=[];
+    sendHiddenMessage(language==='el'?'Χρειάζομαι ταξιδιωτική ασφάλιση':'I need travel insurance');
+  }else if(j!=='travel'&&switching){
+    state={pending_question:'name',language}; history=[]; showIpmiGreeting();
   }
+  applyStaticI18n();
 }
 
 async function sendHiddenMessage(text){
@@ -531,72 +573,52 @@ async function sendHiddenMessage(text){
 }
 
 function renderState(){
-  // Needs chips
-  const box = document.getElementById('needsBody');
-  const chips = [];
-  if (state.age) chips.push(['Age '+state.age, false]);
-  if (state.residence_country) chips.push([state.residence_country, false]);
-  if (state.coverage_area) chips.push([areaLabel(state.coverage_area), false]);
-  if (state.budget_annual) chips.push([money(state.budget_annual)+'/yr budget', false]);
-  Object.entries(MUST_FIELDS).forEach(([k,label]) => { if (state[k]) chips.push([label, true]); });
-  box.innerHTML = chips.length
-    ? '<div class="need-chips">' + chips.map(([l,must]) => `<span class="need-chip ${must?'must':''}">${esc(l)}</span>`).join('') + '</div>'
-    : 'Tell HAL what matters to you.';
+  applyStaticI18n();
+  const box=document.getElementById('needsBody'),chips=[];
+  if(state.age)chips.push([t('ageChip')+' '+state.age,false]);
+  if(state.residence_country)chips.push([state.residence_country,false]);
+  if(state.coverage_area)chips.push([areaLabel(state.coverage_area),false]);
+  if(state.budget_annual)chips.push([money(state.budget_annual)+t('budgetChip'),false]);
+  Object.entries(MUST_FIELDS).forEach(([k,key])=>{if(state[k])chips.push([t(key),true]);});
+  box.innerHTML=chips.length
+    ?'<div class="need-chips">'+chips.map(([l,m])=>`<span class="need-chip ${m?'must':''}">${esc(l)}</span>`).join('')+'</div>'
+    :t('emptyNeeds');
 
-  // Progress
-  let step = 1;
-  if (lastQuotes.length) step = 2;
-  ['ps1','ps2','ps3'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    el.classList.toggle('active', i+1===step);
-    el.classList.toggle('done', i+1<step);
-  });
-
-  // Compare tray
-  const n = compareSelected.size;
-  document.getElementById('compareCount').textContent = `${n} plan${n===1?'':'s'} selected`;
-  document.getElementById('compareTray').classList.toggle('show', n>=2);
+  let step=lastQuotes.length?2:1;
+  ['ps1','ps2','ps3'].forEach((id,i)=>{const el=document.getElementById(id);el.classList.toggle('active',i+1===step);el.classList.toggle('done',i+1<step);});
+  const n=compareSelected.size;
+  document.getElementById('compareCount').textContent=`${n} ${n===1?t('selectedSingular'):t('selectedPlural')}`;
+  document.getElementById('compareTray').classList.toggle('show',n>=2);
 }
 
-function areaLabel(a){
-  return {area1:'Europe',area2:'Worldwide excl. USA/SG/HK/CN',area3:'Worldwide excl. USA',area4:'Worldwide incl. USA'}[a] || a;
-}
+function areaLabel(a){ return t(a)||a; }
 
-function addMsg(text, who='hal', quotes=[], excluded=[], leadCta=null, quickReplies=[], travelRec=null) {
-  const chat = document.getElementById('chat');
-  const box = document.createElement('div');
-  box.className = 'msg ' + who;
-  let html = esc(text).replace(/\n/g,'<br>');
-
-  if (quotes && quotes.length) {
-    html += '<div class="quotes-row">' + quotes.map((q,i) => renderQuoteCard(q,i)).join('') + '</div>';
-    if (excluded && excluded.length) {
-      html += `<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">Why were ${excluded.length} plan${excluded.length===1?'':'s'} excluded?</button>
-        <div class="excluded-list">${excluded.map(e => `<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).join(', '))}</div>`).join('')}</div></div>`;
+function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[],travelRec=null){
+  const chat=document.getElementById('chat'),box=document.createElement('div');
+  box.className='msg '+who;
+  let html=esc(text).replace(/\n/g,'<br>');
+  if(quotes&&quotes.length){
+    html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
+    if(excluded&&excluded.length){
+      const suffix=lang()==='el'?'':'s';
+      const label=t('whyExcluded').replace('{n}',excluded.length).replace('{s}',excluded.length===1?'':suffix);
+      html+=`<div class="excluded-wrap"><button class="excluded-btn" onclick="this.nextElementSibling.classList.toggle('open')">${esc(label)}</button>
+        <div class="excluded-list">${excluded.map(e=>`<div class="excluded-item"><strong>${esc(e.product_name)}</strong> — ${esc((e.gaps||[]).map(trText).join(', '))}</div>`).join('')}</div></div>`;
     }
   }
-  if (travelRec) {
-    html += renderTravelCard(travelRec);
+  if(travelRec)html+=renderTravelCard(travelRec);
+  if(leadCta&&leadCta.show){
+    let label=state.client_segment==='hnwi'?t('requestPrivate'):t('requestProposal');
+    html+=`<button class="lead-cta" onclick="openLeadForm('${esc(leadCta.journey)}')">${esc(label)}</button>`;
   }
-  if (leadCta && leadCta.show) {
-    let label = leadCta.label || 'Request a proposal';
-    if (state.client_segment === 'hnwi') label = 'Request a private consultation';
-    html += `<button class="lead-cta" onclick="openLeadForm('${esc(leadCta.journey)}')">${esc(label)}</button>`;
-  }
-  box.innerHTML = html;
-  chat.appendChild(box);
-  box.scrollIntoView({behavior: 'smooth', block: 'start'});
-  renderState();
+  box.innerHTML=html;chat.appendChild(box);box.scrollIntoView({behavior:'smooth',block:'start'});renderState();
 }
 
 function renderBenefitGrid(checklist){
-  if (!checklist || !checklist.length) return '';
-  const items = checklist.map(item => {
-    let cls, icon;
-    if (item.covered === true) { cls = 'covered'; icon = '✓'; }
-    else if (item.covered === false) { cls = 'not-covered'; icon = '–'; }
-    else { cls = 'unconfirmed'; icon = '?'; }
-    return `<span class="benefit-chip ${cls}"><span class="benefit-icon">${icon}</span>${esc(item.label)}</span>`;
+  if(!checklist||!checklist.length)return'';
+  const items=checklist.map(item=>{
+    let cls,icon;if(item.covered===true){cls='covered';icon='✓';}else if(item.covered===false){cls='not-covered';icon='–';}else{cls='unconfirmed';icon='?';}
+    return `<span class="benefit-chip ${cls}"><span class="benefit-icon">${icon}</span>${esc(trText(item.label))}</span>`;
   }).join('');
   return `<div class="benefit-chips">${items}</div>`;
 }
@@ -609,66 +631,51 @@ function logoColor(insurer){
   return '#5a6472';
 }
 
-function renderQuoteCard(q, i) {
-  const annual = Number(q.premium||0), monthly = annual/12, key = qkey(q);
-  const selected = compareSelected.has(key);
+function renderQuoteCard(q,i){
+  const annual=Number(q.premium||0),monthly=annual/12,key=qkey(q),selected=compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
-    ${q.recommended ? '<div class="rec-ribbon">★ HAL recommends</div>' : ''}
-    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${selected?'✓ Selected':'+ Compare'}</button>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.card_annual_limit||'Annual limit on request')}</div>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(q.coverage_area_label||'')}</div>
-    <div class="q-head">
-      <div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge || 'PLAN')}</div>
-      <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div>
-    </div>
-    <div class="q-badges">${(q.fit_badges||[]).map(b => `<span class="q-badge">${esc(b)}</span>`).join('')}</div>
-    <div class="q-price">${money(annual,q.currency)}<span>/year</span></div>
-    <div class="q-month">${money(monthly,q.currency)}/month${q.family_size>1?` · ${q.family_size} people`:''}</div>
+    ${q.recommended?`<div class="rec-ribbon">${esc(t('recommended'))}</div>`:''}
+    <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${esc(selected?t('selected'):t('compareAdd'))}</button>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.card_annual_limit||t('annualLimit')))}</div>
+    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.coverage_area_label||''))}</div>
+    <div class="q-head"><div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge||'PLAN')}</div>
+      <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div></div>
+    <div class="q-badges">${(q.fit_badges||[]).map(b=>`<span class="q-badge">${esc(trText(b))}</span>`).join('')}</div>
+    <div class="q-price">${money(annual,q.currency)}<span>${t('perYear')}</span></div>
+    <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
     <div class="q-divider"></div>
     <div class="q-spec">
-      <div><b>Coverage</b>${esc(q.card_coverage||'—')}</div>
-      <div><b>Deductible</b>${esc(q.card_deductible||'—')}</div>
-      <div><b>Evacuation</b>${esc(q.card_evacuation||'—')}</div>
+      <div><b>${t('coverage')}</b>${esc(trText(q.card_coverage||'—'))}</div>
+      <div><b>${t('deductible')}</b>${esc(trText(q.card_deductible||'—'))}</div>
+      <div><b>${t('evacuation')}</b>${esc(trText(q.card_evacuation||'—'))}</div>
     </div>
     ${renderBenefitGrid(q.benefit_checklist)}
-    <div class="q-why">${esc(q.card_why||'')}</div>
-    ${q.client_note ? `<div class="q-note">${esc(q.client_note)}</div>` : ''}
-    ${(q.warnings||[]).length ? `<div class="q-warnings">${q.warnings.map(w => `<div>${esc(w)}</div>`).join('')}</div>` : ''}
-    <div class="q-actions">
-      <button class="q-primary" onclick="openLeadForm(currentJourney)">Get proposal</button>
-      <button class="q-secondary" onclick="tellMeMore(${i})">Tell me more</button>
-    </div>
+    <div class="q-why">${esc(trText(q.card_why||''))}</div>
+    ${q.client_note?`<div class="q-note">${esc(trText(q.client_note))}</div>`:''}
+    ${(q.warnings||[]).length?`<div class="q-warnings">${q.warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`:''}
+    <div class="q-actions"><button class="q-primary" onclick="openLeadForm(currentJourney)">${t('getProposal')}</button>
+      <button class="q-secondary" onclick="tellMeMore(${i})">${t('tellMore')}</button></div>
   </div>`;
 }
 
 function renderTravelCard(rec){
-  const alt = (rec.alternatives||[]).map(a => `<div style="font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
-    <strong>${esc(a.name)}</strong> — ${money(a.emergency_medical_eur)} medical, ${money(a.cancellation_eur)} cancellation, ${money(a.baggage_eur)} baggage</div>`).join('');
+  const alt=(rec.alternatives||[]).map(a=>`<div style="font-size:11px;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+    <strong>${esc(a.name)}</strong> — ${money(a.emergency_medical_eur)} ${t('emergencyMedical').toLowerCase()}, ${money(a.cancellation_eur)} ${t('cancellation').toLowerCase()}, ${money(a.baggage_eur)} ${t('baggage').toLowerCase()}</div>`).join('');
   return `<div class="quote-card" style="max-width:420px;margin-top:10px">
-    <div class="q-head"><div class="q-logo">EU</div><div><div class="q-plan">${esc(rec.plan_name)}</div><div class="q-provider">${esc(rec.positioning)}</div></div></div>
+    <div class="q-head"><div class="q-logo">EU</div><div><div class="q-plan">${esc(rec.plan_name)}</div><div class="q-provider">${esc(trText(rec.positioning))}</div></div></div>
     <div class="q-spec" style="margin-top:10px">
-      <div><b>Emergency medical</b>${money(rec.emergency_medical_eur)}</div>
-      <div><b>Cancellation</b>${money(rec.cancellation_eur)}</div>
-      <div><b>Baggage</b>${money(rec.baggage_eur)}</div>
-      <div><b>Trip type</b>${esc(rec.trip_type||'—')}</div>
+      <div><b>${t('emergencyMedical')}</b>${money(rec.emergency_medical_eur)}</div><div><b>${t('cancellation')}</b>${money(rec.cancellation_eur)}</div>
+      <div><b>${t('baggage')}</b>${money(rec.baggage_eur)}</div><div><b>${t('tripType')}</b>${esc(trText(rec.trip_type||'—'))}</div>
     </div>
-    <div class="q-why">${esc(rec.reason)}</div>
-    <div class="q-note">${esc(rec.client_note)}</div>
-    ${!rec.eligible_on_legacy_data ? `<div class="q-note" style="color:#b3261e">${esc(rec.eligibility_note||'')}</div>` : ''}
-    ${alt}
-    <div class="q-actions">
-      <a class="q-primary" style="text-decoration:none;text-align:center;display:block" href="${esc(rec.portal_url)}" target="_blank" rel="noopener">Get current price in Europesure portal</a>
-    </div>
+    <div class="q-why">${esc(trText(rec.reason))}</div><div class="q-note">${esc(trText(rec.client_note))}</div>
+    ${!rec.eligible_on_legacy_data?`<div class="q-note" style="color:#b3261e">${esc(trText(rec.eligibility_note||''))}</div>`:''}
+    ${alt}<div class="q-actions"><a class="q-primary" style="text-decoration:none;text-align:center;display:block" href="${esc(rec.portal_url)}" target="_blank" rel="noopener">${t('currentEuropesure')}</a></div>
   </div>`;
 }
 
-function toggleCompare(key, btn){
-  const nowSelected = !compareSelected.has(key);
-  if (nowSelected) compareSelected.add(key); else compareSelected.delete(key);
-  if (btn) {
-    btn.classList.toggle('selected', nowSelected);
-    btn.textContent = nowSelected ? '✓ Selected' : '+ Compare';
-  }
+function toggleCompare(key,btn){
+  const nowSelected=!compareSelected.has(key);if(nowSelected)compareSelected.add(key);else compareSelected.delete(key);
+  if(btn){btn.classList.toggle('selected',nowSelected);btn.textContent=nowSelected?t('selected'):t('compareAdd');}
   renderState();
 }
 
