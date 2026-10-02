@@ -95,13 +95,22 @@ async def transcribe_audio(file_bytes: bytes, filename: str, content_type: str, 
 
 
 def pick_voice_id(language: str) -> str | None:
-    """Pure function, testable without network."""
+    """Pick a usable multilingual ElevenLabs voice.
+
+    Greek must never go silent merely because a Greek-specific voice was not
+    configured. eleven_multilingual_v2 can speak Greek using the configured
+    default/English library voice, so fall back in that order.
+    """
     settings = get_settings()
-    if language == "el" and settings.elevenlabs_voice_id_el:
-        return settings.elevenlabs_voice_id_el
-    if language == "en" and settings.elevenlabs_voice_id_en:
-        return settings.elevenlabs_voice_id_en
-    return settings.elevenlabs_voice_id
+    if language == "el":
+        return (
+            settings.elevenlabs_voice_id_el
+            or settings.elevenlabs_voice_id
+            or settings.elevenlabs_voice_id_en
+        )
+    if language == "en":
+        return settings.elevenlabs_voice_id_en or settings.elevenlabs_voice_id
+    return settings.elevenlabs_voice_id or settings.elevenlabs_voice_id_en
 
 
 async def synthesize_speech(text: str, language: str = "en") -> bytes:
