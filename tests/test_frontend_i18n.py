@@ -93,7 +93,8 @@ def test_current_policy_upload_is_bilingual_and_server_proxied():
     assert "Σύγκρινε με το τρέχον συμβόλαιό σου" in html
     assert "API+'/quotes/current-policy'" in html
     assert "let currentPolicy = null" in html
-    assert "currentPolicyBenefitForLabel" in html
+    assert "currentPolicyBenefitForRow" in html
+    assert "benefit_rows" in html
 
 
 def test_quote_cards_never_switch_to_squeezed_three_column_layout():
@@ -132,7 +133,8 @@ def test_comparison_email_prefills_real_applicant_name_and_preserves_error_detai
     assert "state.applicant_name||''" in html
     assert 'autocomplete="name"' in html
     assert 'autocomplete="email"' in html
-    assert "alert(e.message||t('comparisonSendFail'))" in html
+    assert "invalid_grant" in html
+    assert "needs to be re-authorized" in html
 
 
 def test_frontend_does_not_contain_invalid_escaped_quote_expression():
