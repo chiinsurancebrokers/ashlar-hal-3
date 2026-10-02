@@ -100,8 +100,9 @@ async def explain(req: ExplainPlanRequest):
 
 class CompareRequest(BaseModel):
     applicant_state: dict = Field(default_factory=dict)
-    plan_keys: list[str] = Field(min_length=2, max_length=4)
+    plan_keys: list[str] = Field(min_length=1, max_length=4)
     language: str = Field(default="en", pattern="^(en|el)$")
+    has_current_policy: bool = False
 
 
 @router.post("/compare")
@@ -120,8 +121,14 @@ async def compare(req: CompareRequest):
     all_current = quote_current(applicant, settings)
     by_key = {q.plan_key: q for q in all_current if q.plan_key}
     selected = [by_key[k] for k in req.plan_keys if k in by_key]
-    if len(selected) < 2:
-        raise HTTPException(status_code=400, detail="At least 2 currently eligible plan_keys are required to compare.")
+    minimum = 1 if req.has_current_policy else 2
+    if len(selected) < minimum:
+        raise HTTPException(
+            status_code=400,
+            detail=("Select at least 1 eligible plan to compare with the current policy."
+                    if req.has_current_policy else
+                    "At least 2 currently eligible plan_keys are required to compare.")
+        )
 
     plans_for_matrix = [
         {"plan_key": q.plan_key, "carrier": q.plan_key.split(":")[0], "product_code": q.product_code,
