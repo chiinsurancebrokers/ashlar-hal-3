@@ -245,3 +245,27 @@ def test_greek_voice_falls_back_to_multilingual_english_library_voice(monkeypatc
         assert pick_voice_id("el") == "JBFqnCBsd6RMkjVDRZzb"
     finally:
         config_module.get_settings.cache_clear()
+
+
+def test_greek_tts_normalizes_euro_amount_instead_of_spelling_digits():
+    from backend.app.services.voice import normalize_speech_text
+    spoken = normalize_speech_text("Το ασφάλιστρο είναι 2.694,72 € τον χρόνο.", "el")
+    assert "δύο χιλιάδες" in spoken
+    assert "ευρώ" in spoken
+    assert "εβδομήντα δύο" in spoken
+    assert "2.694,72" not in spoken
+
+
+def test_english_tts_normalizes_currency_and_percentage():
+    from backend.app.services.voice import normalize_speech_text
+    spoken = normalize_speech_text("Premium EUR 2,694.72 with 20% coinsurance.", "en")
+    assert "two thousand" in spoken
+    assert "euros" in spoken
+    assert "seventy-two cents" in spoken
+    assert "twenty percent" in spoken
+
+
+def test_tts_does_not_rewrite_year_as_currency():
+    from backend.app.services.voice import normalize_speech_text
+    spoken = normalize_speech_text("Policy year 2026.", "en")
+    assert "two thousand and twenty-six" in spoken or "two thousand twenty-six" in spoken
