@@ -57,18 +57,19 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .guided-choices{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .guided-choice{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
 
-.quotes-row{display:flex;gap:14px;overflow-x:auto;padding:10px 2px 16px;scroll-snap-type:x mandatory}
-@media(min-width:720px){.quotes-row{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible}}
-.quote-card{scroll-snap-align:start;flex:0 0 82%;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
-@media(min-width:720px){.quote-card{flex:none}}
+.msg.hal:has(.quotes-row){max-width:100%;width:100%}
+.quotes-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,320px);gap:14px;overflow-x:auto;overflow-y:hidden;padding:14px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.quote-card{scroll-snap-align:start;min-width:0;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
+@media(max-width:640px){.quotes-row{grid-auto-columns:minmax(260px,86vw)}}
+@media(min-width:1180px){.quotes-row{grid-auto-columns:minmax(300px,1fr);grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-flow:row;overflow-x:visible}}
 .quote-card.recommended{border-color:var(--accent);box-shadow:0 10px 28px rgba(87,71,232,.14)}
 .rec-ribbon{position:absolute;top:-11px;left:16px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.02em}
 .q-stat-line{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:2px}
 .q-stat-dot{width:4px;height:4px;border-radius:50%;background:var(--muted);flex-shrink:0}
 .q-head{display:flex;align-items:center;gap:12px;margin-top:10px}
 .q-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:#fff}
-.q-plan{font-weight:700;font-size:15px;line-height:1.25}
-.q-provider{color:var(--muted);font-size:12px;margin-top:1px}
+.q-plan{font-weight:700;font-size:15px;line-height:1.25;overflow-wrap:normal;word-break:normal;hyphens:auto}
+.q-provider{color:var(--muted);font-size:12px;margin-top:1px;overflow-wrap:break-word}
 .q-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
 .q-badge{background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px}
 .q-price{font-size:24px;font-weight:800;margin-top:14px;letter-spacing:-.01em}
@@ -824,6 +825,7 @@ async function saveNeeds(){
 }
 
 function sendQuickReply(encodedValue){
+  stopSpeech();
   document.getElementById('input').value = decodeURIComponent(encodedValue);
   sendMessage();
 }
@@ -842,6 +844,18 @@ let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
 let speakerOn = false;
+let activeSpeechAudio = null;
+let activeSpeechUrl = null;
+let activeSpeechController = null;
+
+function stopSpeech(){
+  if(activeSpeechController){try{activeSpeechController.abort();}catch(_){ } activeSpeechController=null;}
+  if(activeSpeechAudio){
+    try{activeSpeechAudio.pause();activeSpeechAudio.currentTime=0;}catch(_){}
+    activeSpeechAudio=null;
+  }
+  if(activeSpeechUrl){try{URL.revokeObjectURL(activeSpeechUrl);}catch(_){} activeSpeechUrl=null;}
+}
 
 function currentPendingKey(){
   return state.pending_question || state.travel_pending_question || null;
@@ -895,20 +909,38 @@ function isGreekText(t){ return /[\u0370-\u03ff]/.test(t||''); }
 
 function toggleSpeaker(){
   speakerOn=!speakerOn;
+  if(!speakerOn) stopSpeech();
   document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
 }
 
 async function speakText(text){
-  if (!speakerOn || !text) return;
-  try {
-    const language = isGreekText(text) ? 'el' : 'en';
-    const r = await fetch(API+'/speak', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,2000), language})});
-    if (!r.ok) { console.warn('Voice output unavailable:', (await r.json()).detail); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play().catch(() => {});
-  } catch(e) { console.warn('Voice output failed', e); }
+  if(!speakerOn || !text) return;
+  stopSpeech();
+  const controller=new AbortController();
+  activeSpeechController=controller;
+  try{
+    const language=isGreekText(text)?'el':'en';
+    const r=await fetch(API+'/speak',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text.slice(0,2000),language}),
+      signal:controller.signal
+    });
+    if(controller.signal.aborted) return;
+    if(!r.ok){console.warn('Voice output unavailable:',(await r.json()).detail);return;}
+    const blob=await r.blob();
+    if(controller.signal.aborted) return;
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);
+    activeSpeechUrl=url;activeSpeechAudio=audio;activeSpeechController=null;
+    audio.onended=()=>{if(activeSpeechAudio===audio){activeSpeechAudio=null;} if(activeSpeechUrl===url){URL.revokeObjectURL(url);activeSpeechUrl=null;}};
+    audio.onerror=audio.onended;
+    audio.play().catch(()=>{});
+  }catch(e){
+    if(e?.name!=='AbortError') console.warn('Voice output failed',e);
+  }finally{
+    if(activeSpeechController===controller) activeSpeechController=null;
+  }
 }
 
 async function toggleRecording(){
@@ -934,6 +966,7 @@ async function toggleRecording(){
 
 async function sendMessage(){
   const input=document.getElementById('input'),text=input.value.trim();if(!text)return;
+  stopSpeech();
   addMsg(text,'user');history.push({role:'user',content:text});input.value='';document.getElementById('sendBtn').disabled=true;
   document.querySelectorAll('#dynamicInputRow .pill-row, #dynamicInputRow .stepper-input, #dynamicInputRow .dynamic-continue').forEach(el=>el.remove());
   const phrases=[t('thinkingNeeds'),t('thinkingRates'),t('thinkingMatch'),t('thinkingProviders')];showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
