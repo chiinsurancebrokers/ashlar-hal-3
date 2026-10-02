@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     gmail_sender_email: str | None = None
     gmail_lead_recipient: str | None = None
 
+    # Primary transactional mail transport (SiteGround SMTP).
+    smtp_host: str | None = None
+    smtp_port: int = 465
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str | None = None
+    smtp_from_name: str = "Ashlar Assurance"
+    smtp_reply_to: str | None = None
+
     # --- Quote engine business rules ---------------------------------------
     # A deductible-tiered rate table is not yet confirmed by any carrier, so
     # this model is OFF by default. It only activates once you've reviewed

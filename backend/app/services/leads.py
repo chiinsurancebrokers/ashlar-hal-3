@@ -1,8 +1,11 @@
 from __future__ import annotations
 import base64
 import html
+import asyncio
+import smtplib
 from datetime import datetime, timezone
 from email.message import EmailMessage
+from email.utils import formataddr
 from uuid import uuid4
 
 import httpx
@@ -54,6 +57,46 @@ async def _send_via_gmail(msg: EmailMessage) -> dict:
     if not (200 <= response.status_code < 300):
         raise RuntimeError(f"Gmail API returned {response.status_code}: {(response.text or '')[:400]}")
     return response.json()
+
+
+def _smtp_configured(settings: Settings) -> bool:
+    return all([
+        settings.smtp_host,
+        settings.smtp_username,
+        settings.smtp_password,
+        settings.smtp_from_email,
+    ])
+
+
+def _smtp_send_sync(msg: EmailMessage, settings: Settings) -> dict:
+    if not _smtp_configured(settings):
+        raise RuntimeError("SMTP delivery is not fully configured.")
+    with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=30) as smtp:
+        smtp.login(settings.smtp_username, settings.smtp_password)
+        smtp.send_message(msg)
+    return {"transport": "smtp", "message_id": msg.get("Message-ID")}
+
+
+async def _send_via_smtp(msg: EmailMessage) -> dict:
+    settings = get_settings()
+    return await asyncio.to_thread(_smtp_send_sync, msg, settings)
+
+
+async def _send_transactional(msg: EmailMessage) -> dict:
+    """Use SiteGround SMTP first; keep Gmail only as temporary fallback."""
+    settings = get_settings()
+    if _smtp_configured(settings):
+        return await _send_via_smtp(msg)
+    return await _send_via_gmail(msg)
+
+
+def _mail_sender(settings: Settings) -> str:
+    email = settings.smtp_from_email or settings.gmail_sender_email
+    if not email:
+        raise RuntimeError("No mail sender is configured.")
+    if settings.smtp_from_email and settings.smtp_from_name:
+        return formataddr((settings.smtp_from_name, settings.smtp_from_email))
+    return email
 
 
 # ---------------------------------------------------------------------------
@@ -109,12 +152,17 @@ Consent recorded: {'Yes' if payload.get('consent') else 'No'}
 
 async def send_lead(payload: dict) -> dict:
     settings = get_settings()
-    if not settings.gmail_sender_email or not settings.gmail_lead_recipient:
-        raise RuntimeError("Gmail lead delivery is not configured.")
+    if not settings.gmail_lead_recipient:
+        raise RuntimeError("Lead recipient is not configured.")
     reference = f"HAL-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:8].upper()}"
-    msg = _build_lead_message(payload, reference, settings.gmail_sender_email, settings.gmail_lead_recipient)
-    result = await _send_via_gmail(msg)
-    return {"status": "sent", "reference": reference, "gmail_message_id": result.get("id")}
+    msg = _build_lead_message(payload, reference, _mail_sender(settings), settings.gmail_lead_recipient)
+    result = await _send_transactional(msg)
+    return {
+        "status": "sent",
+        "reference": reference,
+        "transport": result.get("transport", "gmail"),
+        "message_id": result.get("message_id") or result.get("id"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -229,17 +277,17 @@ async def send_comparison_email(
     if current_policy_token:
         current_policy = verify_current_policy_token(current_policy_token)
 
-    if not settings.gmail_sender_email:
-        raise RuntimeError("Gmail delivery is not configured.")
-
     msg = _build_comparison_message(
-        name, email, plans, settings.gmail_sender_email,
+        name, email, plans, _mail_sender(settings),
         settings.gmail_lead_recipient, current_policy=current_policy,
     )
-    result = await _send_via_gmail(msg)
+    if settings.smtp_reply_to:
+        msg["Reply-To"] = settings.smtp_reply_to
+    result = await _send_transactional(msg)
     return {
         "status": "sent",
-        "gmail_message_id": result.get("id"),
+        "transport": result.get("transport", "gmail"),
+        "message_id": result.get("message_id") or result.get("id"),
         "plans_sent": [p.plan_key for p in plans],
         "current_policy_included": bool(current_policy),
     }
