@@ -33,6 +33,12 @@ class Settings(BaseSettings):
 
     database_url: str | None = None
 
+    # Secure server-to-server bridge to Ashlar Proposal Studio. These values
+    # stay on the HAL backend and are never exposed to browser JavaScript.
+    proposal_studio_api_url: str | None = None
+    proposal_studio_api_key: str | None = None
+    proposal_studio_timeout_seconds: int = 90
+
     # SECURITY: admin_password has NO default. If it is not set, the admin
     # endpoint refuses every request (fail-closed) instead of silently
     # allowing unauthenticated access. See api/admin.py.
