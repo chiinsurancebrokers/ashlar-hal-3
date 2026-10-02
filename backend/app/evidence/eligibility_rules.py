@@ -60,6 +60,31 @@ def evaluate_profile(applicant: Applicant, profile_name: str) -> EligibilityDeci
     return EligibilityDecision("unknown", profile_name, "More eligibility information is required.")
 
 
+
+def profile_missing_fields(applicant: Applicant, profile_name: str) -> list[str]:
+    """Return only fields required by an active eligibility profile that are missing.
+
+    This is deterministic metadata for the Eligibility Agent. It never infers
+    eligibility from free text or from the LLM.
+    """
+    profile = load_eligibility_rules().get("profiles", {}).get(profile_name)
+    if not profile:
+        return []
+    missing: list[str] = []
+    for condition in profile.get("conditions", []):
+        field = condition.get("field")
+        other = condition.get("different_from_field")
+        if field and not getattr(applicant, field, None):
+            missing.append(str(field))
+        if other and not getattr(applicant, other, None):
+            missing.append(str(other))
+    return sorted(set(missing))
+
+
+def active_profile_for_plan(carrier: str, product_code: str) -> str | None:
+    key = f"{carrier}:{product_code}"
+    return load_eligibility_rules().get("plan_profiles", {}).get(key)
+
 def evaluate_plan_eligibility(applicant: Applicant, carrier: str, product_code: str) -> EligibilityDecision:
     """Apply only explicitly activated product mappings.
 

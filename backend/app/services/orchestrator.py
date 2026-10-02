@@ -10,12 +10,13 @@ from backend.app.services.journey import classify_journey
 from backend.app.services.adviser import intake_analysis, build_local_review_instructions, explain_plan
 from backend.app.services.anthropic_client import claude_response as adviser_response
 from backend.app.services.verifier_agent import verify_shortlist
+from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
 APPLICANT_STATE_KEYS = {
-    "age", "residence_country", "nationality", "coverage_area", "currency", "deductible",
+    "age", "residence_country", "nationality", "primary_healthcare_country", "coverage_area", "currency", "deductible",
     "deductible_preference", "budget_annual", "client_segment", "chronic_conditions_note",
     "outpatient_required", "maternity_required", "dental_required", "mental_health_required",
     "wellness_required", "optical_required", "evacuation_required", "chronic_required",
@@ -261,6 +262,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "age": {"age"},
             "residence": {"residence_country"},
             "nationality": {"nationality"},
+            "primary_healthcare_country": {"primary_healthcare_country"},
             "coverage_area": {"coverage_area"},
             "deductible": {"deductible", "deductible_preference"},
             "outpatient": {"outpatient_required"},
@@ -345,6 +347,21 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     state["pending_question"] = None
     state["discovery_complete"] = True
+
+    applicant = _applicant_from_state(state)
+    eligibility = await assess_eligibility(applicant, greek=greek, settings=settings) if applicant else None
+    eligibility_payload = eligibility.model_dump(mode="json") if eligibility else None
+    if eligibility and eligibility.verdict == "BLOCK":
+        return {
+            "reply": eligibility.explanation,
+            "state": state, "quotes": [], "excluded_plans": [],
+            "ai_status": "eligibility_blocked", "journey": journey if journey != "undetermined" else "ipmi",
+            "lead_cta": {"show": True, "journey": "ipmi", "label": "Request a proposal"},
+            "open_application_form": False, "quick_replies": [],
+            "discovery": discovery_progress(state),
+            "eligibility": eligibility_payload,
+        }
+
     quotes = _quote_payload(state, settings)
     state["last_shortlist_plan_keys"] = [q.get("plan_key") for q in quotes if q.get("plan_key")]
     excluded = _exclusions_payload(state, settings)
@@ -380,6 +397,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "lead_cta": {"show": True, "journey": "ipmi", "label": label},
             "open_application_form": False, "quick_replies": [],
             "discovery": discovery_progress(state),
+            "eligibility": eligibility_payload,
             "verification": verification_payload,
         }
 
@@ -390,5 +408,6 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         "lead_cta": {"show": True, "journey": "ipmi", "label": label},
         "open_application_form": False, "quick_replies": [],
         "discovery": discovery_progress(state),
+        "eligibility": eligibility_payload,
         "verification": verification_payload,
     }
