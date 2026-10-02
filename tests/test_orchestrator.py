@@ -30,7 +30,9 @@ async def test_claude_intake_is_skipped_right_after_the_name_answer(monkeypatch)
 @pytest.mark.asyncio
 async def test_shortlist_reply_always_explains_why_the_top_plan_was_chosen():
     state: dict = {
-        "name_asked": True, "age": 51, "residence_country": "Greece", "coverage_area": "area2", "maternity_required": True,
+        "name_asked": True, "age": 51, "residence_country": "Greece",
+        "primary_healthcare_country": "Greece", "primary_healthcare_country_answered": True,
+        "coverage_area": "area2", "maternity_required": True,
         "discovery_complete": True, "pending_question": None, "deductible_answered": True,
         "outpatient_answered": True, "chronic_answered": True, "maternity_answered": True,
         "dental_answered": True, "mental_health_answered": True, "wellness_answered": True,
@@ -47,7 +49,9 @@ async def test_shortlist_reply_invites_further_conversation_instead_of_ending_ab
     # Regression: the conversation just stopped dead after the shortlist,
     # with no natural next step offered.
     state: dict = {
-        "name_asked": True, "age": 51, "residence_country": "Greece", "coverage_area": "area1",
+        "name_asked": True, "age": 51, "residence_country": "Greece",
+        "primary_healthcare_country": "Greece", "primary_healthcare_country_answered": True,
+        "coverage_area": "area1",
         "discovery_complete": True, "pending_question": None, "deductible_answered": True,
         "outpatient_answered": True, "chronic_answered": True, "maternity_answered": True,
         "dental_answered": True, "mental_health_answered": True, "wellness_answered": True,
@@ -77,6 +81,7 @@ async def test_full_guided_flow_reaches_shortlist_without_claude_configured():
     r = await turn("Christos")
     r = await turn("51")
     r = await turn("Greece")
+    r = await turn("same as residence")  # primary healthcare country
     r = await turn("Greek")   # nationality / eligibility
     r = await turn("Worldwide excluding USA")
     r = await turn("skip")   # deductible

@@ -11,6 +11,7 @@ from backend.app.api.quotes import router as quotes_router
 from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
 from backend.app.api.voice import router as voice_router
+from backend.app.api.healthcare import router as healthcare_router
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -43,6 +44,7 @@ app.include_router(quotes_router, prefix=settings.api_prefix)
 app.include_router(leads_router, prefix=settings.api_prefix)
 app.include_router(travel_router, prefix=settings.api_prefix)
 app.include_router(voice_router, prefix=settings.api_prefix)
+app.include_router(healthcare_router, prefix=settings.api_prefix)
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
