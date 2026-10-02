@@ -47,7 +47,7 @@ async def current_policy(file: UploadFile = File(...)):
         raise HTTPException(status_code=413, detail="Current policy file exceeds 20 MB.")
 
     url = settings.proposal_studio_api_url.rstrip("/") + "/api/v1/current-policy/analyze"
-    headers = {"x-ashlar-api-key": settings.proposal_studio_api_key}
+    headers = {"x-hal-bridge-key": settings.proposal_studio_api_key}
     files = {"file": (filename, content, file.content_type or "application/octet-stream")}
     try:
         async with httpx.AsyncClient(timeout=settings.proposal_studio_timeout_seconds) as client:
