@@ -119,3 +119,21 @@ def test_openai_client_still_usable_standalone_for_future_deep_analysis():
     # the planned deep policy-wording comparison feature.
     body = build_openai_request_body(instructions="x", message="hi", history=None, json_mode=False)
     assert body["store"] is False
+
+
+def test_greek_acknowledgement_sanitizer_removes_repetitive_entaksei_opening():
+    from backend.app.services.adviser import _sanitize_acknowledgement
+    assert _sanitize_acknowledgement("Εντάξει, το σημείωσα.", greek=True) == "το σημείωσα."
+    assert _sanitize_acknowledgement("Κατανοητό.", greek=True) == ""
+
+
+def test_plan_explanation_truncation_guard_detects_mid_sentence_cutoff():
+    from backend.app.services.adviser import _looks_truncated
+    assert _looks_truncated("Καλύπτει επίσης εξωνοσοκομειακές υπηρεσίες και φάρμακ") is True
+    assert _looks_truncated("Καλύπτει επίσης εξωνοσοκομειακές υπηρεσίες.") is False
+
+
+def test_plan_explanation_prompt_demands_complete_sentences():
+    q = _sample_quote()
+    instr = build_explain_plan_instructions(q, greek=True)
+    assert "Never stop mid-sentence" in instr

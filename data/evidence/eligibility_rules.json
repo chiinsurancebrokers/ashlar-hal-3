@@ -1,0 +1,25 @@
+{
+  "profiles": {
+    "greek_local_resident_or_national": {
+      "description": "Future Greek local-market plans: applicant is Greek OR has permanent residence in Greece.",
+      "operator": "any",
+      "conditions": [
+        {"field": "nationality", "equals": "Greece"},
+        {"field": "residence_country", "equals": "Greece"}
+      ]
+    },
+    "april_myhealth_expat": {
+      "description": "APRIL MyHealth eligibility: country of permanent residence must differ from nationality.",
+      "operator": "all",
+      "conditions": [
+        {"field": "residence_country", "different_from_field": "nationality"}
+      ]
+    }
+  },
+  "plan_profiles": {},
+  "future_examples": {
+    "ethniki:*": "greek_local_resident_or_national",
+    "generali_gr:*": "greek_local_resident_or_national",
+    "april_myhealth:*": "april_myhealth_expat"
+  }
+}

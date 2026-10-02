@@ -53,3 +53,17 @@ def test_localized_validation_and_voice_status_use_dictionary():
         "t('micDenied')",
     ]:
         assert expression in html
+
+def test_plan_documents_render_as_clickable_pdf_cards_not_raw_urls():
+    html = _html()
+    assert 'class="plan-doc-link"' in html
+    assert "target=\"_blank\"" in html
+    assert "rel=\"noopener noreferrer\"" in html
+    assert "openPdf" in html
+    assert "Table of Benefits" in html
+    assert "Πίνακας Παροχών" in html
+
+
+def test_chat_messages_wrap_long_content_instead_of_forcing_horizontal_overflow():
+    html = _html()
+    assert "overflow-wrap:anywhere" in html
