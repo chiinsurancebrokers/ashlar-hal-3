@@ -1,0 +1,9 @@
+{
+  "img": {
+    "bronze": {
+      "outpatient_required": false,
+      "source": "HAL verified product catalogue",
+      "note": "Inpatient-focused plan; outpatient cover is not included at this tier."
+    }
+  }
+}
