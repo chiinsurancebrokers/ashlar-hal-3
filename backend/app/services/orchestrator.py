@@ -32,18 +32,34 @@ def _has_latin_words(text: str) -> bool:
     return bool(re.search(r"[A-Za-z]{2,}", text or ""))
 
 
+LANGUAGE_NEUTRAL_UI_VALUES = {
+    "skip", "europe only", "worldwide excluding usa", "worldwide including usa",
+    "€0 deductible", "€500 deductible", "€1000 deductible",
+    "hospital only", "include outpatient cover",
+    "yes", "no", "yes, maternity is required", "no maternity needed",
+    "yes, dental is important", "no dental needed",
+    "yes, mental health is important", "no mental health cover needed",
+    "yes, wellness is important", "no wellness cover needed",
+    "yes, optical is important", "no optical cover needed",
+    "yes, evacuation is important", "no evacuation priority",
+    "no fixed budget", "budget €3000", "budget €5000",
+}
+
+
 def _resolve_language(message: str, state: dict) -> bool:
     """Returns True if the conversation should continue in Greek.
 
-    Sticky by design: once the applicant writes in Greek, HAL keeps
-    replying in Greek even on turns with no Greek characters at all (a bare
-    age like "51", a Skip tap, a quick-reply value) — those shouldn't
-    silently flip the conversation back to English. It only switches back
-    if the applicant clearly writes actual Latin-script words again.
+    Machine values behind localized quick-reply buttons stay in English so
+    deterministic parsers remain stable. Those values are language-neutral
+    and must never be interpreted as the applicant switching languages.
     """
-    if _is_greek(message):
+    raw = (message or "").strip()
+    low = raw.lower()
+    if _is_greek(raw):
         state["language"] = "el"
-    elif _has_latin_words(message):
+    elif low in LANGUAGE_NEUTRAL_UI_VALUES:
+        pass
+    elif _has_latin_words(raw):
         state["language"] = "en"
     return state.get("language") == "el"
 
