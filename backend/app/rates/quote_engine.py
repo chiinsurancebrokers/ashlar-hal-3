@@ -88,8 +88,11 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             continue
 
         eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
-        if eligibility.status == "ineligible":
-            continue  # product-specific eligibility hard exclusion
+        if eligibility.status != "eligible":
+            # An active rule that is unresolved is not safe to display as an
+            # eligible option. The Eligibility Agent can ask for the missing
+            # information; the quote engine never guesses.
+            continue
 
         outcome = evaluate_requirements(applicant, carrier, product_code)
         if not outcome.eligible:
@@ -227,12 +230,13 @@ def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | 
             continue
 
         eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
-        if eligibility.status == "ineligible":
+        if eligibility.status != "eligible":
             out.append({
                 "plan_key": f"{carrier}:{product_code}",
                 "insurer": rows[0].carrier_name,
                 "product_name": rows[0].product_name,
                 "gaps": ["Eligibility criteria"],
+                "eligibility_status": eligibility.status,
                 "eligibility_reason": eligibility.reason,
             })
             continue
