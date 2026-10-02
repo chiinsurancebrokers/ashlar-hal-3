@@ -7,9 +7,9 @@ from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_shortlist, quote_exclusions
 from backend.app.discovery.flow import apply_discovery_answer, next_discovery_question, discovery_progress
 from backend.app.services.journey import classify_journey
-from backend.app.services.adviser import intake_analysis, build_local_review_instructions
+from backend.app.services.adviser import intake_analysis, build_local_review_instructions, explain_plan
 from backend.app.services.anthropic_client import claude_response as adviser_response
-from backend.app.knowledge.service import detect_hnwi
+from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
@@ -47,6 +47,62 @@ def _resolve_language(message: str, state: dict) -> bool:
         state["language"] = "en"
     return state.get("language") == "el"
 
+
+
+def _quote_objects(state: dict, settings: Settings):
+    applicant = _applicant_from_state(state)
+    if not applicant:
+        return []
+    return quote_shortlist(applicant, settings)
+
+
+def _post_shortlist_intent(message: str) -> str | None:
+    low = (message or "").strip().lower()
+    if any(x in low for x in [
+        "public healthcare", "public health system", "greece healthcare", "greek healthcare",
+        "δημόσιο σύστημα", "δημοσιο συστημα", "δημόσια υγεία", "δημοσια υγεια",
+        "σύστημα υγείας", "συστημα υγειας",
+    ]):
+        return "greece_healthcare"
+    if any(x in low for x in [
+        "tell me more", "more detail", "more about", "explain the plan", "explain this plan",
+        "details about", "walk me through", "πες μου περισσότερα", "πείτε μου περισσότερα",
+        "πιο αναλυτικά", "πιο αναλυτικα", "εξήγησέ", "εξηγησε", "ανάλυσέ", "αναλυσε",
+    ]) or low in {"yes", "yes please", "sure", "ναι", "ναι παρακαλώ", "ναι παρακαλω"}:
+        return "explain_plan"
+    return None
+
+
+def _pick_quote_from_message(message: str, quotes):
+    low = (message or "").lower()
+    for q in quotes:
+        names = [q.product_name or "", q.insurer or ""]
+        if any(name and name.lower() in low for name in names):
+            return q
+    return quotes[0] if quotes else None
+
+
+def _greece_healthcare_summary(greek: bool) -> str:
+    profile = greece_profile()
+    by_id = {x["id"]: x for x in profile.get("indicators", [])}
+    satisfaction = by_id.get("satisfaction", {})
+    unmet = by_id.get("unmet_needs_oecd", {})
+    oop = by_id.get("out_of_pocket_share", {})
+    if greek:
+        return (
+            "Με βάση τα στοιχεία που έχει φορτωμένα ο HAL από το OECD Health at a Glance 2025 για την Ελλάδα, "
+            f"{satisfaction.get('value', 'η ικανοποίηση από τη διαθεσιμότητα ποιοτικής φροντίδας είναι χαμηλή σε σύγκριση με τον OECD')}. "
+            f"Επίσης, {unmet.get('value', 'καταγράφονται σημαντικές ανεκπλήρωτες ανάγκες υγείας λόγω κόστους, απόστασης ή αναμονής')}, "
+            f"ενώ {oop.get('value', 'σημαντικό μέρος της δαπάνης υγείας καλύπτεται απευθείας από τα νοικοκυριά')}. "
+            "Αυτό δεν σημαίνει ότι το δημόσιο σύστημα είναι ανεπαρκές για όλους· βοηθά όμως να εξηγήσουμε γιατί κάποιος μπορεί να θέλει ιδιωτική ή διεθνή κάλυψη για μεγαλύτερη προβλεψιμότητα και επιλογές."
+        )
+    return (
+        "Based on HAL's loaded OECD Health at a Glance 2025 evidence for Greece, "
+        f"{satisfaction.get('value', 'reported satisfaction with the availability of quality care is low versus the OECD average')}. "
+        f"Also, {unmet.get('value', 'there are material unmet healthcare needs due to cost, distance or waiting times')}, "
+        f"while {oop.get('value', 'households fund a significant share of healthcare directly out of pocket')}. "
+        "That does not mean Greece's public system is unsuitable for everyone; it helps explain why some people value private or international cover for added predictability and choice."
+    )
 
 def _applicant_from_state(state: dict) -> Applicant | None:
     if not state.get("age") or not state.get("coverage_area"):
@@ -184,6 +240,30 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     journey = classify_journey(message, state)
     state["journey"] = journey
 
+    if state.get("discovery_complete") and journey == "ipmi":
+        intent = _post_shortlist_intent(message)
+        if intent == "greece_healthcare":
+            return {
+                "reply": _greece_healthcare_summary(greek),
+                "state": state, "quotes": [], "excluded_plans": [],
+                "ai_status": "greece_healthcare_context", "journey": "ipmi",
+                "lead_cta": {"show": True, "journey": "ipmi", "label": "Request a proposal"},
+                "open_application_form": False, "quick_replies": [],
+            }
+        if intent == "explain_plan":
+            quote_objects = _quote_objects(state, settings)
+            quote = _pick_quote_from_message(message, quote_objects)
+            if quote is not None:
+                reply = await explain_plan(quote, message, greek)
+                state["last_explained_plan_key"] = quote.plan_key
+                return {
+                    "reply": reply,
+                    "state": state, "quotes": [], "excluded_plans": [],
+                    "ai_status": "evidence_locked_plan_explanation", "journey": "ipmi",
+                    "lead_cta": {"show": True, "journey": "ipmi", "label": "Request a proposal"},
+                    "open_application_form": False, "quick_replies": [],
+                }
+
     if journey == "local_review":
         try:
             reply = await adviser_response(instructions=build_local_review_instructions(greek), message=message, history=history, max_tokens=300)
@@ -218,6 +298,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     state["pending_question"] = None
     state["discovery_complete"] = True
     quotes = _quote_payload(state, settings)
+    state["last_shortlist_plan_keys"] = [q.get("plan_key") for q in quotes if q.get("plan_key")]
     excluded = _exclusions_payload(state, settings)
     label = "Request a private consultation" if state.get("client_segment") == "hnwi" else "Request a proposal"
     name = state.get("applicant_name")
