@@ -130,3 +130,21 @@ def test_rate_limit_kicks_in_after_threshold():
         client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})
     r = client.post("/api/v1/chat/turn", json={"message": "hello", "state": {}, "history": []})
     assert r.status_code == 429
+
+
+def test_greece_healthcare_context_endpoint():
+    r = client.get("/api/v1/healthcare/context", params={"country": "Greece", "language": "el"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["available"] is True
+    assert body["country"] == "Greece"
+    assert len(body["metrics"]) == 3
+    assert any(s["label"].startswith("OECD") for s in body["sources"])
+
+
+def test_unknown_healthcare_country_returns_safe_future_ready_fallback():
+    r = client.get("/api/v1/healthcare/context", params={"country": "Cyprus", "language": "en"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["available"] is False
+    assert body["country"] == "Cyprus"
