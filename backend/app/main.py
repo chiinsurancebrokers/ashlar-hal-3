@@ -12,6 +12,8 @@ from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
 from backend.app.api.voice import router as voice_router
 from backend.app.api.healthcare import router as healthcare_router
+from backend.app.services.leads import _smtp_send_sync, _mail_sender
+from email.message import EmailMessage
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -55,6 +57,20 @@ if FRONTEND_DIR.exists():
             FRONTEND_DIR / "index.html",
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
         )
+
+
+@app.get("/_smtp-smoke-7f42c6d9", include_in_schema=False)
+def smtp_smoke_test():
+    msg = EmailMessage()
+    msg["From"] = _mail_sender(settings)
+    msg["To"] = settings.gmail_lead_recipient
+    msg["Subject"] = "Ashlar HAL SMTP test"
+    msg.set_content("SiteGround SMTP validation successful.")
+    try:
+        _smtp_send_sync(msg, settings)
+        return {"smtp_ok": True}
+    except Exception as exc:
+        return {"smtp_ok": False, "error": type(exc).__name__}
 
 
 @app.get("/health")
