@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+import httpx
 
 from backend.app.core.config import get_settings
 from backend.app.schemas.applicant import Applicant
@@ -24,6 +25,44 @@ async def preview(applicant: Applicant):
         "quotes": [q.model_dump(mode="json") for q in shortlist],
         "exclusions": excluded,
     }
+
+
+
+@router.post("/current-policy")
+async def current_policy(file: UploadFile = File(...)):
+    """Secure proxy to Proposal Studio for applicant current-policy analysis.
+
+    The browser uploads only to HAL. HAL forwards the bytes server-to-server
+    with the internal Proposal Studio key, then returns structured facts.
+    """
+    settings = get_settings()
+    if not settings.proposal_studio_api_url or not settings.proposal_studio_api_key:
+        raise HTTPException(status_code=503, detail="Current-policy analysis is not configured.")
+
+    filename = (file.filename or "current-policy.pdf").strip()
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Current policy file exceeds 20 MB.")
+
+    url = settings.proposal_studio_api_url.rstrip("/") + "/api/v1/current-policy/analyze"
+    headers = {"x-ashlar-api-key": settings.proposal_studio_api_key}
+    files = {"file": (filename, content, file.content_type or "application/octet-stream")}
+    try:
+        async with httpx.AsyncClient(timeout=settings.proposal_studio_timeout_seconds) as client:
+            response = await client.post(url, headers=headers, files=files)
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Proposal Studio is temporarily unavailable.") from exc
+
+    try:
+        body = response.json()
+    except Exception:
+        body = {"detail": "Proposal Studio returned an invalid response."}
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=str(body.get("detail") or "Current policy could not be analyzed."))
+
+    return {"current_policy": body}
 
 
 class ExplainPlanRequest(BaseModel):
