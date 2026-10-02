@@ -474,7 +474,7 @@ function trText(value){
 }
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function money(v,c='EUR'){ try { return new Intl.NumberFormat('en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(); } }
+function money(v,c='EUR'){ try { return new Intl.NumberFormat(lang()==='el'?'el-GR':'en-IE',{style:'currency',currency:c||'EUR',maximumFractionDigits:2}).format(Number(v||0)); } catch(_) { return '€'+Number(v||0).toLocaleString(lang()==='el'?'el-GR':'en-IE'); } }
 function qkey(q){ return q.plan_key || (q.insurer+':'+q.product_code); }
 
 function applyStaticI18n(){
@@ -544,32 +544,19 @@ function setJourney(j){
 }
 
 async function sendHiddenMessage(text){
-  // Same as sendMessage(), but the trigger text isn't shown as a user
-  // bubble — used when a UI control (not typing) starts a new journey.
-  history.push({role:'user', content:text});
-  document.getElementById('chat').innerHTML = '';
-  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
+  history.push({role:'user',content:text});document.getElementById('chat').innerHTML='';
+  const phrases=[t('thinkingNeeds'),t('thinkingRates'),t('thinkingMatch'),t('thinkingProviders')];
   showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
-  try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
-    const d = await r.json();
-    removeThinking();
-    if (!r.ok) throw new Error(d.detail || 'HAL service error');
-    state = d.state || state;
-    currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
-    excludedPlans = d.excluded_plans || [];
-    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
-    if (d.followup_message) addMsg(d.followup_message, 'hal');
-        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
-    updateDynamicInput(d.quick_replies || []);
-    history.push({role:'assistant', content: d.reply || ''});
-  } catch(e) {
-    removeThinking();
-    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
-    updateDynamicInput([]);
-  }
+  try{
+    const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
+    const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    applyStaticI18n();
+    addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
+    if(d.followup_message)addMsg(d.followup_message,'hal');
+    speakText([d.reply,d.followup_message].filter(Boolean).join(' '));updateDynamicInput(d.quick_replies||[]);
+    history.push({role:'assistant',content:d.reply||''});
+  }catch(e){removeThinking();addMsg(lang()==='el'?t('genericError'):e.message,'hal');updateDynamicInput([]);}
 }
 
 function renderState(){
@@ -783,25 +770,19 @@ function openNeedsEditor(){
 }
 
 async function saveNeeds(){
-  state.age = Number(document.getElementById('needAge').value || 0) || undefined;
-  state.residence_country = document.getElementById('needResidence').value.trim() || 'Greece';
-  state.coverage_area = document.getElementById('needArea').value;
-  const b = Number(document.getElementById('needBudget').value || 0);
-  if (b) state.budget_annual = b; else delete state.budget_annual;
-  Object.keys(MUST_FIELDS).forEach(k => state[k] = false);
-  document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el => state[el.dataset.field] = true);
-  closeModal('needsModal');
-  renderState();
-  if (!state.age || !state.residence_country || !state.coverage_area) return;
-
-  try {
-    const r = await fetch(API+'/quotes/preview', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(state)});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not recalculate.');
-    lastQuotes = d.shortlist || [];
-    excludedPlans = d.exclusions || [];
-    addMsg('I updated the shortlist using your edited needs.', 'hal', lastQuotes, excludedPlans, {show:true, journey:currentJourney, label:'Request a proposal'});
-  } catch(e) { addMsg('I could not recalculate the shortlist just now. Please try again.', 'hal'); }
+  state.age=Number(document.getElementById('needAge').value||0)||undefined;
+  state.residence_country=document.getElementById('needResidence').value.trim()||'Greece';
+  state.coverage_area=document.getElementById('needArea').value;
+  const b=Number(document.getElementById('needBudget').value||0);if(b)state.budget_annual=b;else delete state.budget_annual;
+  Object.keys(MUST_FIELDS).forEach(k=>state[k]=false);
+  document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el=>state[el.dataset.field]=true);
+  closeModal('needsModal');renderState();
+  if(!state.age||!state.residence_country||!state.coverage_area)return;
+  try{
+    const r=await fetch(API+'/quotes/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));lastQuotes=d.shortlist||[];excludedPlans=d.exclusions||[];
+    addMsg(lang()==='el'?'Ενημέρωσα τη shortlist με βάση τις αλλαγμένες ανάγκες σας.':'I updated the shortlist using your edited needs.','hal',lastQuotes,excludedPlans,{show:true,journey:currentJourney,label:t('requestProposal')});
+  }catch(e){addMsg(lang()==='el'?'Δεν μπόρεσα να επανυπολογίσω τη shortlist αυτή τη στιγμή. Δοκιμάστε ξανά.':'I could not recalculate the shortlist just now. Please try again.','hal');}
 }
 
 function sendQuickReply(encodedValue){
@@ -914,89 +895,61 @@ async function toggleRecording(){
 }
 
 async function sendMessage(){
-  const input = document.getElementById('input');
-  const text = input.value.trim();
-  if (!text) return;
-  addMsg(text, 'user');
-  history.push({role:'user', content:text});
-  input.value = '';
-  document.getElementById('sendBtn').disabled = true;
-  document.querySelectorAll('#dynamicInputRow .pill-row, #dynamicInputRow .stepper-input, #dynamicInputRow .dynamic-continue').forEach(el => el.remove());
-  const phrases = ['Understanding your needs','Checking rates','Matching your must-have benefits','Comparing providers'];
-  showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
-
-  try {
-    const r = await fetch(API+'/chat/turn', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, state, history: history.slice(0,-1)})});
-    const d = await r.json();
-    removeThinking();
-    if (!r.ok) throw new Error(d.detail || 'HAL service error');
-    state = d.state || state;
-    currentJourney = d.journey || currentJourney;
-    lastQuotes = d.quotes || [];
-    excludedPlans = d.excluded_plans || [];
-    addMsg(d.reply || '', 'hal', lastQuotes, excludedPlans, d.lead_cta, d.quick_replies || [], d.travel_recommendation || null);
-    if (d.followup_message) addMsg(d.followup_message, 'hal');
-        speakText([d.reply, d.followup_message].filter(Boolean).join(' '));
-    updateDynamicInput(d.quick_replies || []);
-    history.push({role:'assistant', content: d.reply || ''});
-  } catch(e) {
-    removeThinking();
-    addMsg("I couldn't complete that request just now. Please try once more.", 'hal');
-    updateDynamicInput([]);
-  }
-  document.getElementById('sendBtn').disabled = false;
+  const input=document.getElementById('input'),text=input.value.trim();if(!text)return;
+  addMsg(text,'user');history.push({role:'user',content:text});input.value='';document.getElementById('sendBtn').disabled=true;
+  document.querySelectorAll('#dynamicInputRow .pill-row, #dynamicInputRow .stepper-input, #dynamicInputRow .dynamic-continue').forEach(el=>el.remove());
+  const phrases=[t('thinkingNeeds'),t('thinkingRates'),t('thinkingMatch'),t('thinkingProviders')];showThinking(phrases[Math.floor(Math.random()*phrases.length)]);
+  try{
+    const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
+    const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    applyStaticI18n();
+    addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
+    if(d.followup_message)addMsg(d.followup_message,'hal');
+    speakText([d.reply,d.followup_message].filter(Boolean).join(' '));updateDynamicInput(d.quick_replies||[]);
+    history.push({role:'assistant',content:d.reply||''});
+  }catch(e){removeThinking();addMsg(lang()==='el'?t('genericError'):e.message,'hal');updateDynamicInput([]);}
+  document.getElementById('sendBtn').disabled=false;
 }
 
 function openLeadForm(journey){
-  currentJourney = journey || currentJourney;
-  const titles = {ipmi:['Request a proposal','Tell us about you and Ashlar will follow up.'],
-                   travel:['Travel insurance enquiry','Tell us about your trip and Ashlar will follow up.'],
-                   local_review:['Request a local-vs-international review','Tell us your priorities and Ashlar will follow up.']};
-  const [title, sub] = titles[journey] || titles.ipmi;
-  document.getElementById('leadTitle').textContent = state.client_segment==='hnwi' ? 'Request a private consultation' : title;
-  document.getElementById('leadSubtitle').textContent = sub;
-  if (state.residence_country) document.getElementById('leadResidence').value = state.residence_country;
-  if (state.applicant_name) document.getElementById('leadFirstName').value = state.applicant_name;
-  if (state.age) document.getElementById('leadAge').value = state.age;
-  if (state.coverage_area) document.getElementById('leadCoverage').value = areaLabel(state.coverage_area);
-  if (state.budget_annual) document.getElementById('leadBudget').value = state.budget_annual;
-  document.getElementById('leadStatus').textContent = '';
-  document.getElementById('leadModal').classList.add('open');
+  currentJourney=journey||currentJourney;
+  const titleKey=journey==='travel'?'proposalTravel':journey==='local_review'?'proposalLocal':'proposalIpmi';
+  const subKey=journey==='travel'?'proposalTravelSub':journey==='local_review'?'proposalLocalSub':'proposalSubtitle';
+  document.getElementById('leadTitle').textContent=state.client_segment==='hnwi'?t('requestPrivate'):t(titleKey);
+  document.getElementById('leadSubtitle').textContent=t(subKey);
+  if(state.residence_country)document.getElementById('leadResidence').value=state.residence_country;
+  if(state.applicant_name)document.getElementById('leadFirstName').value=state.applicant_name;
+  if(state.age)document.getElementById('leadAge').value=state.age;
+  if(state.coverage_area)document.getElementById('leadCoverage').value=areaLabel(state.coverage_area);
+  if(state.budget_annual)document.getElementById('leadBudget').value=state.budget_annual;
+  document.getElementById('leadStatus').textContent='';applyStaticI18n();document.getElementById('leadModal').classList.add('open');
 }
 
 async function submitLead(){
-  const payload = {
-    insurance_interest: currentJourney === 'travel' ? 'Travel Insurance' : 'International Health Insurance',
-    first_name: document.getElementById('leadFirstName').value.trim(),
-    last_name: document.getElementById('leadLastName').value.trim(),
-    email: document.getElementById('leadEmail').value.trim(),
-    residence_country: document.getElementById('leadResidence').value.trim(),
-    age: document.getElementById('leadAge').value.trim(),
-    coverage_area: document.getElementById('leadCoverage').value.trim(),
-    family_members: document.getElementById('leadFamily').value.trim(),
-    budget: document.getElementById('leadBudget').value.trim(),
-    message: document.getElementById('leadMessage').value.trim(),
-    consent: document.getElementById('leadConsent').checked,
-    website: document.getElementById('leadWebsite').value,
+  const payload={
+    insurance_interest:currentJourney==='travel'?'Travel Insurance':'International Health Insurance',
+    first_name:document.getElementById('leadFirstName').value.trim(),last_name:document.getElementById('leadLastName').value.trim(),
+    email:document.getElementById('leadEmail').value.trim(),residence_country:document.getElementById('leadResidence').value.trim(),
+    age:document.getElementById('leadAge').value.trim(),coverage_area:document.getElementById('leadCoverage').value.trim(),
+    family_members:document.getElementById('leadFamily').value.trim(),budget:document.getElementById('leadBudget').value.trim(),
+    message:document.getElementById('leadMessage').value.trim(),consent:document.getElementById('leadConsent').checked,website:document.getElementById('leadWebsite').value,
   };
-  const status = document.getElementById('leadStatus');
-  if (!payload.first_name || !payload.last_name || !payload.email) { status.textContent = 'Please fill in your name and email.'; status.style.color = '#b3261e'; return; }
-  if (!payload.consent) { status.textContent = 'Please confirm consent to proceed.'; status.style.color = '#b3261e'; return; }
-  status.textContent = 'Sending...'; status.style.color = 'var(--muted)';
-  try {
-    const r = await fetch(API+'/leads', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'Could not send enquiry.');
-    status.textContent = 'Sent! Reference: ' + (d.reference || ''); status.style.color = 'var(--good)';
-    setTimeout(() => closeModal('leadModal'), 1400);
-  } catch(e) { status.textContent = e.message; status.style.color = '#b3261e'; }
+  const status=document.getElementById('leadStatus');
+  if(!payload.first_name||!payload.last_name||!payload.email){status.textContent=t('fillNameEmail');status.style.color='#b3261e';return;}
+  if(!payload.consent){status.textContent=t('confirmConsent');status.style.color='#b3261e';return;}
+  status.textContent=t('sending');status.style.color='var(--muted)';
+  try{
+    const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
+    if(!r.ok)throw new Error(d.detail||t('couldNotSend'));status.textContent=t('sentRef')+(d.reference||'');status.style.color='var(--good)';setTimeout(()=>closeModal('leadModal'),1400);
+  }catch(e){status.textContent=lang()==='el'?t('couldNotSend'):e.message;status.style.color='#b3261e';}
 }
 
 // Initial state: HAL greets immediately and asks for the applicant's name
 // first (with a friendly, personalised follow-up into age) — no separate
 // "tap to begin" step.
-state = {pending_question: 'name'};
+state = {pending_question:'name', language:(navigator.language||'').toLowerCase().startsWith('el')?'el':'en'};
+applyStaticI18n();
 showIpmiGreeting();
 renderState();
 </script>
