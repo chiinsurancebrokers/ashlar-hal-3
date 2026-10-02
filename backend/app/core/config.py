@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     gmail_sender_email: str | None = None
     gmail_lead_recipient: str | None = None
 
+    # Resend HTTPS transactional email (preferred on Railway plans where SMTP egress is blocked).
+    resend_api_key: str | None = None
+    resend_from_email: str = "quotes@ashlarassurance.com"
+    resend_from_name: str = "Ashlar Assurance"
+    resend_reply_to: str = "info@ashlarassurance.com"
+
     # --- Quote engine business rules ---------------------------------------
     # A deductible-tiered rate table is not yet confirmed by any carrier, so
     # this model is OFF by default. It only activates once you've reviewed
