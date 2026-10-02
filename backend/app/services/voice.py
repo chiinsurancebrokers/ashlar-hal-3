@@ -117,17 +117,61 @@ def _parse_spoken_number(raw: str) -> float:
     return float(value)
 
 
+_EL_UNITS = {
+    0: "μηδέν", 1: "ένα", 2: "δύο", 3: "τρία", 4: "τέσσερα", 5: "πέντε",
+    6: "έξι", 7: "επτά", 8: "οκτώ", 9: "εννέα", 10: "δέκα",
+    11: "έντεκα", 12: "δώδεκα", 13: "δεκατρία", 14: "δεκατέσσερα",
+    15: "δεκαπέντε", 16: "δεκαέξι", 17: "δεκαεπτά", 18: "δεκαοκτώ", 19: "δεκαεννέα",
+}
+_EL_TENS = {
+    20: "είκοσι", 30: "τριάντα", 40: "σαράντα", 50: "πενήντα",
+    60: "εξήντα", 70: "εβδομήντα", 80: "ογδόντα", 90: "ενενήντα",
+}
+_EL_HUNDREDS = {
+    100: "εκατό", 200: "διακόσια", 300: "τριακόσια", 400: "τετρακόσια",
+    500: "πεντακόσια", 600: "εξακόσια", 700: "επτακόσια", 800: "οκτακόσια", 900: "εννιακόσια",
+}
+
+
+def _greek_integer_words(number: int) -> str:
+    if number < 0:
+        return "μείον " + _greek_integer_words(-number)
+    if number < 20:
+        return _EL_UNITS[number]
+    if number < 100:
+        tens = (number // 10) * 10
+        rest = number % 10
+        return _EL_TENS[tens] + (f" {_EL_UNITS[rest]}" if rest else "")
+    if number < 1000:
+        hundreds = (number // 100) * 100
+        rest = number % 100
+        return _EL_HUNDREDS[hundreds] + (f" {_greek_integer_words(rest)}" if rest else "")
+    if number < 1_000_000:
+        thousands = number // 1000
+        rest = number % 1000
+        if thousands == 1:
+            prefix = "χίλια"
+        else:
+            prefix = _greek_integer_words(thousands) + " χιλιάδες"
+        return prefix + (f" {_greek_integer_words(rest)}" if rest else "")
+    if number < 1_000_000_000:
+        millions = number // 1_000_000
+        rest = number % 1_000_000
+        prefix = "ένα εκατομμύριο" if millions == 1 else _greek_integer_words(millions) + " εκατομμύρια"
+        return prefix + (f" {_greek_integer_words(rest)}" if rest else "")
+    return str(number)
+
+
 def _number_words(value: float, language: str) -> str:
-    lang_code = "el" if language == "el" else "en"
     if float(value).is_integer():
-        return num2words(int(value), lang=lang_code)
+        return _greek_integer_words(int(value)) if language == "el" else num2words(int(value), lang="en")
     whole = int(value)
     decimals = round((value - whole) * 100)
     if decimals == 100:
         whole += 1
         decimals = 0
     if language == "el":
-        return f"{num2words(whole, lang='el')} και {num2words(decimals, lang='el')}"
+        return f"{_greek_integer_words(whole)} και {_greek_integer_words(decimals)}"
     return f"{num2words(whole, lang='en')} point {num2words(decimals, lang='en')}"
 
 
@@ -181,10 +225,12 @@ def normalize_speech_text(text: str, language: str = "en") -> str:
         whole = int(amount)
         cents = round((amount - whole) * 100)
         major, minor = currency_names[language].get(token_key, currency_names[language]["EUR"])
-        words = f"{num2words(whole, lang='el' if language == 'el' else 'en')} {major}"
+        whole_words = _greek_integer_words(whole) if language == "el" else num2words(whole, lang="en")
+        words = f"{whole_words} {major}"
         if cents:
             connector = " και " if language == "el" else " and "
-            words += connector + f"{num2words(cents, lang='el' if language == 'el' else 'en')} {minor}"
+            cent_words = _greek_integer_words(cents) if language == "el" else num2words(cents, lang="en")
+            words += connector + f"{cent_words} {minor}"
         return words
 
     value = amount_re.sub(repl_amount, value)
@@ -204,7 +250,7 @@ def normalize_speech_text(text: str, language: str = "en") -> str:
     def repl_number(match: re.Match) -> str:
         try:
             number = _parse_spoken_number(match.group(0))
-            return num2words(int(number), lang="el" if language == "el" else "en")
+            return _greek_integer_words(int(number)) if language == "el" else num2words(int(number), lang="en")
         except Exception:
             return match.group(0)
     value = standalone_re.sub(repl_number, value)
