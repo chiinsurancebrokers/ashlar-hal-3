@@ -321,8 +321,8 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 <div class="modal-backdrop" id="emailModal" onclick="if(event.target===this)closeModal('emailModal')">
   <div class="modal">
     <h3 id="emailModalTitle">Email me this comparison</h3>
-    <label id="lblEmailName">Name</label><input id="emailName">
-    <label>Email</label><input id="emailAddress" type="email">
+    <label id="lblEmailName">Name</label><input id="emailName" autocomplete="name">
+    <label>Email</label><input id="emailAddress" type="email" autocomplete="email">
     <p id="emailCurrentNote" style="font-size:11px;color:var(--muted)">All figures are recalculated by our server before sending — this is always the current, accurate premium.</p>
     <div class="modal-actions">
       <button class="btn-secondary" id="emailCancelBtn" onclick="closeModal('emailModal')">Cancel</button>
