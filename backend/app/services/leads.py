@@ -56,6 +56,67 @@ async def _send_via_gmail(msg: EmailMessage) -> dict:
     return response.json()
 
 
+def _resend_configured(settings: Settings) -> bool:
+    return bool(settings.resend_api_key and settings.resend_from_email)
+
+
+def _resend_from(settings: Settings) -> str:
+    return f"{settings.resend_from_name} <{settings.resend_from_email}>" if settings.resend_from_name else settings.resend_from_email
+
+
+async def _send_via_resend(msg: EmailMessage) -> dict:
+    settings = get_settings()
+    if not _resend_configured(settings):
+        raise RuntimeError("Resend delivery is not configured.")
+
+    html_part = msg.get_body(preferencelist=("html",))
+    plain_part = msg.get_body(preferencelist=("plain",))
+    payload = {
+        "from": msg.get("From") or _resend_from(settings),
+        "to": [str(msg.get("To"))],
+        "subject": str(msg.get("Subject") or ""),
+        "text": plain_part.get_content() if plain_part else "",
+    }
+    if html_part:
+        payload["html"] = html_part.get_content()
+    if msg.get("Reply-To"):
+        payload["reply_to"] = [str(msg.get("Reply-To"))]
+    if msg.get("Bcc"):
+        payload["bcc"] = [str(msg.get("Bcc"))]
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+    if not (200 <= response.status_code < 300):
+        raise RuntimeError(f"Resend API returned {response.status_code}: {(response.text or '')[:400]}")
+    result = response.json()
+    return {"transport": "resend", "id": result.get("id")}
+
+
+async def _send_transactional(msg: EmailMessage) -> dict:
+    """Prefer Resend HTTPS; keep Gmail only as a temporary fallback."""
+    settings = get_settings()
+    if _resend_configured(settings):
+        return await _send_via_resend(msg)
+    result = await _send_via_gmail(msg)
+    result["transport"] = "gmail"
+    return result
+
+
+def _mail_sender(settings: Settings) -> str:
+    if _resend_configured(settings):
+        return _resend_from(settings)
+    if settings.gmail_sender_email:
+        return settings.gmail_sender_email
+    raise RuntimeError("No transactional email sender is configured.")
+
+
 # ---------------------------------------------------------------------------
 # Enquiry / lead emails (from the "Request a proposal" form)
 # ---------------------------------------------------------------------------
@@ -109,12 +170,19 @@ Consent recorded: {'Yes' if payload.get('consent') else 'No'}
 
 async def send_lead(payload: dict) -> dict:
     settings = get_settings()
-    if not settings.gmail_sender_email or not settings.gmail_lead_recipient:
-        raise RuntimeError("Gmail lead delivery is not configured.")
+    if not settings.gmail_lead_recipient:
+        raise RuntimeError("Lead recipient is not configured.")
     reference = f"HAL-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:8].upper()}"
-    msg = _build_lead_message(payload, reference, settings.gmail_sender_email, settings.gmail_lead_recipient)
-    result = await _send_via_gmail(msg)
-    return {"status": "sent", "reference": reference, "gmail_message_id": result.get("id")}
+    msg = _build_lead_message(payload, reference, _mail_sender(settings), settings.gmail_lead_recipient)
+    if _resend_configured(settings) and settings.resend_reply_to:
+        msg["Reply-To"] = settings.resend_reply_to
+    result = await _send_transactional(msg)
+    return {
+        "status": "sent",
+        "reference": reference,
+        "transport": result.get("transport", "gmail"),
+        "message_id": result.get("id"),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -229,17 +297,17 @@ async def send_comparison_email(
     if current_policy_token:
         current_policy = verify_current_policy_token(current_policy_token)
 
-    if not settings.gmail_sender_email:
-        raise RuntimeError("Gmail delivery is not configured.")
-
     msg = _build_comparison_message(
-        name, email, plans, settings.gmail_sender_email,
+        name, email, plans, _mail_sender(settings),
         settings.gmail_lead_recipient, current_policy=current_policy,
     )
-    result = await _send_via_gmail(msg)
+    if _resend_configured(settings) and settings.resend_reply_to:
+        msg["Reply-To"] = settings.resend_reply_to
+    result = await _send_transactional(msg)
     return {
         "status": "sent",
-        "gmail_message_id": result.get("id"),
+        "transport": result.get("transport", "gmail"),
+        "message_id": result.get("id"),
         "plans_sent": [p.plan_key for p in plans],
         "current_policy_included": bool(current_policy),
     }
