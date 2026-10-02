@@ -88,6 +88,8 @@ Return one JSON object only:
 Rules:
 - Converse in {"Greek" if greek else "English"}.
 - acknowledgement must be at most two short sentences.
+- In Greek, do NOT repeatedly begin with "Εντάξει", "Ωραία", "Κατανοητό" or "Σημειώθηκε".
+  Prefer either no acknowledgement at all or a short context-specific response.
 - Vary your phrasing turn to turn — never fall into a repeating template like
   "Got it, X noted." every time. A real adviser doesn't parrot the same
   three words back on every answer; sound like a person, not a form.
@@ -103,6 +105,27 @@ Current state:
 """
 
 
+def _sanitize_acknowledgement(text: str, greek: bool) -> str:
+    value = (text or "").strip()
+    if not value:
+        return ""
+    if greek:
+        # Avoid the robotic repeated "Εντάξει ..." cadence reported in the live UI.
+        value = re.sub(r"^(?:εντάξει|ενταξει|ωραία|ωραια|κατανοητό|κατανοητο|σημειώθηκε|σημειωθηκε)[,.:;!\-–— ]*", "", value, flags=re.I).strip()
+        if len(value) < 3:
+            return ""
+    return value
+
+
+def _looks_truncated(text: str) -> bool:
+    value = (text or "").rstrip()
+    if not value:
+        return True
+    # A cut-off model response usually ends mid-word with no closing punctuation.
+    return value[-1] not in ".!?;:…»”')]}"
+"
+
+
 async def intake_analysis(message: str, state: dict, history: list[dict] | None, greek: bool) -> dict:
     try:
         text = await adviser_response(
@@ -111,7 +134,7 @@ async def intake_analysis(message: str, state: dict, history: list[dict] | None,
         )
         parsed = _extract_json(text)
         return {
-            "acknowledgement": str(parsed.get("acknowledgement", "") or "").strip(),
+            "acknowledgement": _sanitize_acknowledgement(str(parsed.get("acknowledgement", "") or ""), greek),
             "applicant_updates": clean_applicant_updates(parsed.get("applicant_updates", {})),
         }
     except Exception:
@@ -138,7 +161,8 @@ Hard rules:
 - Never state a benefit, limit, waiting period or exclusion that is not in the verified facts list above.
 - If asked about something not in that list, say it is not confirmed in the loaded policy evidence rather than guessing.
 - Do not restate the premium as anything other than the figure given above.
-- Keep the explanation warm, concise, advisory — 3-5 sentences.
+- Keep the explanation warm, concise, advisory — 3-5 complete sentences.
+- Never stop mid-sentence. If space is tight, omit lower-priority facts rather than truncate a sentence.
 
 {_fairness_clause()}
 """
@@ -146,9 +170,9 @@ Hard rules:
 
 async def explain_plan(quote: QuoteResult, question: str, greek: bool) -> str:
     try:
-        text = await adviser_response(instructions=build_explain_plan_instructions(quote, greek), message=question, max_tokens=400)
+        text = await adviser_response(instructions=build_explain_plan_instructions(quote, greek), message=question, max_tokens=900)
         flags = fairness_check(text)
-        if flags:
+        if flags or _looks_truncated(text):
             # Fail closed to a safe deterministic fallback rather than ever
             # surface a flagged claim to a client.
             return _deterministic_plan_summary(quote, greek)
