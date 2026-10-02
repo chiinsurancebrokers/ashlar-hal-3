@@ -122,8 +122,7 @@ def _looks_truncated(text: str) -> bool:
     if not value:
         return True
     # A cut-off model response usually ends mid-word with no closing punctuation.
-    return value[-1] not in ".!?;:…»”')]}"
-"
+    return value[-1] not in ".!?;:…»”')]}\""
 
 
 async def intake_analysis(message: str, state: dict, history: list[dict] | None, greek: bool) -> dict:
