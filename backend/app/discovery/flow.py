@@ -32,10 +32,34 @@ def _is_skip(text: str) -> bool:
     return _norm(text) in SKIP
 
 
+QUICK_REPLY_LABELS_EL = {
+    "Not sure / Skip": "Δεν είμαι σίγουρος / Παράλειψη",
+    "Europe": "Ευρώπη",
+    "Worldwide excl. USA": "Παγκόσμια εκτός ΗΠΑ",
+    "Worldwide incl. USA": "Παγκόσμια με ΗΠΑ",
+    "Hospital only": "Μόνο νοσοκομειακή",
+    "Include outpatient": "Με εξωνοσοκομειακή κάλυψη",
+    "Yes": "Ναι",
+    "No": "Όχι",
+    "Yes, maternity": "Ναι, με κάλυψη μητρότητας",
+    "No fixed budget": "Χωρίς συγκεκριμένο προϋπολογισμό",
+    "Up to €3,000": "Έως €3.000",
+    "Up to €5,000": "Έως €5.000",
+}
+
+
 def _q(key: str, reply: str, choices: list[tuple[str, str]] | None = None, skippable: bool = True) -> dict:
-    replies = [{"label": a, "value": b} for a, b in (choices or [])]
+    # Keep machine values stable in English, but localise what the applicant
+    # actually sees. We infer the UI language from the already-localised
+    # question so no extra parameter can drift out of sync.
+    greek = bool(re.search(r"[\u0370-\u03ff]", reply or ""))
+    replies = []
+    for label, value in (choices or []):
+        visible = QUICK_REPLY_LABELS_EL.get(label, label) if greek else label
+        replies.append({"label": visible, "value": value})
     if skippable:
-        replies.append({"label": "Not sure / Skip", "value": "skip"})
+        label = QUICK_REPLY_LABELS_EL["Not sure / Skip"] if greek else "Not sure / Skip"
+        replies.append({"label": label, "value": "skip"})
     return {"key": key, "reply": reply, "quick_replies": replies}
 
 
