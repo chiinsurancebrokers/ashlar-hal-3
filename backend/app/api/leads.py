@@ -41,6 +41,7 @@ class ComparisonRequest(BaseModel):
     email: EmailStr
     applicant_state: dict = Field(default_factory=dict)
     plan_keys: list[str] = Field(min_length=1, max_length=10)
+    current_policy_token: str | None = Field(default=None, max_length=50000)
 
 
 @router.post("/comparison")
@@ -50,7 +51,10 @@ async def send_comparison(req: ComparisonRequest):
     emails plans that are currently genuinely eligible — see
     services/leads.py::_verified_plans_for and its tests."""
     try:
-        return await send_comparison_email(req.name, req.email, req.applicant_state, req.plan_keys)
+        return await send_comparison_email(
+            req.name, req.email, req.applicant_state, req.plan_keys,
+            current_policy_token=req.current_policy_token,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
