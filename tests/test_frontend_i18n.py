@@ -133,3 +133,9 @@ def test_comparison_email_prefills_real_applicant_name_and_preserves_error_detai
     assert 'autocomplete="name"' in html
     assert 'autocomplete="email"' in html
     assert "alert(e.message||t('comparisonSendFail'))" in html
+
+
+def test_frontend_does_not_contain_invalid_escaped_quote_expression():
+    html = _html()
+    assert "esc(t(\\'currentEuropesure\\'))" not in html
+    assert "esc(t('currentEuropesure'))" in html
