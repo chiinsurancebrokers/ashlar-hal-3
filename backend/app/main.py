@@ -12,6 +12,7 @@ from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
 from backend.app.api.voice import router as voice_router
 from backend.app.api.healthcare import router as healthcare_router
+from backend.app.services.architecture_auditor_agent import audit_architecture
 
 settings = get_settings()
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -19,10 +20,6 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 app = FastAPI(title=settings.app_name, version="1.0.0")
 
-# CORS is explicit rather than left unconfigured. Tighten allow_origins to
-# your real production domain(s) once you know them; "*" here only allows
-# GET/POST from any origin, no credentials, which is the safest broad
-# default for a public quote/chat widget.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,8 +56,9 @@ if FRONTEND_DIR.exists():
 
 @app.get("/health")
 def health():
+    architecture = audit_architecture(settings)
     return {
-        "status": "ok",
+        "status": "ok" if architecture.verdict != "BLOCK" else "degraded",
         "service": settings.app_name,
         "environment": settings.app_env,
         "conversational_ai": "claude_messages_api" if settings.anthropic_api_key else "not_configured",
@@ -75,4 +73,5 @@ def health():
             settings.gmail_client_id, settings.gmail_client_secret, settings.gmail_refresh_token,
             settings.gmail_sender_email, settings.gmail_lead_recipient,
         ]) else "not_configured",
+        "architecture_audit": architecture.model_dump(mode="json"),
     }
