@@ -307,3 +307,68 @@ async def test_greek_language_stays_sticky_after_same_as_residence_quick_reply()
     assert "Ποια είναι η υπηκοότητά σας;" in result["reply"]
     assert "What is your nationality?" not in result["reply"]
     assert result["quick_replies"][0]["label"] == "Δεν είμαι σίγουρος / Παράλειψη"
+
+
+@pytest.mark.asyncio
+async def test_explicit_europe_answer_cannot_be_overwritten_by_ai_intake(monkeypatch):
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "fake-key-for-test")
+
+    async def fake_intake_analysis(*args, **kwargs):
+        return {
+            "acknowledgement": "",
+            "applicant_updates": {"coverage_area": "area2"},
+        }
+
+    monkeypatch.setattr(orchestrator_module, "intake_analysis", fake_intake_analysis)
+
+    state = {
+        "language": "el",
+        "journey": "ipmi",
+        "name_asked": True,
+        "applicant_name": "Χρήστος",
+        "age": 51,
+        "residence_country": "Greece",
+        "primary_healthcare_country": "Greece",
+        "primary_healthcare_country_answered": True,
+        "nationality": "Greece",
+        "nationality_answered": True,
+        "pending_question": "coverage_area",
+    }
+    r = await chat_turn("Europe only", state, [])
+    assert r["state"]["coverage_area"] == "area1"
+
+
+@pytest.mark.asyncio
+async def test_europe_area_uses_europe_morgan_price_rate():
+    state = {
+        "language": "el",
+        "journey": "ipmi",
+        "name_asked": True,
+        "applicant_name": "Χρήστος",
+        "age": 51,
+        "residence_country": "Greece",
+        "primary_healthcare_country": "Greece",
+        "primary_healthcare_country_answered": True,
+        "nationality": "Greece",
+        "nationality_answered": True,
+        "coverage_area": "area1",
+        "deductible_answered": True,
+        "outpatient_required": True,
+        "outpatient_answered": True,
+        "chronic_answered": True,
+        "maternity_answered": True,
+        "dental_answered": True,
+        "mental_health_answered": True,
+        "wellness_required": True,
+        "wellness_answered": True,
+        "optical_answered": True,
+        "evacuation_required": True,
+        "evacuation_answered": True,
+        "budget_answered": True,
+        "discovery_complete": True,
+        "pending_question": None,
+    }
+    r = await chat_turn("continue", state, [])
+    standard_plus = next(q for q in r["quotes"] if q["product_code"] == "standard_plus")
+    assert standard_plus["coverage_area_label"] == "Europe"
+    assert standard_plus["premium"] == 2694.72
