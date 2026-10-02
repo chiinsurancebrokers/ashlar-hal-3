@@ -161,6 +161,43 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
                 # 'country' by mistake.
                 out["residence_country"] = " ".join(p.capitalize() for p in cleaned.split())
 
+    elif pending == "primary_healthcare_country":
+        raw = text.strip(" .,!?:;")
+        if any(x in text for x in ["same as residence", "same country", "ίδια με την κατοικία", "ιδια με την κατοικια", "ίδια χώρα", "ιδια χωρα"]):
+            if state.get("residence_country"):
+                out["primary_healthcare_country"] = state["residence_country"]
+                out["primary_healthcare_country_answered"] = True
+        else:
+            aliases = {
+                "greece": "Greece", "hellas": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece",
+                "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
+                "usa": "United States", "united states": "United States", "america": "United States",
+                "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus",
+                "germany": "Germany", "france": "France", "italy": "Italy", "spain": "Spain",
+                "malta": "Malta", "uae": "United Arab Emirates", "dubai": "United Arab Emirates",
+                "singapore": "Singapore", "switzerland": "Switzerland", "portugal": "Portugal",
+                "netherlands": "Netherlands", "belgium": "Belgium", "austria": "Austria",
+            }
+            cleaned = re.sub(
+                r"^(?:i(?:'ll| will)?\s+(?:spend|live|stay)\s+(?:most\s+of\s+the\s+time\s+)?in|"
+                r"mostly\s+in|mainly\s+in|"
+                r"θα\s+(?:μένω|μενω|βρίσκομαι|βρισκομαι)\s+(?:κυρίως|κυριως)?\s*(?:στη|στην|στο|σε)?|"
+                r"κυρίως\s+(?:στη|στην|στο|σε)|κυριως\s+(?:στη|στην|στο|σε))\s+",
+                "", raw, flags=re.I,
+            ).strip(" .,!?:;")
+            canonical = aliases.get(cleaned.lower())
+            if not canonical:
+                for alias, name in aliases.items():
+                    if re.search(rf"\b{re.escape(alias)}\b", raw, flags=re.I):
+                        canonical = name
+                        break
+            if canonical:
+                out["primary_healthcare_country"] = canonical
+                out["primary_healthcare_country_answered"] = True
+            elif cleaned and len(cleaned.split()) <= 4 and re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿΑ-Ωα-ωΆ-ώ .'-]+", cleaned):
+                out["primary_healthcare_country"] = " ".join(p.capitalize() for p in cleaned.split())
+                out["primary_healthcare_country_answered"] = True
+
     elif pending == "nationality":
         raw = text.strip(" .,!?:;")
         aliases = {
@@ -272,6 +309,7 @@ def _skip_result(pending: str) -> dict:
         "name": {"name_asked": True},
         "age": {},  # age has no safe default; skip re-asks (handled by next_discovery_question)
         "residence": {},
+        "primary_healthcare_country": {},
         "nationality": {"nationality_answered": True},
         "coverage_area": {"coverage_area": "area1"},  # Europe is the safest narrow default
         "deductible": {"deductible_answered": True, "deductible_preference": "flexible"},
@@ -307,6 +345,15 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
         return _q("residence",
             "What is your country of permanent residence?" if not greek else "Ποια είναι η χώρα μόνιμης κατοικίας σας;",
             skippable=False)
+    if not state.get("primary_healthcare_country_answered"):
+        return _q(
+            "primary_healthcare_country",
+            "In which country will you spend most of the year — roughly six months or more? HAL uses this only to add practical healthcare-system context to your comparison."
+            if not greek else
+            "Σε ποια χώρα θα περνάτε το μεγαλύτερο μέρος του χρόνου σας — περίπου έξι μήνες ή περισσότερο; Ο HAL το χρησιμοποιεί μόνο για να προσθέσει πρακτικό πλαίσιο για το σύστημα υγείας στη σύγκρισή σας.",
+            [("Same as residence", "Same as residence")] if not greek else [("Ίδια με τη χώρα κατοικίας", "Same as residence")],
+            skippable=False,
+        )
     # New guided sessions ask nationality before coverage area. Legacy
     # sessions that already have coverage_area continue without being forced
     # backwards into a newly introduced question.
@@ -361,7 +408,7 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
 
 
 def discovery_progress(state: dict) -> dict:
-    keys = ["name_asked", "age", "residence_country", "nationality_answered", "coverage_area", "deductible_answered", "outpatient_answered",
+    keys = ["name_asked", "age", "residence_country", "primary_healthcare_country_answered", "nationality_answered", "coverage_area", "deductible_answered", "outpatient_answered",
             "chronic_answered", "dental_answered", "mental_health_answered", "wellness_answered",
             "optical_answered", "evacuation_answered", "budget_answered"]
     age = int(state.get("age") or 0)
