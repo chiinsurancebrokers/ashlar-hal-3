@@ -37,9 +37,16 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .edit-link{color:var(--accent);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;background:none;border:none}
 
 #chat{min-height:200px;padding-bottom:120px}
-.msg{max-width:85%;margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.5}
+.msg{max-width:85%;min-width:0;margin:10px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.5;overflow-wrap:anywhere;word-break:normal}
 .msg.user{background:var(--navy);color:var(--white);margin-left:auto;border-bottom-right-radius:4px}
 .msg.hal{background:var(--white);border:1px solid var(--border);margin-right:auto;border-bottom-left-radius:4px}
+.plan-docs{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.plan-docs-title{font-size:12px;font-weight:700;margin-bottom:8px;color:var(--navy)}
+.plan-doc-grid{display:grid;gap:8px}
+.plan-doc-link{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:10px 12px;color:var(--navy)}
+.plan-doc-link:hover{border-color:var(--accent);background:var(--accent-soft)}
+.plan-doc-link strong{font-size:12px;line-height:1.3}
+.plan-doc-link span{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
 
 .thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding:8px 0}
 .thinking-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin-left:2px;animation:pulse 1.2s infinite}
@@ -377,7 +384,8 @@ const I18N = {
     didntCatch:"I didn't catch that — please try speaking again.", micDenied:'Microphone access was not granted.',
     genericError:"I couldn't complete that request just now. Please try once more.",
     area1:'Europe', area2:'Worldwide excl. USA/SG/HK/CN', area3:'Worldwide excl. USA', area4:'Worldwide incl. USA',
-    outpatient:'Outpatient', maternity:'Maternity', dental:'Dental', mental:'Mental health', wellness:'Wellness', optical:'Optical', evac:'Evacuation', chronic:'Chronic cover'
+    outpatient:'Outpatient', maternity:'Maternity', dental:'Dental', mental:'Mental health', wellness:'Wellness', optical:'Optical', evac:'Evacuation', chronic:'Chronic cover',
+    officialDocs:'Official plan documents', openPdf:'Open PDF', tableBenefits:'Table of Benefits', policyWording:'Policy Wording', brochure:'Plan brochure'
   },
   el: {
     eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΕΥΦΥΪΑ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
@@ -424,7 +432,8 @@ const I18N = {
     didntCatch:'Δεν σας άκουσα καθαρά — δοκιμάστε ξανά.', micDenied:'Δεν δόθηκε πρόσβαση στο μικρόφωνο.',
     genericError:'Δεν μπόρεσα να ολοκληρώσω το αίτημα αυτή τη στιγμή. Δοκιμάστε ξανά.',
     area1:'Ευρώπη', area2:'Παγκόσμια εκτός ΗΠΑ/Σιγκαπούρης/Χονγκ Κονγκ/Κίνας', area3:'Παγκόσμια εκτός ΗΠΑ', area4:'Παγκόσμια με ΗΠΑ',
-    outpatient:'Εξωνοσοκομειακή', maternity:'Μητρότητα', dental:'Οδοντιατρική', mental:'Ψυχική υγεία', wellness:'Προληπτικός έλεγχος', optical:'Οπτικά', evac:'Ιατρική διακομιδή', chronic:'Χρόνιες παθήσεις'
+    outpatient:'Εξωνοσοκομειακή', maternity:'Μητρότητα', dental:'Οδοντιατρική', mental:'Ψυχική υγεία', wellness:'Προληπτικός έλεγχος', optical:'Οπτικά', evac:'Ιατρική διακομιδή', chronic:'Χρόνιες παθήσεις',
+    officialDocs:'Επίσημα έντυπα προγράμματος', openPdf:'Άνοιγμα PDF', tableBenefits:'Πίνακας Παροχών', policyWording:'Όροι Ασφάλισης', brochure:'Έντυπο προγράμματος'
   }
 };
 
@@ -687,40 +696,48 @@ function toggleCompare(key,btn){
   renderState();
 }
 
+function documentLabel(url){
+  const low=(url||'').toLowerCase();
+  if(low.includes('tob')||low.includes('table')||low.includes('benefit')) return t('tableBenefits');
+  if(low.includes('policy')||low.includes('wording')||low.includes('terms')) return t('policyWording');
+  return t('brochure');
+}
+
+function addPlanExplanationMsg(answer, docs){
+  const chat=document.getElementById('chat'),box=document.createElement('div');
+  box.className='msg hal';
+  let html=esc(answer||'').replace(/\n/g,'<br>');
+  const valid=(docs||[]).filter(u=>/^https?:\/\//i.test(u||'')).slice(0,4);
+  if(valid.length){
+    html+=`<div class="plan-docs"><div class="plan-docs-title">${esc(t('officialDocs'))}</div><div class="plan-doc-grid">`;
+    valid.forEach(u=>{
+      html+=`<a class="plan-doc-link" href="${esc(u)}" target="_blank" rel="noopener noreferrer"><strong>📄 ${esc(documentLabel(u))}</strong><span>${esc(t('openPdf'))} ↗</span></a>`;
+    });
+    html+='</div></div>';
+  }
+  box.innerHTML=html;chat.appendChild(box);box.scrollIntoView({behavior:'smooth',block:'start'});renderState();
+}
+
 async function tellMeMore(i){
-  const q = lastQuotes[i];
-  if (!q) return;
-  showThinking((state && state.language)==='el' ? 'Αναλύω το πρόγραμμα' : 'Reviewing the plan evidence');
-  try {
-    const r = await fetch(API+'/quotes/explain', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        applicant_state: state,
-        plan_key: qkey(q),
-        question: (state && state.language)==='el'
-          ? 'Εξήγησέ μου αυτό το πρόγραμμα πιο αναλυτικά.'
-          : 'Tell me more about this plan.',
-        language: (state && state.language) || 'en'
+  const q=lastQuotes[i];if(!q)return;
+  showThinking(lang()==='el'?'Αναλύω το πρόγραμμα':'Reviewing the plan evidence');
+  try{
+    const r=await fetch(API+'/quotes/explain',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        applicant_state:state,plan_key:qkey(q),
+        question:lang()==='el'?'Εξήγησέ μου αυτό το πρόγραμμα πιο αναλυτικά.':'Tell me more about this plan.',
+        language:lang()
       })
     });
-    const d = await r.json();
+    const d=await r.json();removeThinking();
+    if(!r.ok)throw new Error(d.detail||'Could not explain this plan.');
+    addPlanExplanationMsg(d.answer||'',d.source_documents||[]);
+    speakText(d.answer||'');
+    history.push({role:'assistant',content:d.answer||''});
+  }catch(e){
     removeThinking();
-    if (!r.ok) throw new Error(d.detail || 'Could not explain this plan.');
-    let text = d.answer || '';
-    const docs = (d.source_documents || []).filter(Boolean);
-    if (docs.length) {
-      text += ((state && state.language)==='el' ? '\n\nΕπίσημα έγγραφα:' : '\n\nOfficial documents:');
-      docs.slice(0,3).forEach((u,idx) => { text += `\n${idx+1}. ${u}`; });
-    }
-    addMsg(text, 'hal');
-    speakText(d.answer || '');
-    history.push({role:'assistant', content:d.answer || ''});
-  } catch(e) {
-    removeThinking();
-    addMsg((state && state.language)==='el'
-      ? 'Δεν μπόρεσα να αναλύσω το πρόγραμμα αυτή τη στιγμή. Δοκιμάστε ξανά.'
-      : 'I could not analyse that plan just now. Please try again.', 'hal');
+    addMsg(lang()==='el'?'Δεν μπόρεσα να αναλύσω το πρόγραμμα αυτή τη στιγμή. Δοκιμάστε ξανά.':'I could not analyse that plan just now. Please try again.','hal');
   }
 }
 
