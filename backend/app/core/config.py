@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     openai_chat_model: str = "gpt-5.6-terra"
     openai_chat_max_output_tokens: int = 1400
     openai_chat_timeout_seconds: int = 60
+
+    # OpenAI Verifier Agent: second-pass consistency gate after deterministic matching.
+    # It may PASS/WARN/BLOCK but never rewrite premiums, eligibility, or evidence.
+    openai_verifier_enabled: bool = True
+    openai_verifier_max_output_tokens: int = 900
+    openai_verifier_timeout_seconds: int = 25
     max_audio_upload_mb: int = 20
 
     elevenlabs_api_key: str | None = None
