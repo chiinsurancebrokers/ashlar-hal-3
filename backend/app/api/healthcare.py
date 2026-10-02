@@ -10,4 +10,11 @@ def context(
     country: str = Query(min_length=2, max_length=80),
     language: str = Query(default="en", pattern="^(en|el)$"),
 ):
-    return assess_healthcare_context(country, language).model_dump(mode="json")
+    decision = assess_healthcare_context(country, language)
+    # Preserve the established context response shape for the frontend while
+    # adding specialist-agent audit metadata alongside it.
+    return {
+        **decision.context,
+        "evidence_quality": decision.evidence_quality,
+        "cautions": decision.cautions,
+    }
