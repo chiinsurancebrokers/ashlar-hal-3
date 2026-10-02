@@ -51,3 +51,30 @@ def test_regression_unverified_carrier_is_not_hard_excluded():
     assert outcome.eligible is True
     assert outcome.evidence_confidence == 0.0
     assert outcome.requirements_score is None
+
+
+# REGRESSION #4 — reported live 2026-10-02.
+# IMG Bronze is explicitly catalogued as inpatient-focused. If outpatient
+# is a MUST HAVE, it must be excluded even though the rest of IMG's detailed
+# benefit set is not yet fully loaded.
+def test_regression_img_bronze_excluded_when_outpatient_required():
+    applicant = Applicant(
+        age=51, residence_country="Greece", coverage_area="area1",
+        outpatient_required=True,
+    )
+    outcome = evaluate_requirements(applicant, "img", "bronze")
+    assert outcome.eligible is False
+    assert outcome.evidence_confidence == 1.0
+    assert "Out-patient cover" in outcome.unmatched
+
+
+def test_regression_img_bronze_never_appears_in_outpatient_shortlist():
+    from backend.app.core.config import Settings
+    from backend.app.rates.quote_engine import quote_shortlist
+
+    applicant = Applicant(
+        age=51, residence_country="Greece", coverage_area="area1",
+        outpatient_required=True,
+    )
+    plans = quote_shortlist(applicant, Settings())
+    assert "img:bronze" not in {q.plan_key for q in plans}
