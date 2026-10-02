@@ -307,7 +307,10 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
         return _q("residence",
             "What is your country of permanent residence?" if not greek else "Ποια είναι η χώρα μόνιμης κατοικίας σας;",
             skippable=False)
-    if not state.get("nationality_answered"):
+    # New guided sessions ask nationality before coverage area. Legacy
+    # sessions that already have coverage_area continue without being forced
+    # backwards into a newly introduced question.
+    if not state.get("nationality_answered") and not state.get("coverage_area"):
         return _q("nationality",
             "What is your nationality? This helps HAL check plan eligibility." if not greek else "Ποια είναι η υπηκοότητά σας; Αυτό βοηθά τον HAL να ελέγχει την επιλεξιμότητα των προγραμμάτων.",
             skippable=True)
