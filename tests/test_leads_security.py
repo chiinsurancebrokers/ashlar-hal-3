@@ -32,3 +32,57 @@ def test_comparison_email_body_only_ever_contains_server_side_premium_string():
     assert "1,490.80" in body
     # A forged lower price must never appear anywhere in the rendered email.
     assert "868.00" not in body
+
+
+@pytest.mark.asyncio
+async def test_resend_is_primary_when_configured(monkeypatch):
+    import backend.app.services.leads as leads
+    settings = leads.get_settings()
+    monkeypatch.setattr(settings, "resend_api_key", "re_test")
+    monkeypatch.setattr(settings, "resend_from_email", "quotes@ashlarassurance.com")
+    monkeypatch.setattr(settings, "resend_from_name", "Ashlar Assurance")
+    called = {"resend": 0, "gmail": 0}
+
+    async def resend(_msg):
+        called["resend"] += 1
+        return {"transport": "resend", "id": "resend-test"}
+
+    async def gmail(_msg):
+        called["gmail"] += 1
+        return {"id": "gmail-test"}
+
+    monkeypatch.setattr(leads, "_send_via_resend", resend)
+    monkeypatch.setattr(leads, "_send_via_gmail", gmail)
+
+    msg = leads.EmailMessage()
+    msg["From"] = leads._mail_sender(settings)
+    msg["To"] = "client@example.com"
+    msg["Subject"] = "Test"
+    msg.set_content("hello")
+
+    result = await leads._send_transactional(msg)
+    assert result["transport"] == "resend"
+    assert called == {"resend": 1, "gmail": 0}
+    assert msg["From"] == "Ashlar Assurance <quotes@ashlarassurance.com>"
+
+
+@pytest.mark.asyncio
+async def test_gmail_remains_fallback_until_resend_key_exists(monkeypatch):
+    import backend.app.services.leads as leads
+    settings = leads.get_settings()
+    monkeypatch.setattr(settings, "resend_api_key", None)
+
+    async def gmail(_msg):
+        return {"id": "gmail-fallback"}
+
+    monkeypatch.setattr(leads, "_send_via_gmail", gmail)
+
+    msg = leads.EmailMessage()
+    msg["From"] = "legacy@example.com"
+    msg["To"] = "client@example.com"
+    msg["Subject"] = "Test"
+    msg.set_content("hello")
+
+    result = await leads._send_transactional(msg)
+    assert result["transport"] == "gmail"
+    assert result["id"] == "gmail-fallback"
