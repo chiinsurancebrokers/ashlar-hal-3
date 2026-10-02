@@ -10,6 +10,7 @@ class Applicant(BaseModel):
     age: int = Field(ge=0, le=120)
     residence_country: str = "Greece"
     nationality: str | None = None
+    primary_healthcare_country: str | None = None
     coverage_area: str = Field(default="area1", pattern="^(area1|area2|area3|area4)$")
     currency: str = "EUR"
 
