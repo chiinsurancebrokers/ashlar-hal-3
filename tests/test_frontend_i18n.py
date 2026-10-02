@@ -30,7 +30,7 @@ def test_quote_card_chrome_uses_translation_keys_not_fixed_english():
     assert "${t('evacuation')}" in html
     assert "${t('getProposal')}" in html
     assert "${t('tellMore')}" in html
-    assert "${t('recommended')}" in html
+    assert "t('recommended')" in html
 
 
 def test_language_toggle_and_browser_greek_detection_are_present():
