@@ -287,3 +287,23 @@ async def test_post_shortlist_nai_keeps_ipmi_context_and_explains_in_greek(monke
     assert result["ai_status"] == "evidence_locked_plan_explanation"
     assert result["reply"] == "ΑΝΑΛΥΣΗ"
     assert result["quotes"] == []
+
+
+@pytest.mark.asyncio
+async def test_greek_language_stays_sticky_after_same_as_residence_quick_reply():
+    state = {
+        "language": "el",
+        "journey": "ipmi",
+        "name_asked": True,
+        "applicant_name": "Χρήστος",
+        "age": 51,
+        "residence_country": "Greece",
+        "pending_question": "primary_healthcare_country",
+    }
+    result = await chat_turn("Same as residence", state, [])
+    assert result["state"]["language"] == "el"
+    assert result["state"]["primary_healthcare_country"] == "Greece"
+    assert result["state"]["primary_healthcare_country_answered"] is True
+    assert "Ποια είναι η υπηκοότητά σας;" in result["reply"]
+    assert "What is your nationality?" not in result["reply"]
+    assert result["quick_replies"][0]["label"] == "Δεν είμαι σίγουρος / Παράλειψη"

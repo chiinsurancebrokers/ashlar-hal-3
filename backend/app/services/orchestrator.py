@@ -33,7 +33,8 @@ def _has_latin_words(text: str) -> bool:
 
 
 LANGUAGE_NEUTRAL_UI_VALUES = {
-    "skip", "europe only", "worldwide excluding usa", "worldwide including usa",
+    "skip", "same as residence",
+    "europe only", "worldwide excluding usa", "worldwide including usa",
     "€0 deductible", "€500 deductible", "€1000 deductible",
     "hospital only", "include outpatient cover",
     "yes", "no", "yes, maternity is required", "no maternity needed",
