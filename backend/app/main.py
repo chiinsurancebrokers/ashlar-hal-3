@@ -12,6 +12,7 @@ from backend.app.api.leads import router as leads_router
 from backend.app.api.travel import router as travel_router
 from backend.app.api.voice import router as voice_router
 from backend.app.api.healthcare import router as healthcare_router
+from backend.app.api.corporate import router as corporate_router
 from backend.app.services.architecture_auditor_agent import audit_architecture
 
 settings = get_settings()
@@ -31,7 +32,7 @@ app.add_middleware(
 app.add_middleware(
     SimpleRateLimitMiddleware,
     limited_prefixes=(f"{settings.api_prefix}/chat", f"{settings.api_prefix}/leads",
-                       f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak"),
+                       f"{settings.api_prefix}/corporate", f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak"),
     max_requests=20,
     window_seconds=60,
 )
@@ -42,6 +43,7 @@ app.include_router(leads_router, prefix=settings.api_prefix)
 app.include_router(travel_router, prefix=settings.api_prefix)
 app.include_router(voice_router, prefix=settings.api_prefix)
 app.include_router(healthcare_router, prefix=settings.api_prefix)
+app.include_router(corporate_router, prefix=settings.api_prefix)
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")

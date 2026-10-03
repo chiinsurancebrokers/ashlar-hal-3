@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from backend.app.services.orchestrator import chat_turn
+from backend.app.services.corporate_group_agent import corporate_chat_turn, is_corporate_intent
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -21,6 +22,8 @@ class ChatRequest(BaseModel):
 @router.post("/turn")
 async def turn(req: ChatRequest):
     try:
+        if is_corporate_intent(req.message, req.state):
+            return corporate_chat_turn(req.message, req.state)
         return await chat_turn(req.message, req.state, [m.model_dump() for m in req.history])
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"HAL conversational service failed: {str(exc)[:180]}")
