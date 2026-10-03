@@ -5,9 +5,11 @@
 (() => {
   const coreOpenLeadForm = window.openLeadForm;
   const coreSubmitLead = window.submitLead;
+  const halState = () => (typeof state !== 'undefined' && state) ? state : {};
+  const halJourney = () => (typeof currentJourney !== 'undefined' ? currentJourney : halState().journey);
 
   function isCorporate() {
-    return window.currentJourney === 'corporate_group' || window.state?.journey === 'corporate_group';
+    return halJourney() === 'corporate_group' || halState().journey === 'corporate_group';
   }
 
   function ensureCorporateFields() {
@@ -36,14 +38,15 @@
     box.style.display = isCorporate() ? 'block' : 'none';
     if (!isCorporate()) return;
 
+    const s = halState();
     document.getElementById('leadTitle').textContent = 'Request a Group Proposal';
     document.getElementById('leadSubtitle').textContent = 'Your group fact-find is pre-filled below. An Ashlar specialist will review insurer terms and underwriting; HAL will not calculate a group premium automatically.';
-    document.getElementById('leadResidence').value = window.state?.company_country || window.state?.residence_country || '';
-    document.getElementById('leadCoverage').value = window.state?.coverage_area_label || '';
-    document.getElementById('leadFamily').value = window.state?.employee_count ? `${window.state.employee_count} employees` : '';
+    document.getElementById('leadResidence').value = s.company_country || s.residence_country || '';
+    document.getElementById('leadCoverage').value = s.coverage_area_label || '';
+    document.getElementById('leadFamily').value = s.employee_count ? `${s.employee_count} employees` : '';
     document.getElementById('leadBudget').value = '';
-    document.getElementById('leadMessage').value = window.state?.group_fact_find_summary || '';
-    document.getElementById('groupCompanyName').value = window.state?.company_name || '';
+    document.getElementById('leadMessage').value = s.group_fact_find_summary || '';
+    document.getElementById('groupCompanyName').value = s.company_name || '';
     document.getElementById('groupNoMedicalData').checked = false;
     document.getElementById('groupCensusFile').value = '';
   };
@@ -80,7 +83,7 @@
     form.append('contact_name', `${first} ${last}`.trim());
     form.append('email', email);
     form.append('company_name', document.getElementById('groupCompanyName')?.value.trim() || '');
-    form.append('fact_find_json', JSON.stringify(window.state || {}));
+    form.append('fact_find_json', JSON.stringify(halState()));
     form.append('consent', String(consent));
     form.append('no_medical_data_confirmed', String(noMedical));
     if (file) form.append('census', file, file.name);
