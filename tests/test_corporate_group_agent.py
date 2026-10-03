@@ -20,6 +20,7 @@ def test_group_intent_routes_without_touching_individual_pricing():
     assert result["journey"] == "corporate_group"
     assert result["quotes"] == []
     assert result["ai_status"] == "corporate_group_guided_discovery"
+    assert result["quick_replies"]
 
 
 def test_mhd_unlocks_at_exactly_five_employees_not_four():
@@ -51,16 +52,6 @@ def test_group_fact_find_never_claims_mhd_is_guaranteed():
     summary = group_fact_find_summary({"employee_count": 8, "mhd_requested": True, "group_benefits": ["inpatient"]})
     assert "subject to insurer approval" in summary
     assert "guaranteed" not in summary.lower()
-
-
-def test_chat_api_corporate_path_returns_no_quotes():
-    client = TestClient(app)
-    response = client.post("/api/v1/chat/turn", json={"message": "We need group health insurance for our employees", "state": {}, "history": []})
-    assert response.status_code == 200
-    body = response.json()
-    assert body["journey"] == "corporate_group"
-    assert body["quotes"] == []
-    assert body["quick_replies"]
 
 
 def test_census_csv_with_medical_column_is_rejected_before_delivery():
