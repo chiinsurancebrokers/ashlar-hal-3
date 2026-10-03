@@ -3,10 +3,9 @@ from __future__ import annotations
 """Family-aware discovery facade.
 
 The mature single-applicant parser remains in ``legacy_flow``. Household
-collection is opt-in at the state level so existing individual discovery
-sessions and regression tests keep their established ordering. The HAL
-orchestrator can enable it with ``household_discovery_enabled=True`` when
-routing a new applicant through the family-capable journey.
+collection is opt-in at the state level. New web sessions are upgraded when
+the applicant answers the initial name question; older in-flight sessions
+without the capability flag continue on the legacy path.
 """
 
 from backend.app.discovery import legacy_flow as _legacy
@@ -35,9 +34,14 @@ def _maternity_question(greek: bool) -> dict:
 
 
 def apply_discovery_answer(message: str, state: dict) -> dict:
-    if not _family_enabled(state):
-        return _legacy.apply_discovery_answer(message, state)
     pending = state.get("pending_question")
+    if not _family_enabled(state):
+        updates = _legacy.apply_discovery_answer(message, state)
+        # The live HAL starts with pending_question='name'. Upgrade only at
+        # that clean journey boundary so old in-flight sessions remain stable.
+        if pending == "name" and updates.get("name_asked"):
+            updates["household_discovery_enabled"] = True
+        return updates
     if pending == "primary_sex":
         low = (message or "").strip().lower()
         if low in {"female","woman","f","γυναίκα","γυναικα"}:
