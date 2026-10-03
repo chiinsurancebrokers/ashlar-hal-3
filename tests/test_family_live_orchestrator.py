@@ -63,7 +63,7 @@ async def test_live_four_member_family_with_response_level_ipmi_never_leaks_indi
     """Regression for the staging journey reproduced on 2026-10-03.
 
     The base orchestrator can retain journey=undetermined in state while the
-    response correctly identifies the completed journey as IPMI.  The family
+    response correctly identifies the completed journey as IPMI. The family
     safeguard must still activate for Chris 51/M + spouse 35/F maternity + two
     children and suppress both the primary price and individual excluded cards.
     """
