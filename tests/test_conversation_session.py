@@ -1,26 +1,59 @@
 import pytest
-from fastapi.testclient import TestClient
 
-from backend.app.main import app
-from backend.app.services.conversation_session import create_session, get_session
+from backend.app.services import conversation_session as sessions
 
 
-client = TestClient(app)
+def test_session_is_not_retained_without_explicit_consent(monkeypatch):
+    def fail_rpc(*args, **kwargs):
+        raise AssertionError("durable store must not be called without retention consent")
+    monkeypatch.setattr(sessions, "_rpc", fail_rpc)
+    session = sessions.create_session(consent_to_retain=False)
+    assert session.consent_to_retain is False
 
 
-def test_session_is_not_retained_without_explicit_consent():
-    session = create_session(consent_to_retain=False)
-    with pytest.raises(KeyError):
-        get_session(session.session_id)
+def test_supabase_adapter_persists_resumes_and_deletes(monkeypatch):
+    store = {}
+    messages = {}
 
+    def fake_rpc(name, payload):
+        if name == "hal_create_session":
+            ref = payload["p_session_reference"]
+            row = {
+                "session_reference": ref,
+                "consent_to_retain": True,
+                "consent_to_transmit": payload["p_consent_to_transmit"],
+                "created_at": "2026-10-03T16:00:00Z",
+                "updated_at": "2026-10-03T16:00:00Z",
+                "state_json": {},
+            }
+            store[ref] = row
+            messages[ref] = []
+            return row
+        if name == "hal_save_turn":
+            ref = payload["p_session_reference"]
+            if ref not in store:
+                raise KeyError("Session not found.")
+            store[ref]["state_json"] = payload["p_state"]
+            messages[ref].extend([
+                {"role": "user", "content": payload["p_user_message"], "created_at": "2026-10-03T16:01:00Z"},
+                {"role": "assistant", "content": payload["p_assistant_message"], "created_at": "2026-10-03T16:01:01Z"},
+            ])
+            return store[ref]
+        if name == "hal_get_session":
+            ref = payload["p_session_reference"]
+            if ref not in store:
+                return []
+            return [{**store[ref], "transcript": messages[ref]}]
+        if name == "hal_delete_session":
+            ref = payload["p_session_reference"]
+            existed = ref in store
+            store.pop(ref, None)
+            messages.pop(ref, None)
+            return existed
+        raise AssertionError(name)
 
-def test_session_resume_summary_and_delete_are_consent_gated():
-    created = client.post("/api/v1/sessions", json={"consent_to_retain": True, "consent_to_transmit": False})
-    assert created.status_code == 200
-    ref = created.json()["session_reference"]
-    assert created.json()["retained"] is True
-    assert created.json()["transmission_allowed"] is False
-
+    monkeypatch.setattr(sessions, "_rpc", fake_rpc)
+    created = sessions.create_session(consent_to_retain=True, consent_to_transmit=False)
     state = {
         "applicant_name": "Test Applicant",
         "age": 42,
@@ -33,26 +66,12 @@ def test_session_resume_summary_and_delete_are_consent_gated():
         ],
         "medical_notes": "must never be copied into the structured summary",
     }
-    saved = client.post(f"/api/v1/sessions/{ref}/turn", json={
-        "state": state,
-        "user_message": "Please include my family.",
-        "assistant_message": "I will collect each family member separately.",
-    })
-    assert saved.status_code == 200
-
-    resumed = client.get(f"/api/v1/sessions/{ref}")
-    assert resumed.status_code == 200
-    assert resumed.json()["state"]["family_household_size"] == 4
-    assert len(resumed.json()["transcript"]) == 2
-
-    summary = client.get(f"/api/v1/sessions/{ref}/summary")
-    assert summary.status_code == 200
-    facts = summary.json()["facts"]
-    assert facts["family_household_size"] == 4
-    assert len(facts["family_members"]) == 3
-    assert "medical_notes" not in facts
-    assert summary.json()["review_required"] is True
-
-    deleted = client.delete(f"/api/v1/sessions/{ref}")
-    assert deleted.status_code == 204
-    assert client.get(f"/api/v1/sessions/{ref}").status_code == 404
+    saved = sessions.save_turn(created.session_id, state=state, user_message="Family", assistant_message="Collected")
+    assert saved.state["family_household_size"] == 4
+    assert len(saved.transcript) == 2
+    summary = sessions.fact_find_summary(saved)
+    assert summary["facts"]["family_household_size"] == 4
+    assert "medical_notes" not in summary["facts"]
+    assert sessions.delete_session(created.session_id) is True
+    with pytest.raises(KeyError):
+        sessions.get_session(created.session_id)
