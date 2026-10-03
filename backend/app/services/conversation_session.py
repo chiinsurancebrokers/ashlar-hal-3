@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
-from threading import RLock
 from typing import Any
 from uuid import uuid4
 
+import httpx
 from pydantic import BaseModel, Field
+
+from backend.app.core.config import get_settings
 
 
 class SessionEvent(BaseModel):
@@ -25,58 +27,91 @@ class ConversationSession(BaseModel):
     transcript: list[SessionEvent] = Field(default_factory=list)
 
 
-# Deliberately process-local for the first safe rollout.  This prevents us from
-# pretending persistence exists across deploys before an approved durable store
-# and retention policy are configured.  The API exposes the same contract so a
-# durable adapter can replace this implementation without changing the client.
-_sessions: dict[str, ConversationSession] = {}
-_lock = RLock()
-
-
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _config() -> tuple[str, str]:
+    settings = get_settings()
+    if not settings.supabase_url or not settings.supabase_service_role_key:
+        raise RuntimeError("Durable HAL session persistence is not configured.")
+    return settings.supabase_url.rstrip("/"), settings.supabase_service_role_key
+
+
+def _rpc(name: str, payload: dict[str, Any]) -> Any:
+    url, key = _config()
+    try:
+        response = httpx.post(
+            f"{url}/rest/v1/rpc/{name}",
+            headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=10.0,
+        )
+    except httpx.HTTPError as exc:
+        raise RuntimeError("HAL session store is temporarily unavailable.") from exc
+    if response.status_code == 404 or response.status_code == 406:
+        raise KeyError("Session not found.")
+    if response.status_code >= 400:
+        detail = response.text.lower()
+        if "does not exist" in detail or "not retained" in detail or "p0002" in detail:
+            raise KeyError("Session is not retained or does not exist.")
+        raise RuntimeError(f"HAL session store rejected the request ({response.status_code}).")
+    return response.json() if response.content else None
+
+
+def _from_row(row: dict[str, Any]) -> ConversationSession:
+    transcript = row.get("transcript") or []
+    return ConversationSession(
+        session_id=row["session_reference"],
+        consent_to_retain=bool(row.get("consent_to_retain")),
+        consent_to_transmit=bool(row.get("consent_to_transmit")),
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+        state=row.get("state_json") or {},
+        transcript=[SessionEvent.model_validate(event) for event in transcript],
+    )
+
+
 def create_session(*, consent_to_retain: bool = False, consent_to_transmit: bool = False) -> ConversationSession:
     now = _now()
-    session = ConversationSession(
-        session_id=f"HALS-{uuid4().hex[:16].upper()}",
-        consent_to_retain=consent_to_retain,
-        consent_to_transmit=consent_to_transmit,
-        created_at=now,
-        updated_at=now,
-    )
-    if consent_to_retain:
-        with _lock:
-            _sessions[session.session_id] = session
-    return deepcopy(session)
+    session_id = f"HALS-{uuid4().hex[:16].upper()}"
+    # Without retention consent the session remains ephemeral by design and no
+    # conversation content is written to the durable store.
+    if not consent_to_retain:
+        return ConversationSession(
+            session_id=session_id,
+            consent_to_retain=False,
+            consent_to_transmit=consent_to_transmit,
+            created_at=now,
+            updated_at=now,
+        )
+    row = _rpc("hal_create_session", {
+        "p_session_reference": session_id,
+        "p_consent_to_retain": True,
+        "p_consent_to_transmit": consent_to_transmit,
+    })
+    return _from_row(row)
 
 
 def save_turn(session_id: str, *, state: dict[str, Any], user_message: str, assistant_message: str) -> ConversationSession:
-    with _lock:
-        session = _sessions.get(session_id)
-        if session is None or not session.consent_to_retain:
-            raise KeyError("Session is not retained or does not exist.")
-        session.state = deepcopy(state)
-        session.transcript.extend([
-            SessionEvent(role="user", content=user_message[:4000]),
-            SessionEvent(role="assistant", content=assistant_message[:8000]),
-        ])
-        session.updated_at = _now()
-        return deepcopy(session)
+    _rpc("hal_save_turn", {
+        "p_session_reference": session_id,
+        "p_state": deepcopy(state),
+        "p_user_message": user_message[:4000],
+        "p_assistant_message": assistant_message[:8000],
+    })
+    return get_session(session_id)
 
 
 def get_session(session_id: str) -> ConversationSession:
-    with _lock:
-        session = _sessions.get(session_id)
-        if session is None:
-            raise KeyError("Session not found.")
-        return deepcopy(session)
+    rows = _rpc("hal_get_session", {"p_session_reference": session_id})
+    if not rows:
+        raise KeyError("Session not found.")
+    return _from_row(rows[0])
 
 
 def delete_session(session_id: str) -> bool:
-    with _lock:
-        return _sessions.pop(session_id, None) is not None
+    return bool(_rpc("hal_delete_session", {"p_session_reference": session_id}))
 
 
 def fact_find_summary(session: ConversationSession) -> dict[str, Any]:
