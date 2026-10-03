@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import get_settings
@@ -50,8 +50,12 @@ if FRONTEND_DIR.exists():
 
     @app.get("/", include_in_schema=False)
     def homepage():
-        return FileResponse(
-            FRONTEND_DIR / "index.html",
+        html = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+        extension = '<script src="/static/corporate-group.js"></script>'
+        if extension not in html:
+            html = html.replace("</body>", f"{extension}\n</body>")
+        return HTMLResponse(
+            html,
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
         )
 
