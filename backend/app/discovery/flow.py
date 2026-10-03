@@ -4,8 +4,8 @@ from __future__ import annotations
 
 The mature single-applicant parser remains in ``legacy_flow``. Household
 collection is opt-in at the state level. New web sessions are upgraded when
-the applicant answers the initial name question; older in-flight sessions
-without the capability flag continue on the legacy path.
+the applicant answers the client-initialised name question; older in-flight
+and server-started legacy sessions continue on the established path.
 """
 
 from backend.app.discovery import legacy_flow as _legacy
@@ -37,9 +37,10 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
     pending = state.get("pending_question")
     if not _family_enabled(state):
         updates = _legacy.apply_discovery_answer(message, state)
-        # The live HAL starts with pending_question='name'. Upgrade only at
-        # that clean journey boundary so old in-flight sessions remain stable.
-        if pending == "name" and updates.get("name_asked"):
+        # The browser initializes directly at the name question before a
+        # journey has been classified. A server-started legacy journey has
+        # already set journey='ipmi', so it remains backward compatible.
+        if pending == "name" and not state.get("journey") and updates.get("name_asked"):
             updates["household_discovery_enabled"] = True
         return updates
     if pending == "primary_sex":
