@@ -161,6 +161,8 @@ Consent recorded: {'Yes' if payload.get('consent') else 'No'}
     msg["From"] = sender
     msg["To"] = recipient
     msg["Subject"] = f"New HAL Lead — {payload.get('insurance_interest', 'Insurance Enquiry')} — {reference}"[:240]
+    # A lead's single Reply-To is deliberately the prospect.  Resend's configured
+    # reply address is for outbound comparison mail and must never be appended here.
     if payload.get("email"):
         msg["Reply-To"] = str(payload["email"]).strip()
     msg.set_content(plain)
@@ -174,8 +176,6 @@ async def send_lead(payload: dict) -> dict:
         raise RuntimeError("Lead recipient is not configured.")
     reference = f"HAL-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:8].upper()}"
     msg = _build_lead_message(payload, reference, _mail_sender(settings), settings.gmail_lead_recipient)
-    if _resend_configured(settings) and settings.resend_reply_to:
-        msg["Reply-To"] = settings.resend_reply_to
     result = await _send_transactional(msg)
     return {
         "status": "sent",
@@ -187,13 +187,6 @@ async def send_lead(payload: dict) -> dict:
 
 # ---------------------------------------------------------------------------
 # Comparison emails — SERVER-SIDE RE-VERIFICATION
-#
-# The client sends `plan_keys` (which plans were selected) and the raw
-# `applicant_state` (age, residence, requirements etc) — never a premium.
-# We recompute the shortlist here, server-side, from the real rate table,
-# and only ever put SERVER-COMPUTED numbers in the email. A client cannot
-# make HAL send a forged "€868" comparison for a plan that actually costs
-# €6,868 — the browser's numbers are advisory UI only, never authoritative.
 # ---------------------------------------------------------------------------
 
 def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: Settings) -> list[QuoteResult]:
@@ -207,18 +200,10 @@ def _verified_plans_for(applicant_state: dict, plan_keys: list[str], settings: S
     return selected
 
 
-def _build_comparison_message(
-    name: str,
-    email: str,
-    plans: list[QuoteResult],
-    sender: str,
-    bcc: str | None,
-    current_policy: dict | None = None,
-) -> EmailMessage:
+def _build_comparison_message(name: str, email: str, plans: list[QuoteResult], sender: str, bcc: str | None, current_policy: dict | None = None) -> EmailMessage:
     top = plans[0]
     rows = ""
     plain_lines = ["Your Ashlar health insurance comparison", ""]
-
     if current_policy:
         premium = current_policy.get("premium") or {}
         cp_amount = premium.get("amount")
@@ -229,85 +214,25 @@ def _build_comparison_message(
         cp_provider = current_policy.get("provider") or "Current insurer"
         cp_area = current_policy.get("area_of_cover") or "Not confirmed"
         cp_deductible = current_policy.get("deductible_or_excess") or "Not confirmed"
-        rows += f"""<tr style='background:#f7f8fa'>
-          <td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>Current policy: {_safe(cp_name)}</strong><br><span>{_safe(cp_provider)}</span></td>
-          <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_premium)}</td>
-          <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_limit)}</td>
-          <td style='padding:12px;border-bottom:1px solid #e7ebef'>Area: {_safe(cp_area)}<br>Deductible: {_safe(cp_deductible)}</td>
-        </tr>"""
-        plain_lines += [
-            f"Current policy: {cp_name} — {cp_provider}",
-            f"Annual premium: {cp_premium}",
-            f"Area: {cp_area}",
-            f"Annual limit: {cp_limit}",
-            f"Deductible: {cp_deductible}",
-            "",
-        ]
-
-    rows += "".join(f"""<tr>
-      <td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>{_safe(p.product_name)}</strong><br><span>{_safe(p.insurer)}</span></td>
-      <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.currency)} {p.premium:,.2f}</td>
-      <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_annual_limit)}</td>
-      <td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_why)}</td>
-    </tr>""" for p in plans)
-
+        rows += f"""<tr style='background:#f7f8fa'><td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>Current policy: {_safe(cp_name)}</strong><br><span>{_safe(cp_provider)}</span></td><td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_premium)}</td><td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(cp_limit)}</td><td style='padding:12px;border-bottom:1px solid #e7ebef'>Area: {_safe(cp_area)}<br>Deductible: {_safe(cp_deductible)}</td></tr>"""
+        plain_lines += [f"Current policy: {cp_name} — {cp_provider}", f"Annual premium: {cp_premium}", f"Area: {cp_area}", f"Annual limit: {cp_limit}", f"Deductible: {cp_deductible}", ""]
+    rows += "".join(f"""<tr><td style='padding:12px;border-bottom:1px solid #e7ebef'><strong>{_safe(p.product_name)}</strong><br><span>{_safe(p.insurer)}</span></td><td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.currency)} {p.premium:,.2f}</td><td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_annual_limit)}</td><td style='padding:12px;border-bottom:1px solid #e7ebef'>{_safe(p.card_why)}</td></tr>""" for p in plans)
     for i, p in enumerate(plans, 1):
         plain_lines += [f"{i}. {p.product_name} — {p.insurer}", f"Annual premium: {p.currency} {p.premium:,.2f}", ""]
-
-    html_body = f"""<html><body style='font-family:Arial,sans-serif'>
-    <div style='max-width:760px;margin:auto'>
-      <div style='font-weight:700'>ASHLAR ASSURANCE</div>
-      <h1>Your health insurance comparison</h1>
-      <p>Dear {_safe(name) if name else 'Client'},</p>
-      <p>Following your HAL session, here is the shortlist you asked us to send you.</p>
-      <p style='background:#f3f0ff;border-radius:12px;padding:14px'><strong>HAL's current top option:</strong> {_safe(top.product_name)} — {_safe(top.insurer)}</p>
-      <table style='border-collapse:collapse;width:100%;font-size:13px'>
-        <thead><tr><th align='left'>Plan</th><th align='left'>Premium</th><th align='left'>Annual limit</th><th align='left'>Why it may fit</th></tr></thead>
-        <tbody>{rows}</tbody>
-      </table>
-      <p style='font-size:12px;color:#697789'>This is an indicative comparison, not confirmation of cover. All figures were recalculated by Ashlar's server at send time. Final premiums, eligibility, underwriting and policy terms remain subject to insurer confirmation.</p>
-      <p>Kind regards,<br><strong>Ashlar Assurance</strong></p>
-    </div></body></html>"""
-
-    msg = EmailMessage()
-    msg["From"] = sender
-    msg["To"] = email
-    if bcc and bcc.lower() != email.lower():
-        msg["Bcc"] = bcc
+    html_body = f"""<html><body style='font-family:Arial,sans-serif'><div style='max-width:760px;margin:auto'><div style='font-weight:700'>ASHLAR ASSURANCE</div><h1>Your health insurance comparison</h1><p>Dear {_safe(name) if name else 'Client'},</p><p>Following your HAL session, here is the shortlist you asked us to send you.</p><p style='background:#f3f0ff;border-radius:12px;padding:14px'><strong>HAL's current top option:</strong> {_safe(top.product_name)} — {_safe(top.insurer)}</p><table style='border-collapse:collapse;width:100%;font-size:13px'><thead><tr><th align='left'>Plan</th><th align='left'>Premium</th><th align='left'>Annual limit</th><th align='left'>Why it may fit</th></tr></thead><tbody>{rows}</tbody></table><p style='font-size:12px;color:#697789'>This is an indicative comparison, not confirmation of cover. All figures were recalculated by Ashlar's server at send time. Final premiums, eligibility, underwriting and policy terms remain subject to insurer confirmation.</p><p>Kind regards,<br><strong>Ashlar Assurance</strong></p></div></body></html>"""
+    msg = EmailMessage(); msg["From"] = sender; msg["To"] = email
+    if bcc and bcc.lower() != email.lower(): msg["Bcc"] = bcc
     msg["Subject"] = f"Your Ashlar international health insurance comparison{(' — ' + name) if name else ''}"[:240]
-    msg.set_content("\n".join(plain_lines))
-    msg.add_alternative(html_body, subtype="html")
+    msg.set_content("\n".join(plain_lines)); msg.add_alternative(html_body, subtype="html")
     return msg
 
 
-async def send_comparison_email(
-    name: str,
-    email: str,
-    applicant_state: dict,
-    plan_keys: list[str],
-    current_policy_token: str | None = None,
-) -> dict:
+async def send_comparison_email(name: str, email: str, applicant_state: dict, plan_keys: list[str], current_policy_token: str | None = None) -> dict:
     settings = get_settings()
-
-    # Re-verify plan prices and eligibility server-side. Current-policy facts
-    # are accepted only from HAL's signed token created immediately after
-    # Proposal Studio analysis; arbitrary browser-edited policy data is ignored.
     plans = _verified_plans_for(applicant_state, plan_keys, settings)
-    current_policy = None
-    if current_policy_token:
-        current_policy = verify_current_policy_token(current_policy_token)
-
-    msg = _build_comparison_message(
-        name, email, plans, _mail_sender(settings),
-        settings.gmail_lead_recipient, current_policy=current_policy,
-    )
+    current_policy = verify_current_policy_token(current_policy_token) if current_policy_token else None
+    msg = _build_comparison_message(name, email, plans, _mail_sender(settings), settings.gmail_lead_recipient, current_policy=current_policy)
     if _resend_configured(settings) and settings.resend_reply_to:
         msg["Reply-To"] = settings.resend_reply_to
     result = await _send_transactional(msg)
-    return {
-        "status": "sent",
-        "transport": result.get("transport", "gmail"),
-        "message_id": result.get("id"),
-        "plans_sent": [p.plan_key for p in plans],
-        "current_policy_included": bool(current_policy),
-    }
+    return {"status": "sent", "transport": result.get("transport", "gmail"), "message_id": result.get("id"), "plans_sent": [p.plan_key for p in plans], "current_policy_included": bool(current_policy)}
