@@ -146,7 +146,7 @@ def next_family_question(state: dict, greek: bool = False) -> dict | None:
     if "sex" not in member:
         return _q(
             "family_sex",
-            "What is this member's sex for benefit relevance and insurer rating?" if not greek else "Ποιο είναι το φύλο αυτού του μέλους για τον έλεγχο σχετικών παροχών και την τιμολόγηση του ασφαλιστή;",
+            "What is this family member's sex?" if not greek else "Ποιο είναι το φύλο αυτού του μέλους της οικογένειας;",
             [("Female", "female"), ("Male", "male"), ("Prefer not to say", "unspecified")]
             if not greek else [("Γυναίκα", "female"), ("Άνδρας", "male"), ("Δεν επιθυμώ να απαντήσω", "unspecified")],
         )
