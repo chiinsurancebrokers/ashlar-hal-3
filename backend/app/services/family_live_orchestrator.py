@@ -9,6 +9,31 @@ from backend.app.services.household_quote_service import household_member_states
 from backend.app.services.orchestrator import chat_turn as base_chat_turn
 
 
+_SHORTLIST_STATUSES = {"verified_shortlist", "deterministic_shortlist"}
+
+
+def _completed_family_shortlist(result: dict[str, Any], current: dict[str, Any]) -> bool:
+    """Return True only when the base flow has just completed a family IPMI shortlist.
+
+    The public orchestrator can expose ``journey='ipmi'`` at the response level
+    while the persisted state still contains ``journey='undetermined'``.  The
+    family price safeguard must therefore not depend on the state-level journey
+    alone.  Requiring a completed household plus a shortlist response keeps the
+    guard narrow and prevents an individual shortlist from being presented as a
+    family price.
+    """
+    journey = current.get("journey") or result.get("journey")
+    if journey == "undetermined":
+        journey = result.get("journey")
+    return bool(
+        journey == "ipmi"
+        and current.get("family_requested")
+        and current.get("household_complete")
+        and current.get("discovery_complete")
+        and result.get("ai_status") in _SHORTLIST_STATUSES
+    )
+
+
 async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
     """Run the established HAL flow, then safely compose a completed family quote.
 
@@ -25,12 +50,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     result = await base_chat_turn(message, state, history)
     current = result.get("state") or state
 
-    if not (
-        current.get("journey") == "ipmi"
-        and current.get("family_requested")
-        and current.get("household_complete")
-        and current.get("discovery_complete")
-    ):
+    if not _completed_family_shortlist(result, current):
         return result
 
     settings = get_settings()
@@ -62,6 +82,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     # Critical safeguard: a single-person shortlist must never be rendered as
     # the family price. Family pricing is exposed only through household_quote.
+    # Excluded individual plans are also suppressed: they are not household
+    # options and must never render as available comparison cards.
     result["quotes"] = []
     result["excluded_plans"] = []
 
