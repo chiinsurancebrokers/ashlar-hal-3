@@ -25,8 +25,8 @@ def _family_enabled(state: dict) -> bool:
 
 def _sex_question(greek: bool) -> dict:
     if greek:
-        return {"key":"primary_sex","reply":"Ποιο είναι το φύλο σας για τον έλεγχο σχετικών παροχών και την τιμολόγηση του ασφαλιστή;","quick_replies":[{"label":"Γυναίκα","value":"female"},{"label":"Άνδρας","value":"male"},{"label":"Δεν επιθυμώ να απαντήσω","value":"unspecified"}]}
-    return {"key":"primary_sex","reply":"What is your sex for benefit relevance and insurer rating?","quick_replies":[{"label":"Female","value":"female"},{"label":"Male","value":"male"},{"label":"Prefer not to say","value":"unspecified"}]}
+        return {"key":"primary_sex","reply":"Ποιο είναι το φύλο σας;","quick_replies":[{"label":"Γυναίκα","value":"female"},{"label":"Άνδρας","value":"male"},{"label":"Δεν επιθυμώ να απαντήσω","value":"unspecified"}]}
+    return {"key":"primary_sex","reply":"What is your sex?","quick_replies":[{"label":"Female","value":"female"},{"label":"Male","value":"male"},{"label":"Prefer not to say","value":"unspecified"}]}
 
 
 def _maternity_question(greek: bool) -> dict:
