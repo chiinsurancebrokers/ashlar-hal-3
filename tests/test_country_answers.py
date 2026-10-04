@@ -1,3 +1,4 @@
+import re
 import pytest
 
 from backend.app.discovery.legacy_flow import apply_discovery_answer
@@ -45,3 +46,27 @@ def test_personal_family_quote_has_no_plan_followup(monkeypatch):
     result = asyncio.run(live.chat_turn("No fixed budget", state, []))
     assert result["ai_status"] == "personal_family_quotation_required"
     assert result["followup_message"] == ""
+
+
+@pytest.mark.parametrize("value", ["Portugal", "Türkiye", "United Arab Emirates", "South Korea", "Czechia",
+                                   "North Macedonia", "Hong Kong", "Saudi Arabia"])
+def test_every_dropdown_value_is_stored_as_given(value):
+    for pending, field in (("residence", "residence_country"), ("primary_healthcare_country", "primary_healthcare_country"),
+                           ("nationality", "nationality")):
+        out = apply_discovery_answer(value, {"pending_question": pending, "residence_country": "Greece"})
+        assert out[field] == value, (pending, value, out)
+
+
+def test_dropdown_country_does_not_switch_greek_conversation_to_english():
+    from backend.app.services.orchestrator import _resolve_language
+    state = {"language": "el", "pending_question": "residence"}
+    assert _resolve_language("Portugal", state) is True
+    assert state["language"] == "el"
+
+
+def test_frontend_has_country_dropdown_for_country_questions():
+    from pathlib import Path
+    html = (Path(__file__).resolve().parents[1] / "frontend" / "index.html").read_text(encoding="utf-8")
+    assert "COUNTRY_KEYS=['residence','primary_healthcare_country','nationality']" in html
+    values = set(re.findall(r'\["([^"]+)","[^"]+"\]', html.split("const COUNTRY_OPTIONS_ALL=")[1].split(";")[0]))
+    assert {"Greece", "Cyprus", "Türkiye", "Portugal", "United Kingdom"} <= values

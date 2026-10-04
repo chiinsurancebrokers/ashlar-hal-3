@@ -63,6 +63,10 @@ def _resolve_language(message: str, state: dict) -> bool:
     """
     raw = (message or "").strip()
     low = raw.lower()
+    # Country answers come from a dropdown whose values are English country
+    # names; choosing one must never switch a Greek conversation to English.
+    if state.get("pending_question") in {"residence", "primary_healthcare_country", "nationality"} and not _is_greek(raw):
+        return state.get("language") == "el"
     if _is_greek(raw):
         state["language"] = "el"
     elif low in LANGUAGE_NEUTRAL_UI_VALUES:

@@ -261,7 +261,7 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
             r"^(?:my\s+nationality\s+is|i'?m|i\s+am|nationality|είμαι|ειμαι|η\s+υπηκοότητά\s+μου\s+είναι|η\s+υπηκοοτητα\s+μου\s+ειναι)\s+",
             "", raw, flags=re.I,
         ).strip(" .,!?:;")
-        canonical = aliases.get(cleaned.lower())
+        canonical = aliases.get(cleaned.lower()) or COUNTRY_ALIASES.get(cleaned.lower())
         if canonical:
             out["nationality"] = canonical
         elif cleaned and len(cleaned.split()) <= 4 and re.fullmatch(r"[A-Za-zÀ-ÖØ-öø-ÿΑ-Ωα-ωΆ-ώ .'-]+", cleaned):
