@@ -253,7 +253,7 @@ def test_real_english_sentence_can_explicitly_switch_from_greek():
 async def test_post_shortlist_yes_keeps_ipmi_context_and_explains_instead_of_rebuilding(monkeypatch):
     import backend.app.services.orchestrator as orch
 
-    async def fake_explain(_quote, _message, _greek):
+    async def fake_explain(_quote, _message, _greek, **_kwargs):
         return "EXPLAINED"
 
     monkeypatch.setattr(orch, "explain_plan", fake_explain)
@@ -273,7 +273,7 @@ async def test_post_shortlist_yes_keeps_ipmi_context_and_explains_instead_of_reb
 async def test_post_shortlist_nai_keeps_ipmi_context_and_explains_in_greek(monkeypatch):
     import backend.app.services.orchestrator as orch
 
-    async def fake_explain(_quote, _message, greek):
+    async def fake_explain(_quote, _message, greek, **_kwargs):
         assert greek is True
         return "ΑΝΑΛΥΣΗ"
 

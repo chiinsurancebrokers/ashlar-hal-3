@@ -1059,6 +1059,12 @@ async function saveNeeds(){
   document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el=>state[el.dataset.field]=true);
   closeModal('needsModal');renderState();
   if(!state.age||!state.residence_country||!state.coverage_area)return;
+  if(state.family_requested&&(state.household_members||[]).length&&state.discovery_complete){
+    // A family quote must be recomposed per member, never re-priced as one person.
+    document.getElementById('input').value='Update my quote with these needs';
+    sendMessage();
+    return;
+  }
   try{
     const r=await fetch(API+'/quotes/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));lastQuotes=d.shortlist||[];excludedPlans=d.exclusions||[];
