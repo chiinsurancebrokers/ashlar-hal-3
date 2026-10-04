@@ -1,0 +1,40 @@
+{
+  "country": "Colombia",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      54.0,
+      36.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "54% of people in Colombia were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Swiss citizens were most likely to be satisfied (89%), while those in Greece, Türkiye, Hungary, Italy, Chile and Colombia were least likely to be satisfied (lower than 50%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 110,
+      "text": "The share was less than 2% in Poland, Luxembourg, Colombia and Türkiye, but stood above 5% in Switzerland, Korea and Chile (Figure 5.8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 140,
+      "text": "Across all staff types, positive perceptions on staffing and work pace are highest in Poland, Israel, Colombia, the United States and Latvia (50% or more with positive perceptions across different types).",
+      "verbatim": true
+    }
+  ]
+}

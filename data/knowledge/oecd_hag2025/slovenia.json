@@ -1,0 +1,130 @@
+{
+  "country": "Slovenia",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      29.0,
+      36.0
+    ],
+    "not_public": [
+      26.4,
+      24.9
+    ],
+    "unmet_needs": [
+      3.4,
+      3.4
+    ],
+    "not_public_hospital": [
+      13.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      22.0,
+      22.0
+    ],
+    "not_public_dental": [
+      53.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      49.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "29% of people in Slovenia were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "26.4% of health spending in Slovenia was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "3.4% of people in Slovenia reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "13% of hospital care costs in Slovenia were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "22% of outpatient medical care costs in Slovenia were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "53% of dental care costs in Slovenia were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "49% of pharmaceutical costs in Slovenia were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "In Slovenia, a major policy reform in 2024 replaced its complementary insurance with a new compulsory healthcare contribution as part of its social health insurance system.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 110,
+      "text": "This varies considerably across OECD countries, from fewer than 2% of households experiencing catastrophic health spending in Sweden, Slovenia, the United Kingdom, Ireland and the Netherlands, to over 10% of households in Lithuania, Latvia and Hungary (Figure 5.10).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 112,
+      "text": "In terms of median number of days (Figure 5.11, right panel), this ranged from around 50 days or less in Spain, Poland, Hungary and Sweden, to 280 days in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 112,
+      "text": "However, in New Zealand and Slovenia, waiting times have continued to increase on both metrics since the pandemic.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 112,
+      "text": "Furthermore, waiting times have remained above pre-pandemic levels in more countries, with large increases observed in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 160,
+      "text": "By contrast, countries including France, Slovenia and Spain have lower price levels, with the same healthcare basket costing roughly two-thirds of the OECD average.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 164,
+      "text": "Meanwhile, in Slovenia, Poland and Costa Rica, the role of government transfers in funding compulsory insurance schemes is marginal, with social insurance contributions representing at least 90% of all revenues of these schemes.",
+      "verbatim": true
+    }
+  ]
+}

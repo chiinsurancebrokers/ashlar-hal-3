@@ -1,0 +1,88 @@
+{
+  "country": "United States",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      25.0,
+      36.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "25% of people in United States were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "In the United States, the share of uninsured people decreased following the Affordable Care Act, and about 25 million people were uninsured in 2023.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 116,
+      "text": "In Canada, Finland, Sweden, the United Kingdom and the United States, the relatively low number of consultations can be explained in part by the enhanced role that nurses and other health professionals play in primary care – notably in management of patients with chronic diseases and in dealing with patients with minor health issues.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 116,
+      "text": "Still, in the United States, doctors are paid mainly by fee-for-service, but consultation rates are relatively low.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 137,
+      "text": "United States sample only includes people aged 65 and over. * Accession/partner country. ** Participated in the PaRIS survey.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 139,
+      "text": "United States sample only includes people aged 65 years or older. * Accession/partner country. ** Participated in the PaRIS survey.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 140,
+      "text": "Across all staff types, positive perceptions on staffing and work pace are highest in Poland, Israel, Colombia, the United States and Latvia (50% or more with positive perceptions across different types).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 160,
+      "text": "The same set of healthcare items costs 55% more than the OECD average in Iceland, and 52% more in Switzerland and the United States – the countries reporting the highest prices.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 160,
+      "text": "The United States continues to have the highest per capita healthcare use, with volumes about 50% above the OECD average.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 162,
+      "text": "In the United States, federal and state programmes covered around 28% of total health spending in 2023, while another 55% of expenditure was classified under compulsory insurance schemes, covering a mix of public arrangements and private health insurance considered compulsory under the Affordable Care Act.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 164,
+      "text": "While government and compulsory spending accounted for 83% of all health spending in the United States and 68% in Switzerland, the corresponding shares of public funding were only 54% and 33%.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 170,
+      "text": "Overall, every third health dollar was spent on ambulatory providers in Belgium, Mexico, Finland, Luxembourg and the United States but this share was below 20% in Türkiye, Greece and the Slovak Republic.",
+      "verbatim": true
+    }
+  ]
+}

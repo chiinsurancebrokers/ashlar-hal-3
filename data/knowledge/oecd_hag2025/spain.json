@@ -1,0 +1,118 @@
+{
+  "country": "Spain",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      38.0,
+      36.0
+    ],
+    "not_public": [
+      26.8,
+      24.9
+    ],
+    "unmet_needs": [
+      1.8,
+      3.4
+    ],
+    "not_public_hospital": [
+      4.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      16.0,
+      22.0
+    ],
+    "not_public_dental": [
+      99.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      33.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "38% of people in Spain were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "26.8% of health spending in Spain was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "1.8% of people in Spain reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "4% of hospital care costs in Spain were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "16% of outpatient medical care costs in Spain were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "99% of dental care costs in Spain were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "33% of pharmaceutical costs in Spain were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 106,
+      "text": "This is especially notable in Finland, Lithuania, Ireland, Greece, Spain and France, where unmet medical care needs due to waiting times increased by 1.4 percentage points or more since 2019.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 106,
+      "text": "In Spain, the National Health System established the Working Group on Waiting Lists (Grupo de Trabajo sobre Listas de Espera) to standardise management and reporting of waiting lists across the autonomous communities.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 106,
+      "text": "There are also some variations in the survey questions across countries: while most countries refer to both a medical examination and treatment, the question in some countries (Czechia and Spain) only refers to a medical examination or a doctor consultation, resulting in lower rates of unmet needs.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 112,
+      "text": "In terms of median number of days (Figure 5.11, right panel), this ranged from around 50 days or less in Spain, Poland, Hungary and Sweden, to 280 days in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 116,
+      "text": "Remote consultations cannot be distinguished and are included in a few countries (such as Austria from 2020, and Ireland, Japan, Latvia, the Netherlands, the Slovak Republic and Spain from 2019).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 160,
+      "text": "By contrast, countries including France, Slovenia and Spain have lower price levels, with the same healthcare basket costing roughly two-thirds of the OECD average.",
+      "verbatim": true
+    }
+  ]
+}

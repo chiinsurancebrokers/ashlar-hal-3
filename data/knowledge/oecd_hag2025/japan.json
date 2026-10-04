@@ -1,0 +1,115 @@
+{
+  "country": "Japan",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      20.0,
+      36.0
+    ],
+    "not_public": [
+      15.2,
+      24.9
+    ],
+    "not_public_hospital": [
+      8.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      14.0,
+      22.0
+    ],
+    "not_public_dental": [
+      21.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      29.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "20% of people in Japan were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "15.2% of health spending in Japan was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "8% of hospital care costs in Japan were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "14% of outpatient medical care costs in Japan were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "21% of dental care costs in Japan were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "29% of pharmaceutical costs in Japan were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 114,
+      "text": "In general, doctors were more evenly distributed across regions in Belgium, Japan and Korea.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 114,
+      "text": "In Japan, where regional disparities in doctors are small, 16% of all medical students are from a regional quota scholarship programme.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 114,
+      "text": "Disparities were smallest in Czechia, France and Japan, where more than 98% of people in rural areas had access to hospitals nearby.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 116,
+      "text": "In some countries, doctors are paid predominantly by fee-for-service (as in Germany, Japan, Korea and the Slovak Republic).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 116,
+      "text": "Remote consultations cannot be distinguished and are included in a few countries (such as Austria from 2020, and Ireland, Japan, Latvia, the Netherlands, the Slovak Republic and Spain from 2019).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 162,
+      "text": "In France, Germany, Luxembourg and Japan, more than three-quarters of spending was covered through a type of compulsory health insurance scheme.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 168,
+      "text": "This increase was particularly pronounced in Denmark, the United Kingdom, Austria and Japan, where the proportion of health spending attributed to preventive care was 7-8 percentage points above the share seen in 2013, reflecting substantial investments in public health measures related to fighting the spread of the COVID-19 pandemic.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 168,
+      "text": "With public health emergency measures phased out after the acute phase of the pandemic, the share of preventive spending dropped and reached pre-pandemic levels by 2023, ranging from 6-7% of total health spending in Canada and the United Kingdom to less than 3% in Poland, Belgium, Iceland, France, Switzerland, Portugal and Japan.",
+      "verbatim": true
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "country": "Türkiye",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      59.0,
+      36.0
+    ],
+    "unmet_needs": [
+      1.2,
+      3.4
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "59% of people in Türkiye were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "1.2% of people in Türkiye reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Swiss citizens were most likely to be satisfied (89%), while those in Greece, Türkiye, Hungary, Italy, Chile and Colombia were least likely to be satisfied (lower than 50%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 104,
+      "text": "While satisfaction levels have decreased on average across OECD countries over the past decade, this masks wide cross-country variation: Türkiye experienced the largest decline in satisfaction of 30 percentage points (percentage points), while Canada, France and New Zealand also had declines of over 20 percentage points Conversely, in Chile and Estonia satisfaction levels increased by 10 percentage points or more.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 110,
+      "text": "The share was less than 2% in Poland, Luxembourg, Colombia and Türkiye, but stood above 5% in Switzerland, Korea and Chile (Figure 5.8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 114,
+      "text": "There were also two or less doctors per 1 000 population working in remote areas in Türkiye and Poland.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 136,
+      "text": "Figure 6.12 reveals broad consistency in the proportion of patients with diabetes on recommended antihypertensive medications in 2023, although Iceland, the Netherlands and Türkiye had rates at around 80% or lower.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 160,
+      "text": "Türkiye records the lowest healthcare prices among OECD countries, at just 18% of the average.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 170,
+      "text": "This average was largely exceeded in Türkiye and Costa Rica, where hospital activities received half or more of all financial resources, as well as in accession countries Indonesia and Thailand (Figure 7.18).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 170,
+      "text": "Overall, every third health dollar was spent on ambulatory providers in Belgium, Mexico, Finland, Luxembourg and the United States but this share was below 20% in Türkiye, Greece and the Slovak Republic.",
+      "verbatim": true
+    }
+  ]
+}

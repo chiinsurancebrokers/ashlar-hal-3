@@ -12,7 +12,7 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
-from backend.app.services.country_health_agent import country_health_note
+from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
@@ -300,8 +300,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if state.get("discovery_complete") and journey == "ipmi":
         intent = _post_shortlist_intent(message)
         if intent == "greece_healthcare":
+            country = state.get("primary_healthcare_country") or state.get("residence_country") or "Greece"
             return {
-                "reply": _greece_healthcare_summary(greek),
+                "reply": deterministic_note(country, greek) or _greece_healthcare_summary(greek),
                 "state": state, "quotes": [], "excluded_plans": [],
                 "ai_status": "greece_healthcare_context", "journey": "ipmi",
                 "lead_cta": {"show": True, "journey": "ipmi", "label": "Request a proposal"},

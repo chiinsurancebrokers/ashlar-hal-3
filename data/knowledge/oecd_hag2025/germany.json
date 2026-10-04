@@ -1,0 +1,160 @@
+{
+  "country": "Germany",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      19.0,
+      36.0
+    ],
+    "not_public": [
+      14.1,
+      24.9
+    ],
+    "unmet_needs": [
+      0.8,
+      3.4
+    ],
+    "not_public_hospital": [
+      3.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      7.0,
+      22.0
+    ],
+    "not_public_dental": [
+      27.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      18.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "19% of people in Germany were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "14.1% of health spending in Germany was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "0.8% of people in Germany reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "3% of hospital care costs in Germany were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "7% of outpatient medical care costs in Germany were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "27% of dental care costs in Germany were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "18% of pharmaceutical costs in Germany were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 106,
+      "text": "However, over 8% of the population reported unmet care needs in Latvia (8.4%), Estonia (8.5%), Finland (8.6%), Canada (9.1%) and Greece (12.1%), while in Germany, the Netherlands and Czechia, fewer than 1% of the population reported unmet needs for medical care.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 106,
+      "text": "More than 8% of people in Greece, Latvia and Iceland reported unmet dental care needs in 2024, compared to fewer than 1% in Germany, Hungary and the Netherlands, as well as accession country Croatia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 108,
+      "text": "In contrast, government and compulsory insurance schemes paid over 90% of these costs in Czechia, the Slovak Republic, Sweden, Germany, Denmark and the United Kingdom.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 108,
+      "text": "The most generous coverage was found in France (83%), Germany (82%) and Ireland (79%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 116,
+      "text": "In some countries, doctors are paid predominantly by fee-for-service (as in Germany, Japan, Korea and the Slovak Republic).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 116,
+      "text": "In Germany, data include only the number of cases of physician treatment according to reimbursement regulations under the country’s social health insurance scheme (a case only counts the first contact over a three-month period, even if the patient consults a doctor more often, leading to an underestimation).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 162,
+      "text": "In France, Germany, Luxembourg and Japan, more than three-quarters of spending was covered through a type of compulsory health insurance scheme.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 164,
+      "text": "In other countries such as Costa Rica, Poland and Germany, the majority of public funding refers to social insurance contributions – payable by employers and employees – which financed close to two-thirds of all healthcare spending in 2023.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 168,
+      "text": "In Austria, Canada, Germany, France, Luxembourg and Switzerland, spending on general outpatient care was much lower overall, accounting for 4% or less of health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_12",
+      "page": 170,
+      "text": "On the other hand, Canada, Germany and Mexico spent less than 30% of the total health budget on hospitals.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_13",
+      "page": 170,
+      "text": "This covers a wide range of facilities with most spending related to either medical practices including GPs and specialists (as in Austria, France and Germany) or ambulatory healthcare centres (as in Finland, Ireland and Sweden).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_14",
+      "page": 170,
+      "text": "In Germany and Greece, on the other hand, hospitals are generally mono-functional, with the vast majority (around 90%) of spending dedicated to the provision of inpatient care services, and very little outpatient and day care spending.",
+      "verbatim": true
+    }
+  ]
+}

@@ -2,22 +2,35 @@ import asyncio
 
 from backend.app.core.config import get_settings
 from backend.app.services import family_live_orchestrator as live
-from backend.app.services.healthcare_context import healthcare_note
+from backend.app.services.country_health_agent import deterministic_note
 
 
-def test_greece_note_uses_verified_oecd_figures_in_both_languages():
-    en, el = healthcare_note("Greece"), healthcare_note("Ελλάδα", greek=True)
-    for figure in ("27%", "64%", "12.1%", "3.4%", "39.1%", "24.9%", "63%", "89%"):
+def test_greece_gap_note_uses_official_figures_in_both_languages():
+    en, el = deterministic_note("Greece"), deterministic_note("Ελλάδα", greek=True)
+    for figure in ("73%", "36%", "12.1%", "3.4%", "39.1%", "24.9%", "37%", "11%", "38%", "22%", "100%", "68%"):
         assert figure in en
-    for figure in ("27%", "64%", "12,1%", "3,4%", "39,1%", "24,9%", "63%", "89%"):
+    for figure in ("73%", "36%", "12,1%", "3,4%", "39,1%", "24,9%", "37%", "11%", "100%"):
         assert figure in el
     assert "OECD, Health at a Glance 2025" in en and "ΟΟΣΑ, Health at a Glance 2025" in el
-    assert "safety net" in en and "δίχτυ ασφαλείας" in el
 
 
-def test_no_note_without_curated_profile():
-    assert healthcare_note("Spain") == ""
-    assert healthcare_note(None) == ""
+def test_gap_framing_never_states_covered_or_satisfied_share():
+    for text in (deterministic_note("Greece"), deterministic_note("Greece", True)):
+        for positive in ("27%", "63%", "64%", "89%", "60.9%", "60,9%", "62%"):
+            assert positive not in text
+
+
+def test_only_worse_than_oecd_gaps_are_shown():
+    turkey = deterministic_note("Turkey")
+    assert "59%" in turkey and "36%" in turkey       # not satisfied, worse than OECD
+    assert "1.2%" not in turkey                      # unmet needs better than OECD: omitted
+
+
+def test_country_names_resolve_in_english_and_greek():
+    assert "Türkiye" in deterministic_note("Τουρκία")
+    assert "Πορτογαλία" in deterministic_note("Πορτογαλία", True)
+    assert deterministic_note("Cyprus") == ""         # not an OECD country in the report
+    assert deterministic_note(None) == ""
 
 
 def _run(messages, monkeypatch):
@@ -40,18 +53,22 @@ def _run(messages, monkeypatch):
 NEEDS = ["€0 deductible", "Include outpatient cover", "No", "No dental needed",
          "No mental health cover needed", "Yes, wellness is important", "No optical cover needed",
          "Yes, evacuation is important", "No fixed budget"]
-START = ["chris", "51", "male", "greece", "Same as residence", "greek", "Europe only"]
 
 
 def test_individual_shortlist_includes_country_note(monkeypatch):
-    result = _run(START + ["no"] + NEEDS, monkeypatch)
+    result = _run(["chris", "51", "male", "greece", "Same as residence", "greek", "Europe only", "no"] + NEEDS, monkeypatch)
     assert result["quotes"]
     assert "A word on healthcare in Greece" in result["reply"]
-    assert result["healthcare_note"] in result["reply"]
+
+
+def test_note_follows_country_where_applicant_lives(monkeypatch):
+    result = _run(["chris", "51", "male", "greece", "portugal", "greek", "Europe only", "no"] + NEEDS, monkeypatch)
+    assert result["state"]["primary_healthcare_country"] == "Portugal"
+    assert "A word on healthcare in Portugal" in result["reply"]
 
 
 def test_household_shortlist_includes_country_note(monkeypatch):
-    result = _run(START + ["yes", "spouse", "45", "female", "no", "no"] + NEEDS, monkeypatch)
+    result = _run(["chris", "51", "male", "greece", "Same as residence", "greek", "Europe only",
+                   "yes", "spouse", "45", "female", "no", "no"] + NEEDS, monkeypatch)
     assert result["ai_status"] == "verified_household_shortlist"
-    assert "Household total" in result["reply"]
     assert result["reply"].index("Household total") < result["reply"].index("A word on healthcare in Greece")
