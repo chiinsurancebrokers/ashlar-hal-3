@@ -9,7 +9,7 @@ from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
 from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
-from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest
+from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest, plan_documents
 
 SUPPORTED_RESIDENCE = {"greece", "gr", "hellas", "ελλάδα", "ellada"}
 
@@ -124,12 +124,13 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             facts = verified_fact_texts(product_code)
             docs = [d["official_url"] for d in load_manifest()["documents"] if d["document_type"] in {"policy_wording", "table_of_benefits"}]
             evidence_status = "verified_2026_tob_and_policy"
+            card_docs = plan_documents(product_code)
         else:
             warnings = [
                 "Indicative quotation using a legacy rate dataset for this carrier.",
                 "Benefit matching is not scored until this carrier's current official documents are loaded.",
             ]
-            facts, docs = [], []
+            facts, docs, card_docs = [], [], []
             evidence_status = "legacy_unverified_benefits"
 
         reasons = []
@@ -164,6 +165,7 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             unmatched_requirements=outcome.unmatched,
             verified_facts=facts,
             source_documents=docs,
+            plan_documents=card_docs,
             reasons=reasons,
             warnings=warnings,
             quoted_on=today,

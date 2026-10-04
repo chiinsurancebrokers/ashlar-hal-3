@@ -58,6 +58,12 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .guided-choice{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
 
 .msg.hal:has(.quotes-row){max-width:100%;width:100%}
+.q-docs{margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--border)}
+.q-docs-title{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.q-doc{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:12.5px}
+.q-doc-open{background:none;border:0;padding:0;color:var(--text);cursor:pointer;text-align:left;font:inherit}
+.q-doc-open:hover{text-decoration:underline}
+.q-doc-pdf{color:var(--muted);text-decoration:none;font-size:11.5px;white-space:nowrap}
 .q-members{margin:10px 0 2px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px}
 .q-member{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
 .q-member em{font-style:normal;color:var(--muted)}
@@ -429,7 +435,7 @@ const I18N = {
     genericError:"I couldn't complete that request just now. Please try once more.",
     area1:'Europe', area2:'Worldwide excl. USA/SG/HK/CN', area3:'Worldwide excl. USA', area4:'Worldwide incl. USA',
     outpatient:'Outpatient', maternity:'Maternity', dental:'Dental', mental:'Mental health', wellness:'Wellness', optical:'Optical', evac:'Evacuation', chronic:'Chronic cover',
-    officialDocs:'Official plan documents', openPdf:'Open PDF', tableBenefits:'Table of Benefits', policyWording:'Policy Wording', brochure:'Plan brochure',
+    officialDocs:'Official plan documents', openPdf:'Open PDF', tableBenefits:'Table of Benefits', policyWording:'Policy Wording', brochure:'Plan brochure', planSummary:'Plan summary (IPID)',
     uploadCurrentPolicy:'📄 Compare with your current policy', currentPolicy:'Current policy', policyUploading:'Analysing your current policy…',
     policyReady:'Current policy ready for comparison', policyFailed:'I could not analyse that policy. Please try another PDF or document.',
     policySelectPlan:'Select at least one plan to compare with your current policy.', replacePolicy:'Replace current policy',
@@ -483,7 +489,7 @@ const I18N = {
     genericError:'Δεν μπόρεσα να ολοκληρώσω το αίτημα αυτή τη στιγμή. Δοκιμάστε ξανά.',
     area1:'Ευρώπη', area2:'Παγκόσμια εκτός ΗΠΑ/Σιγκαπούρης/Χονγκ Κονγκ/Κίνας', area3:'Παγκόσμια εκτός ΗΠΑ', area4:'Παγκόσμια με ΗΠΑ',
     outpatient:'Εξωνοσοκομειακή', maternity:'Μητρότητα', dental:'Οδοντιατρική', mental:'Ψυχική υγεία', wellness:'Προληπτικός έλεγχος', optical:'Οπτικά', evac:'Ιατρική διακομιδή', chronic:'Χρόνιες παθήσεις',
-    officialDocs:'Επίσημα έντυπα προγράμματος', openPdf:'Άνοιγμα PDF', tableBenefits:'Πίνακας Παροχών', policyWording:'Όροι Ασφάλισης', brochure:'Έντυπο προγράμματος',
+    officialDocs:'Επίσημα έντυπα προγράμματος', openPdf:'Άνοιγμα PDF', tableBenefits:'Πίνακας Παροχών', policyWording:'Όροι Ασφάλισης', brochure:'Έντυπο προγράμματος', planSummary:'Σύνοψη προγράμματος (IPID)',
     uploadCurrentPolicy:'📄 Σύγκρινε με το τρέχον συμβόλαιό σου', currentPolicy:'Τρέχον συμβόλαιο', policyUploading:'Αναλύω το τρέχον συμβόλαιό σας…',
     policyReady:'Το τρέχον συμβόλαιο είναι έτοιμο για σύγκριση', policyFailed:'Δεν μπόρεσα να αναλύσω αυτό το συμβόλαιο. Δοκιμάστε άλλο PDF ή έγγραφο.',
     policySelectPlan:'Επιλέξτε τουλάχιστον ένα πρόγραμμα για σύγκριση με το τρέχον συμβόλαιό σας.', replacePolicy:'Αντικατάσταση συμβολαίου',
@@ -710,6 +716,19 @@ function logoColor(insurer){
   return '#5a6472';
 }
 
+function planDocLabel(type){
+  if(type==='ipid')return t('planSummary');
+  if(type==='table_of_benefits')return t('tableBenefits');
+  if(type==='policy_wording')return t('policyWording');
+  return t('brochure');
+}
+
+function renderPlanDocs(q){
+  const docs=(q.plan_documents||[]).filter(d=>/^https:\/\//i.test(d.url||'')).slice(0,4);
+  if(!docs.length)return '';
+  return `<div class="q-docs"><div class="q-docs-title">${esc(t('officialDocs'))}</div>${docs.map(d=>`<div class="q-doc"><button type="button" class="q-doc-open" onclick="openSourceViewer('${esc(d.url)}','${esc(planDocLabel(d.type))}')">📄 ${esc(planDocLabel(d.type))}</button><span class="q-doc-pdf">${esc(t('viewInsideAshlar'))}</span></div>`).join('')}</div>`;
+}
+
 function renderHouseholdMembers(q){
   if(!q.household_card||!(q.household_members||[]).length)return '';
   const mat=lang()==='el'?'μητρότητα':'maternity';
@@ -739,6 +758,7 @@ function renderQuoteCard(q,i){
     <div class="q-why">${esc(trText(q.card_why||''))}</div>
     ${q.client_note?`<div class="q-note">${esc(trText(q.client_note))}</div>`:''}
     ${(q.warnings||[]).length?`<div class="q-warnings">${q.warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`:''}
+    ${renderPlanDocs(q)}
     <div class="q-actions"><button class="q-primary" onclick="openLeadForm(currentJourney)">${t('getProposal')}</button>
       <button class="q-secondary" onclick="tellMeMore(${i})">${t('tellMore')}</button></div>
   </div>`;
@@ -1228,6 +1248,7 @@ function buildHalContext(){
     household_members:(st.household_members||[]).map(m=>({relationship:m.relationship,age:m.age,sex:m.sex,maternity_required:!!m.maternity_required})),
     household_breakdown:(lastHousehold||[]).map(b=>({member_id:b.member_id,label:b.label,product_name:b.product_name,insurer:b.insurer,premium:b.premium,currency:b.currency,maternity:!!b.maternity})),
     shortlist:(lastHousehold&&lastHousehold.length)?[]:(lastShortlist||[]).slice(0,6).map(q=>({product_name:q.product_name,insurer:q.insurer,premium:q.premium,currency:q.currency})),
+    plan_documents:(lastShortlist||[]).slice(0,6).filter(q=>(q.plan_documents||[]).length).map(q=>({product_name:q.product_name,documents:(q.plan_documents||[]).map(d=>({label:planDocLabel(d.type),url:d.url}))})),
     session_reference:st.session_reference||'',
   };
 }

@@ -142,3 +142,41 @@ def test_lead_email_includes_hal_context():
         assert "EUR 6,365.79" in text  # household total
         assert "Medical evacuation" in text
         assert "Declined: Dental" in text
+
+
+def test_plan_documents_are_plan_specific():
+    from backend.app.evidence.morgan_price_2026 import plan_documents
+
+    docs = plan_documents("premium")
+    types = [d["type"] for d in docs]
+    assert types == ["ipid", "table_of_benefits", "policy_wording"]
+    assert "ipid_premium" in docs[0]["url"]
+    assert all(d["url"].startswith("https://morgan-price.eu/") for d in docs)
+    assert "ipid_standard-plus" in plan_documents("standard_plus")[0]["url"]
+
+
+def test_household_cards_carry_their_plan_documents(monkeypatch):
+    result = _run(monkeypatch)
+    for card in result["quotes"]:
+        ipid = next(d for d in card["plan_documents"] if d["type"] == "ipid")
+        code = card["product_code"].replace("_", "-")
+        assert f"ipid_{code}" in ipid["url"]
+
+
+def test_lead_email_lists_plan_document_links():
+    from backend.app.services.leads import _build_lead_message
+
+    url = "https://morgan-price.eu/media/xl0bmfdo/evolutionhealth_eu_ipid_premium_si_04-26.pdf"
+    payload = {
+        "insurance_interest": "International Health Insurance", "first_name": "A", "last_name": "B",
+        "email": "a@example.com", "consent": True,
+        "hal_context": {"plan_documents": [
+            {"product_name": "Morgan Price Premium", "documents": [{"label": "Plan summary (IPID)", "url": url}]},
+            {"product_name": "Bad", "documents": [{"label": "x", "url": "javascript:alert(1)"}]},
+        ]},
+    }
+    msg = _build_lead_message(payload, "HAL-T", "q@example.com", "i@example.com")
+    html = msg.get_body(preferencelist=("html",)).get_content()
+    plain = msg.get_body(preferencelist=("plain",)).get_content()
+    assert f"href='{url}'" in html and url in plain
+    assert "javascript:" not in html and "javascript:" not in plain

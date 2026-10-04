@@ -174,14 +174,33 @@ def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
         if lines:
             sections.append(("Plans shown to the applicant", lines))
 
+    plan_docs = ctx.get("plan_documents") if isinstance(ctx.get("plan_documents"), list) else []
+    doc_lines: list[str] = []
+    doc_html_items: list[str] = []
+    for plan in plan_docs[:6]:
+        if not isinstance(plan, dict):
+            continue
+        for doc in (plan.get("documents") or [])[:4]:
+            url = str((doc or {}).get("url") or "")
+            if not url.startswith("https://"):
+                continue
+            label = f"{plan.get('product_name', '')} — {doc.get('label', 'Document')}"
+            doc_lines.append(f"{label}: {url}")
+            doc_html_items.append(f"<li><a href='{_safe(url)}'>{_safe(label)}</a></li>")
+
     if ctx.get("session_reference"):
         sections.append(("HAL session", [str(ctx["session_reference"])]))
 
+    if doc_lines:
+        sections.append(("Plan documents", doc_lines))
     html_parts = "".join(
         f"<h3 style='margin:18px 0 6px'>{_safe(h)}</h3><ul style='margin:0;padding-left:18px'>"
         + "".join(f"<li>{_safe(line)}</li>" for line in lines) + "</ul>"
-        for h, lines in sections
+        for h, lines in sections if h != "Plan documents"
     )
+    if doc_html_items:
+        html_parts += ("<h3 style='margin:18px 0 6px'>Plan documents</h3><ul style='margin:0;padding-left:18px'>"
+                       + "".join(doc_html_items) + "</ul>")
     return sections, html_parts
 
 
