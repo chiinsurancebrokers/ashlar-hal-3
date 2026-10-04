@@ -121,6 +121,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
              "maternity": alloc["member_id"] in maternity_ids}
             for alloc in top["allocations"]
         ]
+        result["quotes"] = _household_plan_cards(
+            top, quotes_by_member, labels, maternity_ids, greek
+        )
         result["ai_status"] = "verified_household_shortlist"
     else:
         result["reply"] = (
@@ -176,6 +179,58 @@ def _maternity_member_ids(state: dict[str, Any]) -> set[str]:
     if state.get("maternity_required"):
         ids.add("primary")
     return ids
+
+
+def _household_plan_cards(
+    top: dict[str, Any],
+    quotes_by_member: dict[str, list[dict[str, Any]]],
+    labels: dict[str, str],
+    maternity_ids: set[str],
+    greek: bool,
+) -> list[dict[str, Any]]:
+    """One card per plan used in the chosen household composition.
+
+    The card's premium is the sum of the verified premiums of the members
+    allocated to that plan — never one person's price presented as a family
+    price. Each card lists exactly which members it covers and at what price.
+    Card details (benefits, limits) come from the member's own verified quote.
+    """
+    by_plan: dict[str, list[dict[str, Any]]] = {}
+    for alloc in top["allocations"]:
+        by_plan.setdefault(alloc["plan_key"], []).append(alloc)
+
+    cards: list[dict[str, Any]] = []
+    for plan_key, allocs in by_plan.items():
+        source = None
+        for alloc in allocs:
+            source = next((q for q in quotes_by_member.get(alloc["member_id"], [])
+                           if q.get("plan_key") == plan_key), None)
+            if source:
+                break
+        if source is None:
+            continue
+        members = [{
+            "member_id": a["member_id"],
+            "label": labels.get(a["member_id"], a["member_id"]),
+            "premium": a["premium"],
+            "currency": a["currency"],
+            "maternity": a["member_id"] in maternity_ids,
+        } for a in allocs]
+        card = dict(source)
+        card["premium"] = round(sum(a["premium"] for a in allocs), 2)
+        card["family_size"] = len(allocs)
+        card["household_card"] = True
+        card["household_members"] = members
+        card["recommended"] = False
+        names = ", ".join(m["label"] for m in members)
+        card["card_why"] = (f"Καλύπτει: {names}" if greek else f"Covers: {names}")
+        # Individual excluded-plan or "top pick" wording must not leak in.
+        card.pop("rank_reason", None)
+        cards.append(card)
+
+    # Show the plan covering most members first.
+    cards.sort(key=lambda c: (-c["family_size"], c["premium"]))
+    return cards
 
 
 def _applicant_from_member_state(member_state: dict[str, Any]):

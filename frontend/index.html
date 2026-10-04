@@ -58,6 +58,9 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .guided-choice{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
 
 .msg.hal:has(.quotes-row){max-width:100%;width:100%}
+.q-members{margin:10px 0 2px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px}
+.q-member{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.q-member em{font-style:normal;color:var(--muted)}
 .quotes-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,320px);gap:14px;overflow-x:auto;overflow-y:hidden;padding:14px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin}
 .quote-card{scroll-snap-align:start;min-width:0;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
 @media(max-width:640px){.quotes-row{grid-auto-columns:minmax(260px,86vw)}}
@@ -372,6 +375,8 @@ let state = {};
 let history = [];
 let currentJourney = 'ipmi';
 let lastQuotes = [];
+let lastHousehold = [];
+let lastShortlist = [];
 let excludedPlans = [];
 let currentPolicy = null;
 let currentPolicyToken = null;
@@ -631,7 +636,7 @@ async function sendHiddenMessage(text){
   try{
     const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
     const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
-    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];if(d.household_breakdown)lastHousehold=d.household_breakdown;if((d.quotes||[]).length)lastShortlist=d.quotes;
     applyStaticI18n();
     addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
     if(d.followup_message)addMsg(d.followup_message,'hal');
@@ -705,6 +710,12 @@ function logoColor(insurer){
   return '#5a6472';
 }
 
+function renderHouseholdMembers(q){
+  if(!q.household_card||!(q.household_members||[]).length)return '';
+  const mat=lang()==='el'?'μητρότητα':'maternity';
+  return `<div class="q-members">${q.household_members.map(m=>`<div class="q-member"><span>${esc(m.label)}${m.maternity?` <em>· ${mat}</em>`:''}</span><b>${money(Number(m.premium||0),m.currency||q.currency)}</b></div>`).join('')}</div>`;
+}
+
 function renderQuoteCard(q,i){
   const annual=Number(q.premium||0),monthly=annual/12,key=qkey(q),selected=compareSelected.has(key);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
@@ -717,6 +728,7 @@ function renderQuoteCard(q,i){
     <div class="q-badges">${(q.fit_badges||[]).map(b=>`<span class="q-badge">${esc(trText(b))}</span>`).join('')}</div>
     <div class="q-price">${money(annual,q.currency)}<span>${t('perYear')}</span></div>
     <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
+    ${renderHouseholdMembers(q)}
     <div class="q-divider"></div>
     <div class="q-spec">
       <div><b>${t('coverage')}</b>${esc(trText(q.card_coverage||'—'))}</div>
@@ -1178,7 +1190,7 @@ async function sendMessage(){
   try{
     const r=await fetch(API+'/chat/turn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,history:history.slice(0,-1)})});
     const d=await r.json();removeThinking();if(!r.ok)throw new Error(d.detail||t('genericError'));
-    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];
+    state=d.state||state;currentJourney=d.journey||currentJourney;lastQuotes=d.quotes||[];excludedPlans=d.excluded_plans||[];if(d.household_breakdown)lastHousehold=d.household_breakdown;if((d.quotes||[]).length)lastShortlist=d.quotes;
     applyStaticI18n();
     addMsg(d.reply||'','hal',lastQuotes,excludedPlans,d.lead_cta,d.quick_replies||[],d.travel_recommendation||null);
     if(d.followup_message)addMsg(d.followup_message,'hal');
@@ -1199,7 +1211,25 @@ function openLeadForm(journey){
   if(state.age)document.getElementById('leadAge').value=state.age;
   if(state.coverage_area)document.getElementById('leadCoverage').value=areaLabel(state.coverage_area);
   if(state.budget_annual)document.getElementById('leadBudget').value=state.budget_annual;
+  if((state.household_members||[]).length&&!document.getElementById('leadFamily').value){
+    document.getElementById('leadFamily').value=state.household_members.map(m=>`${m.relationship} ${m.age??''}`.trim()).join(', ').slice(0,120);
+  }
   document.getElementById('leadStatus').textContent='';applyStaticI18n();document.getElementById('leadModal').classList.add('open');
+}
+
+function buildHalContext(){
+  const st=state||{},needKeys=['outpatient_required','maternity_required','dental_required','mental_health_required','wellness_required','optical_required','evacuation_required','chronic_required','chronic_conditions_disclosed'];
+  const needs={};needKeys.forEach(k=>{if(typeof st[k]==='boolean'&&(st[k.replace('_required','_answered')]||k==='chronic_conditions_disclosed'||st[k]))needs[k]=st[k];});
+  return {
+    applicant_name:st.applicant_name||'',age:st.age||'',sex:st.sex||'',nationality:st.nationality||'',
+    residence_country:st.residence_country||'',primary_healthcare_country:st.primary_healthcare_country||'',
+    coverage_area:st.coverage_area?areaLabel(st.coverage_area):'',deductible:(st.deductible!==undefined&&st.deductible!==null)?st.deductible:'',
+    budget:st.budget_annual||st.budget_preference||'',needs,
+    household_members:(st.household_members||[]).map(m=>({relationship:m.relationship,age:m.age,sex:m.sex,maternity_required:!!m.maternity_required})),
+    household_breakdown:(lastHousehold||[]).map(b=>({member_id:b.member_id,label:b.label,product_name:b.product_name,insurer:b.insurer,premium:b.premium,currency:b.currency,maternity:!!b.maternity})),
+    shortlist:(lastHousehold&&lastHousehold.length)?[]:(lastShortlist||[]).slice(0,6).map(q=>({product_name:q.product_name,insurer:q.insurer,premium:q.premium,currency:q.currency})),
+    session_reference:st.session_reference||'',
+  };
 }
 
 async function submitLead(){
@@ -1210,6 +1240,7 @@ async function submitLead(){
     age:document.getElementById('leadAge').value.trim(),coverage_area:document.getElementById('leadCoverage').value.trim(),
     family_members:document.getElementById('leadFamily').value.trim(),budget:document.getElementById('leadBudget').value.trim(),
     message:document.getElementById('leadMessage').value.trim(),consent:document.getElementById('leadConsent').checked,website:document.getElementById('leadWebsite').value,
+    hal_context:buildHalContext(),
   };
   const status=document.getElementById('leadStatus');
   if(!payload.first_name||!payload.last_name||!payload.email){status.textContent=t('fillNameEmail');status.style.color='#b3261e';return;}

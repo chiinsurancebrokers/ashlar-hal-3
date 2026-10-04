@@ -80,35 +80,157 @@ def _mail_sender(settings: Settings) -> str:
     raise RuntimeError("No transactional email sender is configured.")
 
 
+_NEED_LABELS = [
+    ("outpatient_required", "Out-patient"), ("maternity_required", "Maternity"),
+    ("dental_required", "Dental"), ("mental_health_required", "Mental health"),
+    ("wellness_required", "Wellness / check-ups"), ("optical_required", "Optical"),
+    ("evacuation_required", "Medical evacuation"), ("chronic_required", "Chronic condition cover"),
+]
+
+
+def _fmt_money(amount: object, currency: object) -> str:
+    try:
+        return f"{currency or 'EUR'} {float(amount):,.2f}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
+    """Turn the HAL conversation context into email sections.
+
+    Everything here is what HAL showed the applicant on screen; prices are
+    labelled indicative. Returns [(heading, lines)] for plain text and the
+    same content as HTML.
+    """
+    if not isinstance(ctx, dict) or not ctx:
+        return [], ""
+    sections: list[tuple[str, list[str]]] = []
+
+    profile = []
+    for key, label in [("applicant_name", "Name given to HAL"), ("age", "Age"), ("sex", "Sex"),
+                       ("nationality", "Nationality"), ("residence_country", "Residence"),
+                       ("primary_healthcare_country", "Main healthcare country"),
+                       ("coverage_area", "Area of cover"), ("deductible", "Deductible"),
+                       ("budget", "Budget")]:
+        value = ctx.get(key)
+        if value not in (None, "", []):
+            profile.append(f"{label}: {value}")
+    if profile:
+        sections.append(("Applicant profile", profile))
+
+    needs = ctx.get("needs") if isinstance(ctx.get("needs"), dict) else {}
+    if needs:
+        wanted = [label for key, label in _NEED_LABELS if needs.get(key) is True]
+        declined = [label for key, label in _NEED_LABELS if needs.get(key) is False]
+        lines = [f"Requested: {', '.join(wanted) or 'None beyond in-patient'}"]
+        if declined:
+            lines.append(f"Declined: {', '.join(declined)}")
+        if needs.get("chronic_conditions_disclosed"):
+            lines.append("Applicant indicated an existing medical condition — underwriting review needed.")
+        sections.append(("Requirements", lines))
+
+    members = ctx.get("household_members") if isinstance(ctx.get("household_members"), list) else []
+    if members:
+        lines = []
+        for m in members[:12]:
+            if not isinstance(m, dict):
+                continue
+            bits = [str(m.get("relationship", "member")).capitalize()]
+            if m.get("age") is not None:
+                bits.append(f"age {m['age']}")
+            if m.get("sex"):
+                bits.append(str(m["sex"]))
+            if m.get("maternity_required"):
+                bits.append("maternity required")
+            lines.append(", ".join(bits))
+        if lines:
+            sections.append(("Family members", lines))
+
+    breakdown = ctx.get("household_breakdown") if isinstance(ctx.get("household_breakdown"), list) else []
+    if breakdown:
+        lines, total, currency = [], 0.0, None
+        for b in breakdown[:12]:
+            if not isinstance(b, dict):
+                continue
+            note = " (maternity)" if b.get("maternity") else ""
+            lines.append(f"{b.get('label', b.get('member_id', ''))}: {b.get('product_name', '')}{note} — "
+                         f"{_fmt_money(b.get('premium'), b.get('currency'))}")
+            try:
+                total += float(b.get("premium") or 0)
+            except (TypeError, ValueError):
+                pass
+            currency = currency or b.get("currency")
+        lines.append(f"Household total (indicative): {_fmt_money(total, currency)}")
+        sections.append(("HAL household composition", lines))
+
+    shortlist = ctx.get("shortlist") if isinstance(ctx.get("shortlist"), list) else []
+    if shortlist:
+        lines = []
+        for q in shortlist[:6]:
+            if not isinstance(q, dict):
+                continue
+            lines.append(f"{q.get('product_name', '')} — {q.get('insurer', '')}: "
+                         f"{_fmt_money(q.get('premium'), q.get('currency'))}/year")
+        if lines:
+            sections.append(("Plans shown to the applicant", lines))
+
+    if ctx.get("session_reference"):
+        sections.append(("HAL session", [str(ctx["session_reference"])]))
+
+    html_parts = "".join(
+        f"<h3 style='margin:18px 0 6px'>{_safe(h)}</h3><ul style='margin:0;padding-left:18px'>"
+        + "".join(f"<li>{_safe(line)}</li>" for line in lines) + "</ul>"
+        for h, lines in sections
+    )
+    return sections, html_parts
+
+
 def _build_lead_message(payload: dict, reference: str, sender: str, recipient: str) -> EmailMessage:
     submitted = datetime.now(timezone.utc).isoformat()
     name = " ".join(x for x in [payload.get("first_name", "").strip(), payload.get("last_name", "").strip()] if x)
     fact_find = payload.get("fact_find") if isinstance(payload.get("fact_find"), dict) else {}
     fact_lines = "\n".join(f"- {k}: {v}" for k, v in fact_find.items())
-    plain = f"""New Ashlar HAL enquiry
+    sections, context_html = _context_sections(payload.get("hal_context") or {})
+    context_plain = "\n\n".join(h + ":\n" + "\n".join(f"- {l}" for l in lines) for h, lines in sections)
 
-Reference: {reference}
-Submitted: {submitted}
-
-Insurance interest: {payload.get('insurance_interest', '')}
-Name: {name}
-Email: {payload.get('email', '')}
-Phone: {payload.get('phone', '')}
-Residence: {payload.get('residence_country', '')}
-Age: {payload.get('age', '')}
-Coverage area / destination: {payload.get('coverage_area', '')}
-Family / travellers: {payload.get('family_members', '')}
-Approx. budget: {payload.get('budget', '')}
-
-Reviewed structured Fact Find:
-{fact_lines or 'Not supplied'}
-
-Applicant note:
-{payload.get('message', '')}
-
-Consent recorded: {'Yes' if payload.get('consent') else 'No'}
-"""
-    html_body = f"<html><body style='font-family:Arial,sans-serif'><h2>New Ashlar HAL enquiry</h2><p>Reference: <strong>{_safe(reference)}</strong></p><p><strong>Interest:</strong> {_safe(payload.get('insurance_interest',''))}</p><p><strong>Name:</strong> {_safe(name)}<br><strong>Email:</strong> {_safe(payload.get('email',''))}<br><strong>Residence:</strong> {_safe(payload.get('residence_country',''))}<br><strong>Age:</strong> {_safe(payload.get('age',''))}</p><p><strong>Reviewed Fact Find:</strong><br>{_safe(fact_find)}</p><p><strong>Note:</strong> {_safe(payload.get('message',''))}</p></body></html>"
+    contact_rows = [
+        ("Interest", payload.get("insurance_interest", "")), ("Name", name),
+        ("Email", payload.get("email", "")), ("Phone", payload.get("phone", "")),
+        ("Residence", payload.get("residence_country", "")), ("Age", payload.get("age", "")),
+        ("Coverage area / destination", payload.get("coverage_area", "")),
+        ("Family / travellers", payload.get("family_members", "")),
+        ("Approx. budget", payload.get("budget", "")),
+    ]
+    plain = (
+        "New Ashlar HAL enquiry\n\n"
+        f"Reference: {reference}\nSubmitted: {submitted}\n\n"
+        + "\n".join(f"{k}: {v}" for k, v in contact_rows)
+        + "\n\n"
+        + (context_plain + "\n\n" if context_plain else "")
+        + ("Reviewed structured Fact Find:\n" + fact_lines + "\n\n" if fact_lines else "")
+        + f"Applicant note:\n{payload.get('message', '') or '—'}\n\n"
+        + f"Consent recorded: {'Yes' if payload.get('consent') else 'No'}\n"
+        + "Prices are indicative figures shown by HAL and remain subject to insurer underwriting and confirmation.\n"
+    )
+    contact_html = "".join(
+        f"<tr><td style='padding:3px 12px 3px 0;color:#555'>{_safe(k)}</td><td style='padding:3px 0'><strong>{_safe(v) or '—'}</strong></td></tr>"
+        for k, v in contact_rows
+    )
+    fact_html = (
+        "<h3 style='margin:18px 0 6px'>Reviewed Fact Find</h3><ul style='margin:0;padding-left:18px'>"
+        + "".join(f"<li>{_safe(k)}: {_safe(v)}</li>" for k, v in fact_find.items()) + "</ul>"
+    ) if fact_find else ""
+    html_body = (
+        "<html><body style='font-family:Arial,sans-serif;color:#172333;font-size:14px'>"
+        "<h2 style='margin-bottom:4px'>New Ashlar HAL enquiry</h2>"
+        f"<p style='margin-top:0'>Reference: <strong>{_safe(reference)}</strong></p>"
+        f"<table style='border-collapse:collapse'>{contact_html}</table>"
+        f"{context_html}{fact_html}"
+        f"<h3 style='margin:18px 0 6px'>Applicant note</h3><p style='margin:0'>{_safe(payload.get('message', '')) or '—'}</p>"
+        f"<p style='margin-top:18px;color:#687586;font-size:12px'>Consent recorded: {'Yes' if payload.get('consent') else 'No'}. "
+        "Prices are indicative figures shown by HAL and remain subject to insurer underwriting and confirmation.</p>"
+        "</body></html>"
+    )
     msg = EmailMessage(); msg["From"] = sender; msg["To"] = recipient; msg["Subject"] = f"New HAL Lead — {payload.get('insurance_interest','Insurance Enquiry')} — {reference}"[:240]
     if payload.get("email"): msg["Reply-To"] = str(payload["email"]).strip()
     msg.set_content(plain); msg.add_alternative(html_body, subtype="html"); return msg

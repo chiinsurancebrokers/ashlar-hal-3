@@ -91,9 +91,19 @@ def test_live_family_scenario_respects_declined_benefits_and_splits_plans(monkey
     assert state["wellness_required"] is True
 
     assert result["ai_status"] == "verified_household_shortlist"
-    assert result["quotes"] == []  # never an individual premium shown as family price
     top = result["household_quote"]["options"][0]
     assert len(top["allocations"]) == 4
+
+    # Cards are household cards only: one per plan used, priced as the sum of
+    # the members on that plan — never one person's price as a family price.
+    cards = result["quotes"]
+    assert cards and all(c["household_card"] for c in cards)
+    assert sum(c["family_size"] for c in cards) == 4
+    for card in cards:
+        assert abs(card["premium"] - sum(m["premium"] for m in card["household_members"])) < 0.01
+    assert abs(sum(c["premium"] for c in cards) - top["total_premium"]) < 0.01
+    maternity_card = next(c for c in cards if any(m["maternity"] for m in c["household_members"]))
+    assert [m["member_id"] for m in maternity_card["household_members"]] == ["member-1"]
 
     breakdown = {b["member_id"]: b for b in result["household_breakdown"]}
     assert breakdown["member-1"]["maternity"] is True
@@ -104,3 +114,31 @@ def test_live_family_scenario_respects_declined_benefits_and_splits_plans(monkey
     assert abs(sum(a["premium"] for a in top["allocations"]) - top["total_premium"]) < 0.01
     for label in ("Chris (51)", "Spouse (35)", "Child 1 (5)", "Child 2 (5)", "Household total"):
         assert label in result["reply"]
+
+
+def test_lead_email_includes_hal_context():
+    from backend.app.services.leads import _build_lead_message
+
+    payload = {
+        "insurance_interest": "International Health Insurance", "first_name": "Chris",
+        "last_name": "Test", "email": "c@example.com", "consent": True, "message": "",
+        "hal_context": {
+            "age": 51, "residence_country": "Greece", "coverage_area": "Europe only",
+            "needs": {"outpatient_required": True, "dental_required": False, "evacuation_required": True},
+            "household_members": [{"relationship": "spouse", "age": 35, "sex": "female", "maternity_required": True}],
+            "household_breakdown": [
+                {"member_id": "primary", "label": "Chris (51)", "product_name": "Morgan Price Standard Plus",
+                 "premium": 2694.72, "currency": "EUR"},
+                {"member_id": "member-1", "label": "Spouse (35)", "product_name": "Morgan Price Premium",
+                 "premium": 3671.07, "currency": "EUR", "maternity": True},
+            ],
+        },
+    }
+    msg = _build_lead_message(payload, "HAL-TEST", "quotes@example.com", "info@example.com")
+    plain = msg.get_body(preferencelist=("plain",)).get_content()
+    html = msg.get_body(preferencelist=("html",)).get_content()
+    for text in (plain, html):
+        assert "Spouse (35)" in text and "Morgan Price Premium" in text
+        assert "EUR 6,365.79" in text  # household total
+        assert "Medical evacuation" in text
+        assert "Declined: Dental" in text
