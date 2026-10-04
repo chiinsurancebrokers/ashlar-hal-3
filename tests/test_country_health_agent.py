@@ -88,3 +88,22 @@ def test_turkey_prompt_uses_turkey_evidence(monkeypatch, with_key):
     note = asyncio.run(agent.country_health_note({"residence_country": "Τουρκία"}, False))
     assert "Türkiye" in seen["instructions"] and "Greece" not in seen["instructions"].split("Hard rules")[0].split("official OECD data")[0]
     assert note.startswith("59%")
+
+
+def test_decimal_marks_follow_language():
+    assert agent.fix_decimals("39,1% of spending", False) == "39.1% of spending"
+    assert agent.fix_decimals("το 39.1% των δαπανών", True) == "το 39,1% των δαπανών"
+    assert agent.fix_decimals("EUR 13,456.16", False) == "EUR 13,456.16"
+
+
+def test_prompt_knows_client_already_lives_there(monkeypatch, with_key):
+    seen = {}
+
+    async def fake(**kwargs):
+        seen.update(kwargs)
+        return "73% are not satisfied (OECD 36%). Source: OECD, Health at a Glance 2025."
+    monkeypatch.setattr(agent, "claude_response", fake)
+    asyncio.run(agent.country_health_note({"residence_country": "Greece", "primary_healthcare_country": "Greece"}, False))
+    assert "ALREADY LIVES in Greece" in seen["instructions"]
+    asyncio.run(agent.country_health_note({"residence_country": "Cyprus", "primary_healthcare_country": "Greece"}, False))
+    assert "will spend most of the year in Greece" in seen["instructions"]

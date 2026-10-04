@@ -65,10 +65,14 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .q-doc-open:hover{text-decoration:underline}
 .q-doc-pdf{color:var(--muted);text-decoration:none;font-size:11.5px;white-space:nowrap}
 .country-select select{width:100%;min-width:220px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);font:inherit;font-size:15px}
-.q-members{margin:10px 0 2px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px}
-.q-member{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.q-members{margin:12px 0 4px;padding:10px 12px;background:var(--bg);border-radius:12px;font-size:13px}
+.q-members-title{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.q-member{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 0;border-top:1px solid var(--border)}
+.q-member:nth-child(2){border-top:0}
+.q-member b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.q-mat{display:inline-block;margin-left:4px;font-style:normal;font-size:10.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 7px;border-radius:999px}
 .q-member em{font-style:normal;color:var(--muted)}
-.quotes-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(280px,320px);gap:14px;overflow-x:auto;overflow-y:hidden;padding:14px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+.quotes-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(300px,340px);gap:14px;overflow-x:auto;overflow-y:hidden;padding:14px 4px 18px;scroll-snap-type:x mandatory;scrollbar-width:thin}
 .quote-card{scroll-snap-align:start;min-width:0;background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;position:relative;transition:box-shadow .15s}
 @media(max-width:640px){.quotes-row{grid-auto-columns:minmax(260px,86vw)}}
 @media(min-width:900px){.quotes-row{grid-auto-columns:minmax(300px,340px)}}
@@ -76,27 +80,30 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .rec-ribbon{position:absolute;top:-11px;left:16px;background:var(--accent);color:var(--white);font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.02em}
 .q-stat-line{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:2px}
 .q-stat-dot{width:4px;height:4px;border-radius:50%;background:var(--muted);flex-shrink:0}
-.q-head{display:flex;align-items:center;gap:12px;margin-top:10px}
+.q-head{display:flex;align-items:center;gap:12px;margin-top:4px;padding-right:78px}
+.q-stats{font-size:12px;color:var(--muted);margin-top:8px}
+.q-stats b{color:var(--text);font-weight:600}
 .q-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:#fff}
-.q-plan{font-weight:700;font-size:15px;line-height:1.25;overflow-wrap:normal;word-break:normal;hyphens:auto}
+.q-plan{font-weight:700;font-size:16px;line-height:1.25;overflow-wrap:normal;word-break:normal;hyphens:auto}
 .q-provider{color:var(--muted);font-size:12px;margin-top:1px;overflow-wrap:break-word}
 .q-badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
 .q-badge{background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px}
-.q-price{font-size:24px;font-weight:800;margin-top:14px;letter-spacing:-.01em}
+.q-price{font-size:26px;font-weight:800;margin-top:14px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .q-price span{font-size:12px;font-weight:400;color:var(--muted)}
 .q-month{font-size:12px;color:var(--muted);margin-bottom:12px}
 .q-divider{border-top:1px solid var(--border);margin:4px 0 14px}
-.q-spec{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:11px;margin-bottom:14px}
+.q-spec{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:12px;line-height:1.45;margin-bottom:14px}
 .q-spec b{display:block;color:var(--muted);font-weight:600;margin-bottom:1px}
-.benefit-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.benefit-chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--bg)}
-.benefit-chip.covered{background:#eaf7ef;color:var(--good)}
-.benefit-chip.not-covered{background:var(--bg);color:#a7afba}
-.benefit-chip.unconfirmed{background:#fdf3e5;color:#a15c00}
-.benefit-icon{font-size:10px}
+.benefit-chips{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:2px}
+.benefit-chip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:0;background:none;line-height:1.35}
+.benefit-chip.covered{color:var(--text)}
+.benefit-chip.covered .benefit-icon{color:var(--good);font-weight:800}
+.benefit-chip.not-covered{color:#a7afba}
+.benefit-chip.unconfirmed{color:#a15c00}
+.benefit-icon{font-size:12px;width:12px;text-align:center;flex-shrink:0}
 .q-why{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
 .q-note{font-size:11px;color:#a15c00;margin-top:6px}
-.q-warnings{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
+.q-warnings{font-size:10.5px;color:var(--muted);margin-top:10px;line-height:1.5;border-top:1px solid var(--border);padding-top:8px}
 .q-actions{display:flex;gap:8px;margin-top:16px}
 .q-primary{flex:1;background:var(--navy);color:var(--white);border:none;border-radius:10px;padding:11px;font-weight:700;font-size:13px;cursor:pointer}
 .q-secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;cursor:pointer}
@@ -418,7 +425,7 @@ const I18N = {
     ageChip:'Age', budgetChip:'/yr budget', whyExcluded:'Why were {n} plan{s} excluded?',
     requestPrivate:'Request a private consultation', getProposal:'Get proposal', tellMore:'Tell me more',
     recommended:'★ HAL recommends', selected:'✓ Selected', compareAdd:'+ Compare',
-    coverage:'Coverage', deductible:'Deductible', evacuation:'Evacuation', annualLimit:'Annual limit on request',
+    coverage:'Coverage', deductible:'Deductible', evacuation:'Evacuation', annualLimit:'Annual limit on request', annualMax:'Annual limit',
     perYear:'/year', perMonth:'/month', people:'people',
     emergencyMedical:'Emergency medical', cancellation:'Cancellation', baggage:'Baggage', tripType:'Trip type',
     currentEuropesure:'Get current price in Europesure portal',
@@ -472,7 +479,7 @@ const I18N = {
     ageChip:'Ηλικία', budgetChip:'/έτος προϋπολογισμός', whyExcluded:'Γιατί αποκλείστηκαν {n} πρόγραμμα{s};',
     requestPrivate:'Αίτημα ιδιωτικής συμβουλευτικής', getProposal:'Λήψη πρότασης', tellMore:'Πείτε μου περισσότερα',
     recommended:'★ Ο HAL προτείνει', selected:'✓ Επιλεγμένο', compareAdd:'+ Σύγκριση',
-    coverage:'Κάλυψη', deductible:'Απαλλαγή', evacuation:'Ιατρική διακομιδή', annualLimit:'Ετήσιο όριο κατόπιν προγράμματος',
+    coverage:'Κάλυψη', deductible:'Απαλλαγή', evacuation:'Ιατρική διακομιδή', annualLimit:'Ετήσιο όριο κατόπιν προγράμματος', annualMax:'Ετήσιο όριο',
     perYear:'/έτος', perMonth:'/μήνα', people:'άτομα',
     emergencyMedical:'Επείγουσα ιατρική κάλυψη', cancellation:'Ακύρωση ταξιδιού', baggage:'Αποσκευές', tripType:'Τύπος ταξιδιού',
     currentEuropesure:'Δείτε την τρέχουσα τιμή στο Europesure',
@@ -733,7 +740,8 @@ function renderPlanDocs(q){
 function renderHouseholdMembers(q){
   if(!q.household_card||!(q.household_members||[]).length)return '';
   const mat=lang()==='el'?'μητρότητα':'maternity';
-  return `<div class="q-members">${q.household_members.map(m=>`<div class="q-member"><span>${esc(m.label)}${m.maternity?` <em>· ${mat}</em>`:''}</span><b>${money(Number(m.premium||0),m.currency||q.currency)}</b></div>`).join('')}</div>`;
+  const title=lang()==='el'?'Ανά μέλος':'Per member';
+  return `<div class="q-members"><div class="q-members-title">${esc(title)}</div>${q.household_members.map(m=>`<div class="q-member"><span>${esc(m.label)}${m.maternity?` <em class="q-mat">${mat}</em>`:''}</span><b>${money(Number(m.premium||0),m.currency||q.currency)}</b></div>`).join('')}</div>`;
 }
 
 function renderQuoteCard(q,i){
@@ -741,10 +749,9 @@ function renderQuoteCard(q,i){
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended?`<div class="rec-ribbon">${esc(t('recommended'))}</div>`:''}
     <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${esc(selected?t('selected'):t('compareAdd'))}</button>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.card_annual_limit||t('annualLimit')))}</div>
-    <div class="q-stat-line"><span class="q-stat-dot"></span>${esc(trText(q.coverage_area_label||''))}</div>
     <div class="q-head"><div class="q-logo" style="background:${logoColor(q.insurer)}">${esc(q.card_badge||'PLAN')}</div>
       <div><div class="q-plan">${esc(q.product_name)}</div><div class="q-provider">${esc(q.insurer)}</div></div></div>
+    <div class="q-stats">${[q.card_annual_limit?`${esc(t('annualMax'))}: <b>${esc(trText(q.card_annual_limit))}</b>`:'',q.coverage_area_label?esc(trText(q.coverage_area_label)):''].filter(Boolean).join(' · ')}</div>
     <div class="q-badges">${(q.fit_badges||[]).map(b=>`<span class="q-badge">${esc(trText(b))}</span>`).join('')}</div>
     <div class="q-price">${money(annual,q.currency)}<span>${t('perYear')}</span></div>
     <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
@@ -756,7 +763,7 @@ function renderQuoteCard(q,i){
       <div><b>${t('evacuation')}</b>${esc(trText(q.card_evacuation||'—'))}</div>
     </div>
     ${renderBenefitGrid(q.benefit_checklist)}
-    <div class="q-why">${esc(trText(q.card_why||''))}</div>
+    ${q.household_card?'':`<div class="q-why">${esc(trText(q.card_why||''))}</div>`}
     ${q.client_note?`<div class="q-note">${esc(trText(q.client_note))}</div>`:''}
     ${(q.warnings||[]).length?`<div class="q-warnings">${q.warnings.map(w=>`<div>${esc(trText(w))}</div>`).join('')}</div>`:''}
     ${renderPlanDocs(q)}

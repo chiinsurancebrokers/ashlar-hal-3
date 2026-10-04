@@ -82,7 +82,7 @@ def test_voice_controller_stops_previous_audio_and_tts_request():
 
 def test_plan_cards_keep_readable_minimum_width_instead_of_three_squeezed_columns():
     html = _html()
-    assert "grid-auto-columns:minmax(280px,320px)" in html
+    assert "grid-auto-columns:minmax(300px,340px)" in html
     assert "@media(min-width:900px)" in html
     assert "word-break:normal" in html
 
