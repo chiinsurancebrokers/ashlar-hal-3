@@ -113,15 +113,20 @@ def healthcare_note(country: str | None, greek: bool = False) -> str:
         return ""
     sat, unmet, oop = (metrics[k] for k in needed)
     p = lambda m, which: _fmt_pct(m[which], greek)  # noqa: E731
+    hosp = metrics.get("hospital_public_share")
+    hosp_el = (f" Ακόμη και για τη νοσηλεία, τα δημόσια σχήματα καλύπτουν μόνο το {p(hosp, 'country_value')} του κόστους "
+               f"(ΟΟΣΑ {p(hosp, 'comparator_value')}).") if hosp else ""
+    hosp_en = (f" Even for hospital care, public schemes cover only {p(hosp, 'country_value')} of costs "
+               f"(OECD {p(hosp, 'comparator_value')}).") if hosp else ""
     if greek:
         where = data.get("country_in_el") or f"στη χώρα {data.get('country_el') or country}"
         return (
             f"Λίγα λόγια για το σύστημα υγείας {where}: μόνο το {p(sat, 'country_value')} των κατοίκων δηλώνει "
             f"ικανοποιημένο από τη διαθεσιμότητα ποιοτικής περίθαλψης (μέσος όρος ΟΟΣΑ {p(sat, 'comparator_value')}), "
             f"ενώ το {p(unmet, 'country_value')} αναφέρει ανικανοποίητες ανάγκες περίθαλψης λόγω κόστους, απόστασης ή "
-            f"αναμονής (ΟΟΣΑ {p(unmet, 'comparator_value')}). Περίπου το {p(oop, 'country_value')} των δαπανών υγείας "
-            f"δεν καλύπτεται από το δημόσιο σύστημα (ΟΟΣΑ {p(oop, 'comparator_value')}) και πάνω από το ένα τρίτο "
-            "πληρώνεται απευθείας από την τσέπη των νοικοκυριών. Ένα διεθνές πρόγραμμα καλύπτει μεγάλο μέρος αυτών των "
+            f"αναμονής (ΟΟΣΑ {p(unmet, 'comparator_value')}). Το {p(oop, 'country_value')} των δαπανών υγείας "
+            f"δεν καλύπτεται από δημόσια ή υποχρεωτικά σχήματα (ΟΟΣΑ {p(oop, 'comparator_value')}) και πάνω από το ένα τρίτο "
+            f"πληρώνεται απευθείας από την τσέπη των νοικοκυριών.{hosp_el} Ένα διεθνές πρόγραμμα καλύπτει μεγάλο μέρος αυτών των "
             "εξόδων — ιδιωτική νοσηλεία, εξετάσεις και, ανάλογα με το πρόγραμμα, εξωνοσοκομειακή περίθαλψη — ενώ το "
             "δημόσιο σύστημα παραμένει δίχτυ ασφαλείας. Πηγή: ΟΟΣΑ, Health at a Glance 2025."
         )
@@ -130,9 +135,9 @@ def healthcare_note(country: str | None, greek: bool = False) -> str:
         f"A word on healthcare in {name}: only {p(sat, 'country_value')} of residents are satisfied with the "
         f"availability of quality healthcare (OECD average {p(sat, 'comparator_value')}), and "
         f"{p(unmet, 'country_value')} report unmet healthcare needs because of cost, distance or waiting times "
-        f"(OECD {p(unmet, 'comparator_value')}). About {p(oop, 'country_value')} of health spending is not covered by "
-        f"the public system (OECD {p(oop, 'comparator_value')}), and more than a third is paid directly out of "
-        "households' pockets. International cover pays for much of that — private hospital treatment, diagnostics "
+        f"(OECD {p(unmet, 'comparator_value')}). {p(oop, 'country_value')} of health spending is not covered by "
+        f"public or compulsory schemes (OECD {p(oop, 'comparator_value')}), and more than a third is paid directly out of "
+        f"households' pockets.{hosp_en} International cover pays for much of that — private hospital treatment, diagnostics "
         "and, depending on the plan, outpatient care — while the public system remains a safety net. "
         "Source: OECD, Health at a Glance 2025."
     )

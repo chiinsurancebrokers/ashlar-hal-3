@@ -1,0 +1,101 @@
+{
+  "country": "Greece",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "extracted_on": "2026-10-04",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Page numbers refer to the PDF.",
+  "facts": [
+    {
+      "id": "core_coverage",
+      "page": 23,
+      "text": "100% of the population in Greece is eligible for a core set of health services (OECD average 98%, 2024)."
+    },
+    {
+      "id": "satisfaction",
+      "page": 23,
+      "text": "Only 27% of people in Greece were satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 64%; satisfaction in Greece has deteriorated over time."
+    },
+    {
+      "id": "satisfaction_rank",
+      "page": 22,
+      "text": "Greece had the lowest satisfaction with the availability of quality health services among OECD countries; fewer than 50% were satisfied in Greece, Türkiye, Hungary, Italy, Chile and Colombia."
+    },
+    {
+      "id": "public_share_total",
+      "page": 23,
+      "text": "Only 60.9% of health spending in Greece was covered by government or compulsory insurance schemes in 2023, versus an OECD average of 75.1% — so 39.1% was not covered by public or compulsory schemes (OECD 24.9%)."
+    },
+    {
+      "id": "out_of_pocket",
+      "page": 162,
+      "text": "Households in Greece had to bear more than one-third of all healthcare costs directly out of pocket (OECD average: just under one-fifth)."
+    },
+    {
+      "id": "public_share_hospital",
+      "page": 109,
+      "text": "Public and compulsory schemes covered only 63% of hospital care costs in Greece in 2023, versus 89% on average in the OECD; in Greece and Korea public coverage of inpatient care was only around two-thirds."
+    },
+    {
+      "id": "public_share_outpatient",
+      "page": 109,
+      "text": "Public and compulsory schemes covered 62% of outpatient medical care costs in Greece in 2023, versus 78% on average in the OECD."
+    },
+    {
+      "id": "public_share_dental",
+      "page": 109,
+      "text": "Public and compulsory schemes covered 0% of dental care costs in Greece in 2023, versus 32% on average in the OECD."
+    },
+    {
+      "id": "public_share_pharma",
+      "page": 109,
+      "text": "Public and compulsory schemes covered 52% of pharmaceutical costs in Greece in 2023, versus 58% on average in the OECD."
+    },
+    {
+      "id": "oop_inpatient",
+      "page": 110,
+      "text": "Inpatient care made up 34% of out-of-pocket spending in Greece, versus 8% across OECD countries, reflecting outlays for privately provided hospital services."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 106,
+      "text": "12.1% of people in Greece reported unmet medical care needs due to cost, distance or waiting times in 2024 — the highest among 28 OECD countries with comparable data (OECD average 3.4%)."
+    },
+    {
+      "id": "unmet_cost",
+      "page": 106,
+      "text": "Cost was the main reason for unmet medical care needs in Greece."
+    },
+    {
+      "id": "unmet_income",
+      "page": 106,
+      "text": "In Greece more than one in six people in the lowest income group reported unmet medical care needs; the income gap in unmet needs was among the largest in the OECD."
+    },
+    {
+      "id": "unmet_waiting",
+      "page": 106,
+      "text": "Unmet medical care needs due to waiting times have increased in Greece since 2019; Greece launched the Unified Digital List of Surgeries in 2024 to centralise state hospital surgery waiting lists."
+    },
+    {
+      "id": "unmet_dental",
+      "page": 106,
+      "text": "More than 8% of people in Greece reported unmet dental care needs in 2024, versus fewer than 1% in Germany and the Netherlands."
+    },
+    {
+      "id": "distance",
+      "page": 114,
+      "text": "In Greece 15% of people living in cities and 43% in rural areas lived far from a hospital; Greece had the highest share of unmet needs due to distance to travel among 28 OECD countries."
+    },
+    {
+      "id": "trust",
+      "page": 138,
+      "text": "57% of patients with chronic conditions in Greece trusted the last healthcare professional they saw — the lowest among participating OECD countries (OECD average 78%)."
+    },
+    {
+      "id": "safety_events",
+      "page": 140,
+      "text": "Over 50% of primary care users aged 45 and over in Greece reported an event that could have caused them unnecessary harm, such as not getting an appointment when needed or a delayed diagnosis — among the highest rates."
+    }
+  ]
+}

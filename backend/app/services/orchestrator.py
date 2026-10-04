@@ -12,7 +12,7 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
-from backend.app.services.healthcare_context import healthcare_note
+from backend.app.services.country_health_agent import country_health_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
@@ -412,7 +412,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     # Context on the country where the applicant will live, appended after
     # verification so it never interferes with the shortlist consistency check.
-    note = healthcare_note(state.get("primary_healthcare_country") or state.get("residence_country"), greek)
+    # Family quotes get their note from the household layer, so skip the
+    # (AI) call here when a household composition will replace this reply.
+    family_pending = bool(state.get("family_requested") and state.get("household_members"))
+    note = "" if family_pending else await country_health_note(state, greek)
     if note:
         reply = f"{reply}\n\n{note}"
     return {

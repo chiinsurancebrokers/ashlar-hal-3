@@ -7,9 +7,9 @@ from backend.app.services.healthcare_context import healthcare_note
 
 def test_greece_note_uses_verified_oecd_figures_in_both_languages():
     en, el = healthcare_note("Greece"), healthcare_note("Ελλάδα", greek=True)
-    for figure in ("27%", "64%", "12.1%", "3.4%", "39%", "25%"):
+    for figure in ("27%", "64%", "12.1%", "3.4%", "39.1%", "24.9%", "63%", "89%"):
         assert figure in en
-    for figure in ("27%", "64%", "12,1%", "3,4%", "39%", "25%"):
+    for figure in ("27%", "64%", "12,1%", "3,4%", "39,1%", "24,9%", "63%", "89%"):
         assert figure in el
     assert "OECD, Health at a Glance 2025" in en and "ΟΟΣΑ, Health at a Glance 2025" in el
     assert "safety net" in en and "δίχτυ ασφαλείας" in el
