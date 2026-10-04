@@ -138,7 +138,7 @@ def test_greece_healthcare_context_endpoint():
     body = r.json()
     assert body["available"] is True
     assert body["country"] == "Greece"
-    assert len(body["metrics"]) == 3
+    assert len(body["metrics"]) == 4
     assert any(s["label"].startswith("OECD") for s in body["sources"])
 
 

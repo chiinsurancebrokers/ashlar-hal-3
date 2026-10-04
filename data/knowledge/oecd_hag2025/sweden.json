@@ -1,0 +1,190 @@
+{
+  "country": "Sweden",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      25.0,
+      36.0
+    ],
+    "not_public": [
+      13.9,
+      24.9
+    ],
+    "unmet_needs": [
+      2.2,
+      3.4
+    ],
+    "not_public_hospital": [
+      1.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      7.0,
+      22.0
+    ],
+    "not_public_dental": [
+      58.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      46.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "25% of people in Sweden were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "13.9% of health spending in Sweden was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "2.2% of people in Sweden reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "1% of hospital care costs in Sweden were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "7% of outpatient medical care costs in Sweden were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "58% of dental care costs in Sweden were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "46% of pharmaceutical costs in Sweden were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 108,
+      "text": "In many countries, patients have access to free acute inpatient care or only need to make a small copayment; as a result, coverage rates were near 100% in Sweden, Norway, Iceland and Estonia, as well as accession country Romania.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "In contrast, government and compulsory insurance schemes paid over 90% of these costs in Czechia, the Slovak Republic, Sweden, Germany, Denmark and the United Kingdom.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 110,
+      "text": "This varies considerably across OECD countries, from fewer than 2% of households experiencing catastrophic health spending in Sweden, Slovenia, the United Kingdom, Ireland and the Netherlands, to over 10% of households in Lithuania, Latvia and Hungary (Figure 5.10).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 112,
+      "text": "In terms of median number of days (Figure 5.11, right panel), this ranged from around 50 days or less in Spain, Poland, Hungary and Sweden, to 280 days in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 114,
+      "text": "The difference was largest in Norway and Sweden, where almost everyone living in cities had easy physical access to a hospital, while among those living in rural areas, only 57% in Norway and 66% in Sweden were within 45 minutes’ drive of a hospital.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 116,
+      "text": "In 2023, the average number of annual in-person doctor consultations per person among OECD countries ranged from fewer than 3 in Mexico, Costa Rica, Sweden and Greece to 18 in Korea (Figure 5.16).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 116,
+      "text": "In Canada, Finland, Sweden, the United Kingdom and the United States, the relatively low number of consultations can be explained in part by the enhanced role that nurses and other health professionals play in primary care – notably in management of patients with chronic diseases and in dealing with patients with minor health issues.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 116,
+      "text": "Such countries tend to have higher consultation rates than those countries where doctors are mainly paid by salaries or capitation (such as Denmark, Finland, Mexico and Sweden).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 116,
+      "text": "Numbers were lowest in Greece and Sweden.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_12",
+      "page": 116,
+      "text": "In Sweden, consultations with doctors in both primary care and hospital settings tend to be focussed on patients with more severe and complex cases.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_13",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_14",
+      "page": 136,
+      "text": "However, it should be noted that minor lower extremity amputations can be conducted in outpatient settings in OECD countries, which is common practice in Sweden, hence the rate of minor lower extremity amputations in hospital settings is relatively low, so caution is needed when interpreting cross- country variations in this indicator.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_15",
+      "page": 162,
+      "text": "Central, regional or local government schemes in Sweden, Norway, Iceland, Denmark and the United Kingdom accounted for 80% or more of national health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_16",
+      "page": 164,
+      "text": "Where government financing schemes are the principal financing mechanism, as in Norway and Sweden, government transfers fund 85% or more of healthcare expenditure.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_17",
+      "page": 166,
+      "text": "In countries with formal arrangements such as Norway, Sweden and the Netherlands, nearly 30% of all health spending was on long-term care services in 2023.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_18",
+      "page": 170,
+      "text": "This covers a wide range of facilities with most spending related to either medical practices including GPs and specialists (as in Austria, France and Germany) or ambulatory healthcare centres (as in Finland, Ireland and Sweden).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_19",
+      "page": 170,
+      "text": "The latter provider group plays a much more central role in the health systems in the Netherlands, Sweden and Finland than elsewhere.",
+      "verbatim": true
+    }
+  ]
+}

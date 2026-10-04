@@ -1,0 +1,82 @@
+{
+  "country": "Mexico",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      44.0,
+      36.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "44% of people in Mexico were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Population coverage for core services remained below 95% in four OECD countries in 2024, and was below 90% in Mexico and accession country Romania.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 110,
+      "text": "In Mexico, the Slovak Republic and Poland, pharmaceuticals accounted for over 60% of OOP spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 116,
+      "text": "In 2023, the average number of annual in-person doctor consultations per person among OECD countries ranged from fewer than 3 in Mexico, Costa Rica, Sweden and Greece to 18 in Korea (Figure 5.16).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 116,
+      "text": "Such countries tend to have higher consultation rates than those countries where doctors are mainly paid by salaries or capitation (such as Denmark, Finland, Mexico and Sweden).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 160,
+      "text": "In contrast, Mexico and Costa Rica report the lowest volumes, at around one-fifth of the average.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 162,
+      "text": "Households had to bear more than one-third of all healthcare costs directly in Mexico, Chile, Latvia and Greece.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 168,
+      "text": "Spending on general outpatient care provided by ambulatory providers was particularly high in Costa Rica, Poland and Mexico, reaching up to 14% of overall health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 168,
+      "text": "This compares with the Netherlands, Costa Rica, Mexico, Poland and the United Kingdom where dental care spending represents only around 3% of total health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 170,
+      "text": "On the other hand, Canada, Germany and Mexico spent less than 30% of the total health budget on hospitals.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 170,
+      "text": "Overall, every third health dollar was spent on ambulatory providers in Belgium, Mexico, Finland, Luxembourg and the United States but this share was below 20% in Türkiye, Greece and the Slovak Republic.",
+      "verbatim": true
+    }
+  ]
+}

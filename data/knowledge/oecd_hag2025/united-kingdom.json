@@ -1,0 +1,142 @@
+{
+  "country": "United Kingdom",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      39.0,
+      36.0
+    ],
+    "not_public": [
+      18.5,
+      24.9
+    ],
+    "unmet_needs": [
+      4.5,
+      3.4
+    ],
+    "not_public_hospital": [
+      5.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      9.0,
+      22.0
+    ],
+    "not_public_dental": [
+      64.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      33.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "39% of people in United Kingdom were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "18.5% of health spending in United Kingdom was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "4.5% of people in United Kingdom reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "5% of hospital care costs in United Kingdom were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "9% of outpatient medical care costs in United Kingdom were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "64% of dental care costs in United Kingdom were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "33% of pharmaceutical costs in United Kingdom were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 108,
+      "text": "In contrast, government and compulsory insurance schemes paid over 90% of these costs in Czechia, the Slovak Republic, Sweden, Germany, Denmark and the United Kingdom.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 110,
+      "text": "This varies considerably across OECD countries, from fewer than 2% of households experiencing catastrophic health spending in Sweden, Slovenia, the United Kingdom, Ireland and the Netherlands, to over 10% of households in Lithuania, Latvia and Hungary (Figure 5.10).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 112,
+      "text": "In Canada and the United Kingdom, more than 10% reported having to wait for more than a year (Figure 5.13, right panel).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 116,
+      "text": "In Canada, Finland, Sweden, the United Kingdom and the United States, the relatively low number of consultations can be explained in part by the enhanced role that nurses and other health professionals play in primary care – notably in management of patients with chronic diseases and in dealing with patients with minor health issues.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 138,
+      "text": "On average across OECD countries, 87% reported positive experiences, ranging from 97% in Switzerland to 66% in Wales (United Kingdom).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 138,
+      "text": "The average across OECD countries was 59%, ranging from 81% in Switzerland to 22% in Wales (United Kingdom).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 162,
+      "text": "Central, regional or local government schemes in Sweden, Norway, Iceland, Denmark and the United Kingdom accounted for 80% or more of national health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 166,
+      "text": "By contrast, these shares were much lower in Norway, the Netherlands and the United Kingdom, accounting for only one-tenth of health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 168,
+      "text": "This compares with the Netherlands, Costa Rica, Mexico, Poland and the United Kingdom where dental care spending represents only around 3% of total health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 168,
+      "text": "This increase was particularly pronounced in Denmark, the United Kingdom, Austria and Japan, where the proportion of health spending attributed to preventive care was 7-8 percentage points above the share seen in 2013, reflecting substantial investments in public health measures related to fighting the spread of the COVID-19 pandemic.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 168,
+      "text": "With public health emergency measures phased out after the acute phase of the pandemic, the share of preventive spending dropped and reached pre-pandemic levels by 2023, ranging from 6-7% of total health spending in Canada and the United Kingdom to less than 3% in Poland, Belgium, Iceland, France, Switzerland, Portugal and Japan.",
+      "verbatim": true
+    }
+  ]
+}

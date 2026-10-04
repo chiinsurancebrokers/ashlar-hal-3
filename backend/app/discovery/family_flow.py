@@ -8,6 +8,9 @@ from backend.app.services.family_household_agent import HouseholdMember, materni
 YES = {"yes", "y", "sure", "include", "yes please", "ναι", "βεβαίως", "βεβαιως"}
 NO = {"no", "n", "none", "no thanks", "όχι", "οχι"}
 
+# Children are insurable as dependants only while under this age.
+MAX_CHILD_DEPENDANT_AGE = 25
+
 
 def _norm(value: str) -> str:
     return re.sub(r"\s+", " ", (value or "").strip().lower())
@@ -86,8 +89,17 @@ def apply_family_answer(message: str, state: dict) -> dict:
                 members = _members(state)
                 idx = int(state.get("household_member_index") or 0)
                 if 0 <= idx < len(members):
-                    members[idx] = {**members[idx], "age": age}
-                    out["household_members"] = members
+                    if members[idx].get("relationship") == "child" and age >= MAX_CHILD_DEPENDANT_AGE:
+                        # A child aged 25+ cannot be insured as a dependant.
+                        members.pop(idx)
+                        out.update(
+                            household_members=members,
+                            household_member_index=len(members),
+                            family_notice="child_over_age",
+                        )
+                    else:
+                        members[idx] = {**members[idx], "age": age}
+                        out["household_members"] = members
 
     elif pending == "family_sex":
         sex = _parse_sex(text)
@@ -129,6 +141,20 @@ def next_family_question(state: dict, greek: bool = False) -> dict | None:
         return None
     if state.get("household_complete"):
         return None
+
+    if state.get("family_notice") == "child_over_age":
+        state.pop("family_notice", None)
+        q = _q(
+            "family_add_another",
+            ("Children aged 25 or over can't be added as dependants on a family policy — they would need "
+             "their own individual policy, which we can quote separately. Would you like to add another family member?")
+            if not greek else
+            ("Τα παιδιά 25 ετών και άνω δεν μπορούν να ασφαλιστούν ως εξαρτώμενα μέλη — χρειάζονται δικό τους "
+             "ατομικό πρόγραμμα, που μπορούμε να τιμολογήσουμε ξεχωριστά. Θέλετε να προσθέσετε άλλο μέλος της οικογένειας;"),
+            [("Yes", "yes"), ("No", "no")] if not greek else [("Ναι", "yes"), ("Όχι", "no")],
+        )
+        q["suppress_ack"] = True
+        return q
 
     members = _members(state)
     idx = int(state.get("household_member_index") or 0)

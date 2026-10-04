@@ -1,0 +1,130 @@
+{
+  "country": "Denmark",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      14.0,
+      36.0
+    ],
+    "not_public": [
+      16.7,
+      24.9
+    ],
+    "unmet_needs": [
+      3.1,
+      3.4
+    ],
+    "not_public_hospital": [
+      12.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      7.0,
+      22.0
+    ],
+    "not_public_dental": [
+      62.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      58.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "14% of people in Denmark were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "16.7% of health spending in Denmark was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "3.1% of people in Denmark reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "12% of hospital care costs in Denmark were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "7% of outpatient medical care costs in Denmark were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "62% of dental care costs in Denmark were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "58% of pharmaceutical costs in Denmark were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Over the last decade, the population covered by additional private health insurance has increased in 16 of 29 OECD countries with comparable data, with large increases in Belgium and Denmark (over 15 percentage points).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "In contrast, government and compulsory insurance schemes paid over 90% of these costs in Czechia, the Slovak Republic, Sweden, Germany, Denmark and the United Kingdom.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 116,
+      "text": "Such countries tend to have higher consultation rates than those countries where doctors are mainly paid by salaries or capitation (such as Denmark, Finland, Mexico and Sweden).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 136,
+      "text": "Any reported decrease in rates may be accounted for by an increase in the denominator of diabetes patients identified by prescribing data, due to increased prescription of glucagon-like peptide-1 (GLP-1) agonist medication for weight loss rather than for diabetes indication, identified in Denmark and Norway (see Chapter 9 on “Pharmaceuticals, technologies and digital health”).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 160,
+      "text": "In Denmark, for example, general price levels are relatively high, but healthcare prices remain below the OECD average.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 162,
+      "text": "Central, regional or local government schemes in Sweden, Norway, Iceland, Denmark and the United Kingdom accounted for 80% or more of national health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 168,
+      "text": "This increase was particularly pronounced in Denmark, the United Kingdom, Austria and Japan, where the proportion of health spending attributed to preventive care was 7-8 percentage points above the share seen in 2013, reflecting substantial investments in public health measures related to fighting the spread of the COVID-19 pandemic.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 170,
+      "text": "In Finland and Denmark, outpatient care accounts for more than half of hospital expenditure, since specialists typically receive patients in hospital outpatient departments.",
+      "verbatim": true
+    }
+  ]
+}

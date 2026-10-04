@@ -140,7 +140,7 @@ async def intake_analysis(message: str, state: dict, history: list[dict] | None,
         return {"acknowledgement": "", "applicant_updates": {}}
 
 
-def build_explain_plan_instructions(quote: QuoteResult, greek: bool) -> str:
+def build_explain_plan_instructions(quote: QuoteResult, greek: bool, household_lines: list[str] | None = None) -> str:
     """The ONLY facts this prompt is allowed to state about the plan are the
     ones explicitly listed below, all sourced from the evidence layer. It
     cannot see the internet, training data, or "general knowledge" about
@@ -149,8 +149,8 @@ def build_explain_plan_instructions(quote: QuoteResult, greek: bool) -> str:
     return f"""You are HAL, explaining ONE specific insurance plan to an applicant, in {"Greek" if greek else "English"}.
 
 Plan: {quote.insurer} — {quote.product_name}
-Annual premium: {quote.currency} {quote.premium:,.2f}
-Matched requirements (verified): {", ".join(quote.matched_requirements) or "none selected"}
+Annual premium: {quote.currency} {quote.premium:,.2f}{" (total for the household members on this plan)" if household_lines else ""}
+{("Household members on this plan (state each member's premium exactly as given):" + chr(10) + chr(10).join("- " + line for line in household_lines) + chr(10)) if household_lines else ""}Matched requirements (verified): {", ".join(quote.matched_requirements) or "none selected"}
 Unmatched requirements (verified): {", ".join(quote.unmatched_requirements) or "none"}
 
 The ONLY verified facts about this plan you may state:
@@ -167,24 +167,34 @@ Hard rules:
 """
 
 
-async def explain_plan(quote: QuoteResult, question: str, greek: bool) -> str:
+async def explain_plan(quote: QuoteResult, question: str, greek: bool, household_lines: list[str] | None = None) -> str:
     try:
-        text = await adviser_response(instructions=build_explain_plan_instructions(quote, greek), message=question, max_tokens=900)
+        text = await adviser_response(
+            instructions=build_explain_plan_instructions(quote, greek, household_lines),
+            message=question, max_tokens=900,
+        )
         flags = fairness_check(text)
-        if flags or _looks_truncated(text):
+        if flags or _looks_truncated(text) or (household_lines and not _mentions_premium(text, quote.premium)):
             # Fail closed to a safe deterministic fallback rather than ever
-            # surface a flagged claim to a client.
-            return _deterministic_plan_summary(quote, greek)
+            # surface a flagged claim or a wrong premium to a client.
+            return _deterministic_plan_summary(quote, greek, household_lines)
         return text
     except Exception:
-        return _deterministic_plan_summary(quote, greek)
+        return _deterministic_plan_summary(quote, greek, household_lines)
 
 
-def _deterministic_plan_summary(quote: QuoteResult, greek: bool) -> str:
+def _mentions_premium(text: str, premium: float) -> bool:
+    """The explanation must quote the exact premium it was given."""
+    digits = re.sub(r"[^0-9]", "", text or "")
+    whole = f"{premium:,.2f}"
+    return re.sub(r"[^0-9]", "", whole) in digits
+
+
+def _deterministic_plan_summary(quote: QuoteResult, greek: bool, household_lines: list[str] | None = None) -> str:
     facts = "; ".join(quote.verified_facts[:3])
-    if greek:
-        return f"{quote.product_name} ({quote.insurer}): {quote.currency} {quote.premium:,.2f}/έτος. {facts}"
-    return f"{quote.product_name} ({quote.insurer}): {quote.currency} {quote.premium:,.2f}/year. {facts}"
+    per_year = "έτος" if greek else "year"
+    members = (" (" + "; ".join(household_lines) + ")") if household_lines else ""
+    return f"{quote.product_name} ({quote.insurer}): {quote.currency} {quote.premium:,.2f}/{per_year}{members}. {facts}"
 
 
 def build_comparison_conclusion_instructions(matrix_rows: list[dict], plan_labels: dict[str, str], greek: bool) -> str:

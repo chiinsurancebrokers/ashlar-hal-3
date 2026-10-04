@@ -1,0 +1,118 @@
+{
+  "country": "Chile",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      56.0,
+      36.0
+    ],
+    "not_public": [
+      40.7,
+      24.9
+    ],
+    "not_public_hospital": [
+      11.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      35.0,
+      22.0
+    ],
+    "not_public_pharma": [
+      73.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "56% of people in Chile were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "40.7% of health spending in Chile was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "11% of hospital care costs in Chile were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "35% of outpatient medical care costs in Chile were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "73% of pharmaceutical costs in Chile were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Swiss citizens were most likely to be satisfied (89%), while those in Greece, Türkiye, Hungary, Italy, Chile and Colombia were least likely to be satisfied (lower than 50%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 104,
+      "text": "While satisfaction levels have decreased on average across OECD countries over the past decade, this masks wide cross-country variation: Türkiye experienced the largest decline in satisfaction of 30 percentage points (percentage points), while Canada, France and New Zealand also had declines of over 20 percentage points Conversely, in Chile and Estonia satisfaction levels increased by 10 percentage points or more.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 108,
+      "text": "On the other hand, this share was less than two-fifths in Canada, Poland and Chile.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 108,
+      "text": "In Canada, over one-third of all pharmaceutical spending was financed via voluntary health insurance schemes in 2023, while in Chile and Poland, out-of-pocket payments financed 65% of pharmaceutical spending or more (see section on “Pharmaceutical expenditure” in Chapter 9).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 110,
+      "text": "The share was less than 2% in Poland, Luxembourg, Colombia and Türkiye, but stood above 5% in Switzerland, Korea and Chile (Figure 5.8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 162,
+      "text": "Households had to bear more than one-third of all healthcare costs directly in Mexico, Chile, Latvia and Greece.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 164,
+      "text": "Government transfers fund two-thirds of the social health insurance system in Chile, and over 50% of all their revenues in Hungary and Israel.",
+      "verbatim": true
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "country": "Italy",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      56.0,
+      36.0
+    ],
+    "not_public": [
+      26.9,
+      24.9
+    ],
+    "unmet_needs": [
+      1.9,
+      3.4
+    ],
+    "not_public_hospital": [
+      4.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      42.0,
+      22.0
+    ],
+    "not_public_pharma": [
+      37.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "56% of people in Italy were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "26.9% of health spending in Italy was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "1.9% of people in Italy reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "4% of hospital care costs in Italy were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "42% of outpatient medical care costs in Italy were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "37% of pharmaceutical costs in Italy were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Swiss citizens were most likely to be satisfied (89%), while those in Greece, Türkiye, Hungary, Italy, Chile and Colombia were least likely to be satisfied (lower than 50%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "Financial coverage for outpatient care was under 60% in Latvia, Israel, Portugal, Italy and Korea.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 110,
+      "text": "Outpatient care accounted for 22% of household spending on healthcare on average, but was especially high in Belgium (43%), Italy (48%) and Portugal (52%) where cost-sharing arrangements for outpatient care are common.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 136,
+      "text": "Confidence in self-management among people aged 45 and over with chronic conditions varied almost four-fold across surveyed countries, ranging from 92% in France to under 40% in Italy, Iceland and Greece.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 137,
+      "text": "Data for Italy refer to patients enrolled in outpatient settings for specialist visits in selected regions. 2.",
+      "verbatim": true
+    }
+  ]
+}

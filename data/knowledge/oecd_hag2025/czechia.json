@@ -1,0 +1,118 @@
+{
+  "country": "Czechia",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      25.0,
+      36.0
+    ],
+    "not_public": [
+      15.5,
+      24.9
+    ],
+    "unmet_needs": [
+      0.5,
+      3.4
+    ],
+    "not_public_hospital": [
+      5.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      8.0,
+      22.0
+    ],
+    "not_public_dental": [
+      56.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      43.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "25% of people in Czechia were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "15.5% of health spending in Czechia was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "0.5% of people in Czechia reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "5% of hospital care costs in Czechia were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "8% of outpatient medical care costs in Czechia were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "56% of dental care costs in Czechia were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "43% of pharmaceutical costs in Czechia were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 106,
+      "text": "However, over 8% of the population reported unmet care needs in Latvia (8.4%), Estonia (8.5%), Finland (8.6%), Canada (9.1%) and Greece (12.1%), while in Germany, the Netherlands and Czechia, fewer than 1% of the population reported unmet needs for medical care.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 106,
+      "text": "There are also some variations in the survey questions across countries: while most countries refer to both a medical examination and treatment, the question in some countries (Czechia and Spain) only refers to a medical examination or a doctor consultation, resulting in lower rates of unmet needs.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 108,
+      "text": "In contrast, government and compulsory insurance schemes paid over 90% of these costs in Czechia, the Slovak Republic, Sweden, Germany, Denmark and the United Kingdom.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 108,
+      "text": "For example, in Czechia, almost all health services are free at the point of use, except for a small fee for out-of-hours outpatient care.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 114,
+      "text": "Disparities were smallest in Czechia, France and Japan, where more than 98% of people in rural areas had access to hospitals nearby.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 140,
+      "text": "Rates ranged from over 50% in Greece and Saudi Arabia, to under 10% in Czechia and Switzerland (Figure 6.20).",
+      "verbatim": true
+    }
+  ]
+}

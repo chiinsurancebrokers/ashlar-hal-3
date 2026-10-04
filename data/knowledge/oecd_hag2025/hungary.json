@@ -1,0 +1,112 @@
+{
+  "country": "Hungary",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      59.0,
+      36.0
+    ],
+    "not_public": [
+      26.3,
+      24.9
+    ],
+    "unmet_needs": [
+      1.0,
+      3.4
+    ],
+    "not_public_hospital": [
+      4.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      31.0,
+      22.0
+    ],
+    "not_public_dental": [
+      61.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      53.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "59% of people in Hungary were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "26.3% of health spending in Hungary was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "1% of people in Hungary reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "4% of hospital care costs in Hungary were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "31% of outpatient medical care costs in Hungary were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "61% of dental care costs in Hungary were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "53% of pharmaceutical costs in Hungary were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Swiss citizens were most likely to be satisfied (89%), while those in Greece, Türkiye, Hungary, Italy, Chile and Colombia were least likely to be satisfied (lower than 50%).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 106,
+      "text": "More than 8% of people in Greece, Latvia and Iceland reported unmet dental care needs in 2024, compared to fewer than 1% in Germany, Hungary and the Netherlands, as well as accession country Croatia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 110,
+      "text": "This varies considerably across OECD countries, from fewer than 2% of households experiencing catastrophic health spending in Sweden, Slovenia, the United Kingdom, Ireland and the Netherlands, to over 10% of households in Lithuania, Latvia and Hungary (Figure 5.10).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 112,
+      "text": "In terms of median number of days (Figure 5.11, right panel), this ranged from around 50 days or less in Spain, Poland, Hungary and Sweden, to 280 days in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 164,
+      "text": "Government transfers fund two-thirds of the social health insurance system in Chile, and over 50% of all their revenues in Hungary and Israel.",
+      "verbatim": true
+    }
+  ]
+}

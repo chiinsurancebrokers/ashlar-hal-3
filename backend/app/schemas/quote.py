@@ -33,6 +33,7 @@ class QuoteResult(BaseModel):
     unmatched_requirements: list[str] = []
     verified_facts: list[str] = []
     source_documents: list[str] = []
+    plan_documents: list[dict] = []
     reasons: list[str] = []
     warnings: list[str] = []
 

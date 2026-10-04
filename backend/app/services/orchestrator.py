@@ -12,6 +12,7 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
+from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
@@ -278,6 +279,12 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         for key in protected_by_question.get(prior_pending, set()):
             if key in deterministic_updates:
                 ai_updates.pop(key, None)
+        # Answers to household questions describe a FAMILY MEMBER, never the
+        # primary applicant. The AI intake must not turn "yes" to a spouse's
+        # or daughter's maternity question (or a member's age/sex) into the
+        # primary applicant's own facts. Household data is deterministic only.
+        if str(prior_pending or "").startswith("family_"):
+            ai_updates = {}
         state = _merge(state, ai_updates)
         claude_ack = intake.get("acknowledgement", "")
 
@@ -293,8 +300,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if state.get("discovery_complete") and journey == "ipmi":
         intent = _post_shortlist_intent(message)
         if intent == "greece_healthcare":
+            country = state.get("primary_healthcare_country") or state.get("residence_country") or "Greece"
             return {
-                "reply": _greece_healthcare_summary(greek),
+                "reply": deterministic_note(country, greek) or _greece_healthcare_summary(greek),
                 "state": state, "quotes": [], "excluded_plans": [],
                 "ai_status": "greece_healthcare_context", "journey": "ipmi",
                 "lead_cta": {"show": True, "journey": "ipmi", "label": "Request a proposal"},
@@ -336,6 +344,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if next_q is not None:
         state["pending_question"] = next_q["key"]
         state["discovery_complete"] = False
+        if next_q.pop("suppress_ack", False):
+            claude_ack = ""  # a correction must not follow an AI line like "25, noted"
         reply = ((claude_ack.rstrip() + " " + next_q["reply"]) if claude_ack else next_q["reply"]).strip()
         return {
             "reply": reply, "state": state, "quotes": [], "excluded_plans": [],
@@ -401,8 +411,17 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "verification": verification_payload,
         }
 
+    # Context on the country where the applicant will live, appended after
+    # verification so it never interferes with the shortlist consistency check.
+    # Family quotes get their note from the household layer, so skip the
+    # (AI) call here when a household composition will replace this reply.
+    family_pending = bool(state.get("family_requested") and state.get("household_members"))
+    note = "" if family_pending else await country_health_note(state, greek)
+    if note:
+        reply = f"{reply}\n\n{note}"
     return {
         "reply": reply, "followup_message": followup, "state": state, "quotes": quotes, "excluded_plans": excluded,
+        "healthcare_note": note,
         "ai_status": "verified_shortlist" if verification.model_used else "deterministic_shortlist",
         "journey": journey if journey != "undetermined" else "ipmi",
         "lead_cta": {"show": True, "journey": "ipmi", "label": label},

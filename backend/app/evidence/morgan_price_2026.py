@@ -60,3 +60,30 @@ def verified_fact_texts(product_code: str, limit: int = 10) -> list[str]:
     policy_specific = [c["claim"] for c in verified_claims(product_code) if c.get("product_code") == product_code]
     policy_general = [c["claim"] for c in verified_claims(product_code) if c.get("product_code") is None]
     return (tob + policy_specific + policy_general)[:limit]
+
+
+
+_DOC_ORDER = {"ipid": 0, "table_of_benefits": 1, "policy_wording": 2}
+
+
+def plan_documents(product_code: str) -> list[dict]:
+    """Official documents for one Morgan Price tier, for the plan card.
+
+    Returns the tier's own IPID (plan summary), the Table of Benefits and the
+    Policy Wording. Only URLs registered in the evidence manifest are used —
+    nothing is guessed.
+    """
+    docs = []
+    for d in load_manifest().get("documents", []):
+        url = d.get("official_url") or ""
+        if not url.startswith("https://"):
+            continue
+        dtype = d.get("document_type")
+        if dtype == "ipid":
+            if d.get("document_id") != f"mp_eu_ipid_{product_code}_2026":
+                continue
+        elif dtype not in {"table_of_benefits", "policy_wording"}:
+            continue
+        docs.append({"type": dtype, "title": d.get("title", ""), "url": url})
+    docs.sort(key=lambda x: _DOC_ORDER.get(x["type"], 9))
+    return docs

@@ -1,0 +1,172 @@
+{
+  "country": "Poland",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      49.0,
+      36.0
+    ],
+    "not_public": [
+      22.4,
+      24.9
+    ],
+    "unmet_needs": [
+      3.8,
+      3.4
+    ],
+    "not_public_hospital": [
+      5.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      25.0,
+      22.0
+    ],
+    "not_public_dental": [
+      56.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      64.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "49% of people in Poland were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "22.4% of health spending in Poland was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "3.8% of people in Poland reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "5% of hospital care costs in Poland were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "25% of outpatient medical care costs in Poland were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "56% of dental care costs in Poland were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "64% of pharmaceutical costs in Poland were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 108,
+      "text": "On the other hand, this share was less than two-fifths in Canada, Poland and Chile.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "In Canada, over one-third of all pharmaceutical spending was financed via voluntary health insurance schemes in 2023, while in Chile and Poland, out-of-pocket payments financed 65% of pharmaceutical spending or more (see section on “Pharmaceutical expenditure” in Chapter 9).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 110,
+      "text": "The share was less than 2% in Poland, Luxembourg, Colombia and Türkiye, but stood above 5% in Switzerland, Korea and Chile (Figure 5.8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 110,
+      "text": "In Mexico, the Slovak Republic and Poland, pharmaceuticals accounted for over 60% of OOP spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 112,
+      "text": "In terms of median number of days (Figure 5.11, right panel), this ranged from around 50 days or less in Spain, Poland, Hungary and Sweden, to 280 days in Slovenia.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 112,
+      "text": "In recent years, Poland has seen considerable reductions in waiting times.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 112,
+      "text": "In 2024, median waiting times ranged from 67 days in Sweden and Spain, to over half a year in Hungary (209 days), Chile (313 days), Poland (343 days), and almost two years in Slovenia (667 days).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 112,
+      "text": "Poland is again an exception, with large reductions in waiting times compared to 2019.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 114,
+      "text": "There were also two or less doctors per 1 000 population working in remote areas in Türkiye and Poland.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 140,
+      "text": "Across all staff types, positive perceptions on staffing and work pace are highest in Poland, Israel, Colombia, the United States and Latvia (50% or more with positive perceptions across different types).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 164,
+      "text": "In other countries such as Costa Rica, Poland and Germany, the majority of public funding refers to social insurance contributions – payable by employers and employees – which financed close to two-thirds of all healthcare spending in 2023.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_12",
+      "page": 164,
+      "text": "Meanwhile, in Slovenia, Poland and Costa Rica, the role of government transfers in funding compulsory insurance schemes is marginal, with social insurance contributions representing at least 90% of all revenues of these schemes.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_13",
+      "page": 166,
+      "text": "In 2023, Greece, Poland and Costa Rica reported the highest share of total health spending allocated to inpatient services, at around 40% – much above the OECD average of 28%.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_14",
+      "page": 168,
+      "text": "Spending on general outpatient care provided by ambulatory providers was particularly high in Costa Rica, Poland and Mexico, reaching up to 14% of overall health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_15",
+      "page": 168,
+      "text": "This compares with the Netherlands, Costa Rica, Mexico, Poland and the United Kingdom where dental care spending represents only around 3% of total health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_16",
+      "page": 168,
+      "text": "With public health emergency measures phased out after the acute phase of the pandemic, the share of preventive spending dropped and reached pre-pandemic levels by 2023, ranging from 6-7% of total health spending in Canada and the United Kingdom to less than 3% in Poland, Belgium, Iceland, France, Switzerland, Portugal and Japan.",
+      "verbatim": true
+    }
+  ]
+}

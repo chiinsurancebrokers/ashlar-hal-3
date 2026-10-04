@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.app.services.orchestrator import chat_turn
+from backend.app.services.family_live_orchestrator import chat_turn
 from backend.app.services.corporate_group_agent import corporate_chat_turn, is_corporate_intent
 
 router = APIRouter(prefix="/chat", tags=["chat"])

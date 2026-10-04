@@ -1,0 +1,79 @@
+{
+  "country": "Australia",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      29.0,
+      36.0
+    ],
+    "not_public": [
+      27.2,
+      24.9
+    ],
+    "not_public_hospital": [
+      32.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      13.0,
+      22.0
+    ],
+    "not_public_dental": [
+      88.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      52.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "29% of people in Australia were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "27.2% of health spending in Australia was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "32% of hospital care costs in Australia were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "13% of outpatient medical care costs in Australia were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "88% of dental care costs in Australia were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "52% of pharmaceutical costs in Australia were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Duplicate private health insurance was most widely used in Australia and Ireland.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 160,
+      "text": "Australia and Israel also exhibit relatively high healthcare prices.",
+      "verbatim": true
+    }
+  ]
+}

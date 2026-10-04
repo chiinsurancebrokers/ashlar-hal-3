@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr, Field
+from typing import Any
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from backend.app.services.leads import send_lead, send_comparison_email
 
@@ -20,6 +22,16 @@ class LeadRequest(BaseModel):
     message: str = Field(default="", max_length=2500)
     consent: bool
     website: str = Field(default="", max_length=200)  # honeypot
+    # What HAL collected and showed on screen (needs, household, prices).
+    hal_context: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("hal_context")
+    @classmethod
+    def _limit_context(cls, value: dict[str, Any]) -> dict[str, Any]:
+        import json
+        if len(json.dumps(value, default=str)) > 20000:
+            raise ValueError("HAL context is too large.")
+        return value
 
 
 @router.post("")

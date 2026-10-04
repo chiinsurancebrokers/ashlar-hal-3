@@ -1,0 +1,112 @@
+{
+  "country": "Luxembourg",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      14.0,
+      36.0
+    ],
+    "not_public": [
+      14.4,
+      24.9
+    ],
+    "unmet_needs": [
+      1.0,
+      3.4
+    ],
+    "not_public_hospital": [
+      6.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      12.0,
+      22.0
+    ],
+    "not_public_dental": [
+      53.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      26.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "14% of people in Luxembourg were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "14.4% of health spending in Luxembourg was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "1% of people in Luxembourg reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "6% of hospital care costs in Luxembourg were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "12% of outpatient medical care costs in Luxembourg were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "53% of dental care costs in Luxembourg were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "26% of pharmaceutical costs in Luxembourg were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 110,
+      "text": "The share was less than 2% in Poland, Luxembourg, Colombia and Türkiye, but stood above 5% in Switzerland, Korea and Chile (Figure 5.8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 162,
+      "text": "In France, Germany, Luxembourg and Japan, more than three-quarters of spending was covered through a type of compulsory health insurance scheme.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 162,
+      "text": "By contrast, in France and Luxembourg, out-of-pocket spending accounted for less than 10% of total health expenditure.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 168,
+      "text": "In 2023, PHC represented 14% of all health spending on average across OECD countries, ranging from 10% or less in Switzerland, the Netherlands, Luxembourg and the Slovak Republic to around 20% in Lithuania, Estonia and Finland (Figure 7.16).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 168,
+      "text": "In Austria, Canada, Germany, France, Luxembourg and Switzerland, spending on general outpatient care was much lower overall, accounting for 4% or less of health spending.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 170,
+      "text": "Overall, every third health dollar was spent on ambulatory providers in Belgium, Mexico, Finland, Luxembourg and the United States but this share was below 20% in Türkiye, Greece and the Slovak Republic.",
+      "verbatim": true
+    }
+  ]
+}

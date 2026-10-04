@@ -43,6 +43,11 @@ class Settings(BaseSettings):
 
     database_url: str | None = None
 
+    # Durable HAL conversation/fact-find persistence. The secret service-role
+    # key is server-only and must never be exposed to frontend JavaScript.
+    supabase_url: str | None = None
+    supabase_service_role_key: str | None = None
+
     # Secure server-to-server bridge to Ashlar Proposal Studio. These values
     # stay on the HAL backend and are never exposed to browser JavaScript.
     proposal_studio_api_url: str | None = None

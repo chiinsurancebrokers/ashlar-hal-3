@@ -1,0 +1,139 @@
+{
+  "country": "Portugal",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      42.0,
+      36.0
+    ],
+    "not_public": [
+      38.5,
+      24.9
+    ],
+    "unmet_needs": [
+      2.5,
+      3.4
+    ],
+    "not_public_hospital": [
+      20.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      43.0,
+      22.0
+    ],
+    "not_public_pharma": [
+      45.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "42% of people in Portugal were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%; satisfaction has deteriorated over the past decade."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "38.5% of health spending in Portugal was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "unmet_needs",
+      "page": 23,
+      "text": "2.5% of people in Portugal reported unmet medical care needs due to cost, distance or waiting times in 2024 (average of 28 OECD countries: 3.4%)."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "20% of hospital care costs in Portugal were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "43% of outpatient medical care costs in Portugal were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "45% of pharmaceutical costs in Portugal were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 106,
+      "text": "This was most evident in Greece, Latvia and Portugal, where more than 15% of people in the lowest income quintile reported forgoing needed dental care in 2024, compared to 5% or fewer in the highest quintile.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "Financial coverage for outpatient care was under 60% in Latvia, Israel, Portugal, Italy and Korea.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 108,
+      "text": "In Latvia and Portugal, patients are increasingly seeking alternatives to the public system through private providers, with significant increases in duplicative voluntary health insurance between 2013 and 2023 to cover these costs (see section on “Population coverage for healthcare”).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 110,
+      "text": "Outpatient care accounted for 22% of household spending on healthcare on average, but was especially high in Belgium (43%), Italy (48%) and Portugal (52%) where cost-sharing arrangements for outpatient care are common.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 110,
+      "text": "For example, in Portugal the elimination of flat rate charges for primary care and publicly prescribed services may have contributed to the reduction of the incidence of catastrophic health spending in recent years.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 114,
+      "text": "In Portugal, where there was also a marked difference between metropolitan and remote areas, more disaggregated data show that doctors were mostly centralised in the metropolitan area of Lisbon, with much lower distribution in remote localities (see section on “Doctors (overall number and distribution) in Chapter 8).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_8",
+      "page": 136,
+      "text": "Iceland, Portugal, Italy, Korea and Sweden reported rates lower than 12 per 100 000 population, while Chile, Czechia, Slovenia and Germany reported rates higher than 40 per 100 000.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_9",
+      "page": 138,
+      "text": "On average across OECD countries, 87% of patients with chronic conditions rated the care they received positively (good, very good or excellent), ranging from 97% in Switzerland to 69% in Portugal (Figure 6.15).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_10",
+      "page": 166,
+      "text": "Taken together, in 2023, spending on outpatient care services accounted for around 45% of all health spending in Israel, Portugal and Estonia compared to an OECD average of 33%.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_11",
+      "page": 168,
+      "text": "With public health emergency measures phased out after the acute phase of the pandemic, the share of preventive spending dropped and reached pre-pandemic levels by 2023, ranging from 6-7% of total health spending in Canada and the United Kingdom to less than 3% in Poland, Belgium, Iceland, France, Switzerland, Portugal and Japan.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_12",
+      "page": 170,
+      "text": "As a result, day care services account for 15% or more of all hospital expenditures in Belgium, Ireland and Portugal.",
+      "verbatim": true
+    }
+  ]
+}

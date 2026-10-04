@@ -1,0 +1,109 @@
+{
+  "country": "Israel",
+  "source": "OECD (2025), Health at a Glance 2025: OECD Indicators, OECD Publishing, Paris",
+  "source_short_en": "OECD, Health at a Glance 2025",
+  "source_short_el": "ΟΟΣΑ, Health at a Glance 2025",
+  "doi": "https://doi.org/10.1787/8f9e3f98-en",
+  "framing": "Gap framing: every figure is what is NOT covered, NOT satisfied or unmet. Gap figures are 100 minus the published figure.",
+  "rule": "HAL may phrase these facts freely but must not state any figure, ranking or claim that is not in this list. Verbatim report sentences may name other countries; only what they say about this country may be used.",
+  "metrics": {
+    "not_satisfied": [
+      27.0,
+      36.0
+    ],
+    "not_public": [
+      37.9,
+      24.9
+    ],
+    "not_public_hospital": [
+      4.0,
+      11.0
+    ],
+    "not_public_outpatient": [
+      44.0,
+      22.0
+    ],
+    "not_public_dental": [
+      99.0,
+      68.0
+    ],
+    "not_public_pharma": [
+      47.0,
+      42.0
+    ]
+  },
+  "facts": [
+    {
+      "id": "not_satisfied",
+      "page": 23,
+      "text": "27% of people in Israel were NOT satisfied with the availability of quality healthcare where they live in 2024, versus an OECD average of 36%."
+    },
+    {
+      "id": "not_public_total",
+      "page": 23,
+      "text": "37.9% of health spending in Israel was NOT covered by government or compulsory insurance schemes in 2023, versus an OECD average of 24.9%."
+    },
+    {
+      "id": "not_public_hospital",
+      "page": 109,
+      "text": "4% of hospital care costs in Israel were NOT covered by public or compulsory schemes in 2023, versus 11% on average in the OECD."
+    },
+    {
+      "id": "not_public_outpatient",
+      "page": 109,
+      "text": "44% of outpatient medical care costs in Israel were NOT covered by public or compulsory schemes in 2023, versus 22% on average in the OECD."
+    },
+    {
+      "id": "not_public_dental",
+      "page": 109,
+      "text": "99% of dental care costs in Israel were NOT covered by public or compulsory schemes in 2023, versus 68% on average in the OECD."
+    },
+    {
+      "id": "not_public_pharma",
+      "page": 109,
+      "text": "47% of pharmaceutical costs in Israel were NOT covered by public or compulsory schemes in 2023, versus 42% on average in the OECD."
+    },
+    {
+      "id": "report_text_1",
+      "page": 104,
+      "text": "Israel and the Netherlands had the largest supplementary health insurance market (over 80% of the population).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_2",
+      "page": 108,
+      "text": "Financial coverage for outpatient care was under 60% in Latvia, Israel, Portugal, Italy and Korea.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_3",
+      "page": 116,
+      "text": "Teleconsultations comprised over 25% of all doctor consultations in Denmark, Estonia, Israel, Portugal and Sweden, but remained very low in Chile, Germany, Greece and Korea (see the section on “Data and digital” in Chapter 9 for trends in teleconsultations).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_4",
+      "page": 140,
+      "text": "Across all staff types, positive perceptions on staffing and work pace are highest in Poland, Israel, Colombia, the United States and Latvia (50% or more with positive perceptions across different types).",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_5",
+      "page": 160,
+      "text": "Australia and Israel also exhibit relatively high healthcare prices.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_6",
+      "page": 164,
+      "text": "Government transfers fund two-thirds of the social health insurance system in Chile, and over 50% of all their revenues in Hungary and Israel.",
+      "verbatim": true
+    },
+    {
+      "id": "report_text_7",
+      "page": 166,
+      "text": "Taken together, in 2023, spending on outpatient care services accounted for around 45% of all health spending in Israel, Portugal and Estonia compared to an OECD average of 33%.",
+      "verbatim": true
+    }
+  ]
+}
