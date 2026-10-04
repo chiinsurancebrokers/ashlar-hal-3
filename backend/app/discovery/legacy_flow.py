@@ -24,6 +24,36 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "").strip().lower())
 
 
+# Countries for residence / main-healthcare-country answers: names,
+# demonyms (people often answer "greek" to "where do you live?") and Greek
+# names. Kept free of short ambiguous tokens (e.g. "us") because aliases are
+# also searched inside longer sentences.
+COUNTRY_ALIASES = {
+    "greece": "Greece", "greek": "Greece", "hellas": "Greece", "hellenic": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece", "ελλάδα μου": "Greece",
+    "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom", "great britain": "United Kingdom",
+    "britain": "United Kingdom", "british": "United Kingdom", "english": "United Kingdom", "ηνωμένο βασίλειο": "United Kingdom", "αγγλία": "United Kingdom", "αγγλια": "United Kingdom",
+    "usa": "United States", "united states": "United States", "america": "United States", "american": "United States", "ηπα": "United States", "αμερική": "United States", "αμερικη": "United States",
+    "cyprus": "Cyprus", "cypriot": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus", "κύπρο": "Cyprus", "κυπρο": "Cyprus",
+    "germany": "Germany", "german": "Germany", "γερμανία": "Germany", "γερμανια": "Germany",
+    "france": "France", "french": "France", "γαλλία": "France", "γαλλια": "France",
+    "italy": "Italy", "italian": "Italy", "ιταλία": "Italy", "ιταλια": "Italy",
+    "spain": "Spain", "spanish": "Spain", "ισπανία": "Spain", "ισπανια": "Spain",
+    "portugal": "Portugal", "portuguese": "Portugal", "πορτογαλία": "Portugal", "πορτογαλια": "Portugal",
+    "turkey": "Türkiye", "türkiye": "Türkiye", "turkiye": "Türkiye", "turkish": "Türkiye", "τουρκία": "Türkiye", "τουρκια": "Türkiye",
+    "malta": "Malta", "maltese": "Malta", "μάλτα": "Malta", "μαλτα": "Malta",
+    "uae": "United Arab Emirates", "dubai": "United Arab Emirates", "united arab emirates": "United Arab Emirates", "emirates": "United Arab Emirates",
+    "singapore": "Singapore", "switzerland": "Switzerland", "swiss": "Switzerland", "ελβετία": "Switzerland", "ελβετια": "Switzerland",
+    "netherlands": "Netherlands", "dutch": "Netherlands", "holland": "Netherlands", "ολλανδία": "Netherlands", "ολλανδια": "Netherlands",
+    "belgium": "Belgium", "belgian": "Belgium", "βέλγιο": "Belgium", "βελγιο": "Belgium",
+    "austria": "Austria", "austrian": "Austria", "αυστρία": "Austria", "αυστρια": "Austria",
+    "ireland": "Ireland", "irish": "Ireland", "sweden": "Sweden", "swedish": "Sweden", "norway": "Norway", "norwegian": "Norway",
+    "denmark": "Denmark", "danish": "Denmark", "finland": "Finland", "finnish": "Finland", "poland": "Poland", "polish": "Poland",
+    "bulgaria": "Bulgaria", "bulgarian": "Bulgaria", "βουλγαρία": "Bulgaria", "βουλγαρια": "Bulgaria",
+    "romania": "Romania", "romanian": "Romania", "albania": "Albania", "albanian": "Albania", "αλβανία": "Albania", "αλβανια": "Albania",
+    "canada": "Canada", "canadian": "Canada", "australia": "Australia", "australian": "Australia",
+}
+
+
 def _has_any(text: str, terms: set[str]) -> bool:
     return any(t in text for t in terms)
 
@@ -161,14 +191,7 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
 
     elif pending == "residence":
         raw = text.strip(" .,!?:;")
-        aliases = {
-            "greece": "Greece", "hellas": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece",
-            "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
-            "usa": "United States", "united states": "United States", "america": "United States",
-            "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus", "κύπρο": "Cyprus", "κυπρο": "Cyprus",
-            "germany": "Germany", "france": "France", "italy": "Italy", "spain": "Spain",
-            "malta": "Malta", "uae": "United Arab Emirates", "dubai": "United Arab Emirates",
-        }
+        aliases = COUNTRY_ALIASES
         cleaned = re.sub(
             r"^(?:i\s+(?:live|reside)\s+in|i'?m\s+(?:living|resident)\s+in|living\s+in|resident\s+in|residing\s+in|in|"
             r"μένω\s+(?:στη|στην|στο|σε)|μενω\s+(?:στη|στην|στο|σε)|κατοικώ\s+(?:στη|στην|στο|σε)|κατοικω\s+(?:στη|στην|στο|σε))\s+",
@@ -203,16 +226,7 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
                 out["primary_healthcare_country"] = state["residence_country"]
                 out["primary_healthcare_country_answered"] = True
         else:
-            aliases = {
-                "greece": "Greece", "hellas": "Greece", "ελλάδα": "Greece", "ελλαδα": "Greece",
-                "uk": "United Kingdom", "united kingdom": "United Kingdom", "england": "United Kingdom",
-                "usa": "United States", "united states": "United States", "america": "United States",
-                "cyprus": "Cyprus", "κύπρος": "Cyprus", "κυπρος": "Cyprus", "κύπρο": "Cyprus", "κυπρο": "Cyprus",
-                "germany": "Germany", "france": "France", "italy": "Italy", "spain": "Spain",
-                "malta": "Malta", "uae": "United Arab Emirates", "dubai": "United Arab Emirates",
-                "singapore": "Singapore", "switzerland": "Switzerland", "portugal": "Portugal",
-                "netherlands": "Netherlands", "belgium": "Belgium", "austria": "Austria",
-            }
+            aliases = COUNTRY_ALIASES
             cleaned = re.sub(
                 r"^(?:i(?:'ll| will)?\s+(?:spend|live|stay)\s+(?:most\s+of\s+the\s+time\s+)?in|"
                 r"mostly\s+in|mainly\s+in|"

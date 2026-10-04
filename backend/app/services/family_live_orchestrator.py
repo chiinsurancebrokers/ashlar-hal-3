@@ -171,6 +171,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "A personal family quotation is required."
         )
         result["ai_status"] = "personal_family_quotation_required"
+        # No plans were shown, so the usual "walk you through these plans"
+        # follow-up would make no sense here.
+        result["followup_message"] = ""
+        result["quick_replies"] = []
 
     return result
 
