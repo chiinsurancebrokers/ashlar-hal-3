@@ -70,6 +70,9 @@ async def current_policy(file: UploadFile = File(...)):
 class ExplainPlanRequest(BaseModel):
     applicant_state: dict = Field(default_factory=dict)
     plan_key: str
+    # For a household card: which members the card covers. Premiums are
+    # recomputed server-side for each member — never taken from the browser.
+    household_member_ids: list[str] = Field(default_factory=list, max_length=12)
     question: str = "Tell me more about this plan."
     language: str = Field(default="en", pattern="^(en|el)$")
 
@@ -84,20 +87,60 @@ async def explain(req: ExplainPlanRequest):
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid applicant_state: {str(exc)[:180]}") from exc
 
-    current = quote_current(applicant, settings)
-    quote = next((q for q in current if q.plan_key == req.plan_key), None)
+    greek = req.language == "el"
+    household_lines: list[str] | None = None
+    if req.household_member_ids:
+        quote, household_lines = _household_plan_quote(req, settings, greek)
+    else:
+        current = quote_current(applicant, settings)
+        quote = next((q for q in current if q.plan_key == req.plan_key), None)
     if quote is None:
         raise HTTPException(status_code=404, detail="That plan is not currently eligible for this applicant.")
 
-    answer = await explain_plan(quote, req.question, greek=(req.language == "el"))
+    answer = await explain_plan(quote, req.question, greek=greek, household_lines=household_lines)
+    docs = [d["url"] for d in quote.plan_documents] or quote.source_documents
     return {
         "plan_key": quote.plan_key,
         "product_name": quote.product_name,
         "insurer": quote.insurer,
+        "premium": quote.premium,
+        "household_lines": household_lines or [],
         "answer": answer,
-        "source_documents": quote.source_documents,
+        "source_documents": docs,
         "verified_facts": quote.verified_facts,
     }
+
+
+def _household_plan_quote(req: ExplainPlanRequest, settings, greek: bool):
+    """Recompute this plan's premium for exactly the household members the
+    card covers, using the same deterministic member states as the family
+    composition. Returns (quote with household total, per-member lines)."""
+    from backend.app.services.household_quote_service import household_member_states
+    from backend.app.services.family_live_orchestrator import _member_labels
+
+    wanted = list(dict.fromkeys(req.household_member_ids))
+    states = dict(household_member_states(req.applicant_state))
+    labels = _member_labels(req.applicant_state, greek)
+    base, total, lines = None, 0.0, []
+    for member_id in wanted:
+        member_state = states.get(member_id)
+        if member_state is None:
+            return None, None
+        fields = {k: v for k, v in member_state.items() if k in Applicant.model_fields}
+        try:
+            member_applicant = Applicant(**fields)
+        except Exception:
+            return None, None
+        member_quote = next((q for q in quote_current(member_applicant, settings) if q.plan_key == req.plan_key), None)
+        if member_quote is None:
+            return None, None
+        base = base or member_quote
+        total += member_quote.premium
+        lines.append(f"{labels.get(member_id, member_id)}: {member_quote.currency} {member_quote.premium:,.2f}")
+    if base is None:
+        return None, None
+    quote = base.model_copy(update={"premium": round(total, 2), "family_size": len(wanted)})
+    return quote, lines
 
 
 class CompareRequest(BaseModel):

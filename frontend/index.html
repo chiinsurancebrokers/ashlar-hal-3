@@ -803,6 +803,7 @@ function closeSourceViewer(){
 
 function documentLabel(url){
   const low=(url||'').toLowerCase();
+  if(low.includes('ipid')) return t('planSummary');
   if(low.includes('tob')||low.includes('table')||low.includes('benefit')) return t('tableBenefits');
   if(low.includes('policy')||low.includes('wording')||low.includes('terms')) return t('policyWording');
   return t('brochure');
@@ -831,6 +832,7 @@ async function tellMeMore(i){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         applicant_state:state,plan_key:qkey(q),
+        household_member_ids:q.household_card?(q.household_members||[]).map(m=>m.member_id):[],
         question:lang()==='el'?'Εξήγησέ μου αυτό το πρόγραμμα πιο αναλυτικά.':'Tell me more about this plan.',
         language:lang()
       })
