@@ -188,6 +188,9 @@ def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
             doc_lines.append(f"{label}: {url}")
             doc_html_items.append(f"<li><a href='{_safe(url)}'>{_safe(label)}</a></li>")
 
+    if ctx.get("saved_quote_reference"):
+        sections.insert(0, ("Saved HAL quote", [f"{ctx['saved_quote_reference']} (client can reopen it with their date of birth)"]))
+
     if ctx.get("session_reference"):
         sections.append(("HAL session", [str(ctx["session_reference"])]))
 
@@ -287,3 +290,77 @@ async def send_comparison_email(name: str, email: str, applicant_state: dict, pl
     settings=get_settings(); plans=_verified_plans_for(applicant_state,plan_keys,settings); current_policy=verify_current_policy_token(current_policy_token) if current_policy_token else None; msg=_build_comparison_message(name,email,plans,_mail_sender(settings),settings.gmail_lead_recipient,current_policy=current_policy)
     if _resend_configured(settings) and settings.resend_reply_to: msg["Reply-To"]=settings.resend_reply_to
     result=await _send_transactional(msg); return {"status":"sent","transport":result.get("transport","gmail"),"message_id":result.get("id"),"plans_sent":[p.plan_key for p in plans],"current_policy_included":bool(current_policy)}
+
+
+# ---------------------------------------------------------------------------
+# Saved-quote email to the client (reference + retrieve link)
+# ---------------------------------------------------------------------------
+
+def _build_saved_quote_message(saved: dict, email: str, retrieve_url: str, sender: str, bcc: str | None) -> EmailMessage:
+    greek = saved.get("language") == "el"
+    snap = saved.get("snapshot") or {}
+    ref, name = saved["reference"], saved.get("applicant_name") or ""
+    currency = snap.get("currency", "EUR")
+    total = f"{currency} {float(snap.get('total_premium') or 0):,.2f}"
+    valid = saved.get("valid_until", "")
+    try:
+        from datetime import date as _date
+        _d = _date.fromisoformat(valid)
+        valid = _d.strftime("%d/%m/%Y") if saved.get("language") == "el" else f"{_d.day} {_d.strftime('%B %Y')}"
+    except ValueError:
+        pass
+    if snap.get("kind") == "household":
+        lines = [f"{b['label']}: {b['product_name']} — {b['currency']} {float(b['premium']):,.2f}" for b in snap.get("breakdown", [])]
+    else:
+        cards = snap.get("cards") or []
+        lines = [f"{c.get('product_name')} ({c.get('insurer')}) — {c.get('currency', currency)} {float(c.get('premium') or 0):,.2f}" for c in cards[:3]]
+    if greek:
+        subject = f"Η προσφορά σας από τον HAL — {ref}"
+        hello = f"Αγαπητέ/ή {name}," if name else "Γεια σας,"
+        intro = "Αποθηκεύσαμε την προσφορά ασφάλισης υγείας που υπολογίσατε με τον HAL."
+        labels = ("Αριθμός προσφοράς", "Σύνολο" if snap.get("kind") == "household" else "Πρώτη επιλογή", "Ισχύει έως")
+        steps = ["Πατήστε τον σύνδεσμο παρακάτω.", "Ο αριθμός προσφοράς είναι ήδη συμπληρωμένος· βάλτε την ημερομηνία γέννησής σας.",
+                 "Δείτε την προσφορά σας και, αν θέλετε, ζητήστε πρόταση από την Ashlar."]
+        button, howto = "Άνοιγμα της προσφοράς μου", "Πώς ανοίγετε την προσφορά σας"
+        footer = ("Η προσφορά είναι ενδεικτική· η τελική τιμή, η αποδοχή και οι όροι ορίζονται από τον ασφαλιστή μετά την αίτηση. "
+                  "Δεν χρειάζεται να απαντήσετε σε αυτό το email — για οποιαδήποτε ερώτηση, απαντήστε και θα σας καλέσουμε.")
+    else:
+        subject = f"Your HAL quote — {ref}"
+        hello = f"Dear {name}," if name else "Hello,"
+        intro = "We have saved the health insurance quote you calculated with HAL."
+        labels = ("Quote reference", "Total" if snap.get("kind") == "household" else "Top option", "Valid until")
+        steps = ["Click the link below.", "Your quote reference is already filled in; enter your date of birth.",
+                 "View your quote and, if you like, request a proposal from Ashlar."]
+        button, howto = "Open my quote", "How to open your quote"
+        footer = ("This quote is indicative; the final premium, acceptance and terms are set by the insurer after application. "
+                  "Questions? Just reply to this email and we will call you.")
+    plain = "\n".join([hello, "", intro, "", f"{labels[0]}: {ref}", f"{labels[1]}: {total}", f"{labels[2]}: {valid}", "",
+                       *[f"- {l}" for l in lines], "", howto + ":", *[f"{i}. {s}" for i, s in enumerate(steps, 1)], "",
+                       retrieve_url, "", footer, "", "Ashlar Assurance"])
+    rows = "".join(f"<li style='margin:2px 0'>{_safe(l)}</li>" for l in lines)
+    step_html = "".join(f"<li style='margin:4px 0'>{_safe(s)}</li>" for s in steps)
+    html_body = (
+        "<html><body style='font-family:Arial,sans-serif;color:#172333;font-size:14px;line-height:1.5'>"
+        f"<p>{_safe(hello)}</p><p>{_safe(intro)}</p>"
+        "<table style='border-collapse:collapse;margin:8px 0 12px'>"
+        f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[0])}</td><td><strong style='font-size:16px'>{_safe(ref)}</strong></td></tr>"
+        f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[1])}</td><td><strong>{_safe(total)}</strong></td></tr>"
+        f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[2])}</td><td>{_safe(valid)}</td></tr></table>"
+        f"<ul style='margin:0 0 14px;padding-left:18px'>{rows}</ul>"
+        f"<p style='margin:0 0 4px'><strong>{_safe(howto)}</strong></p><ol style='margin:0 0 16px;padding-left:20px'>{step_html}</ol>"
+        f"<p><a href='{_safe(retrieve_url)}' style='display:inline-block;background:#0f1a2b;color:#fff;padding:11px 18px;border-radius:10px;text-decoration:none;font-weight:bold'>{_safe(button)}</a></p>"
+        f"<p style='color:#687586;font-size:12px;margin-top:18px'>{_safe(footer)}</p><p>Ashlar Assurance</p></body></html>"
+    )
+    msg = EmailMessage(); msg["From"] = sender; msg["To"] = email; msg["Subject"] = subject
+    if bcc and bcc.lower() != email.lower():
+        msg["Bcc"] = bcc
+    msg.set_content(plain); msg.add_alternative(html_body, subtype="html"); return msg
+
+
+async def send_saved_quote_email(saved: dict, email: str, retrieve_url: str) -> dict:
+    settings = get_settings()
+    msg = _build_saved_quote_message(saved, email, retrieve_url, _mail_sender(settings), settings.gmail_lead_recipient)
+    if _resend_configured(settings) and settings.resend_reply_to:
+        msg["Reply-To"] = settings.resend_reply_to
+    result = await _send_transactional(msg)
+    return {"status": "sent", "transport": result.get("transport", "gmail"), "message_id": result.get("id")}

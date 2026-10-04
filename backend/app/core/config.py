@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     proposal_studio_api_key: str | None = None
     proposal_studio_timeout_seconds: int = 90
     current_policy_signing_secret: str | None = None
+    # Secret used to hash the date of birth that protects a saved quote.
+    # Falls back to the Supabase service-role key when not set.
+    quote_retrieval_secret: str | None = None
 
     # SECURITY: admin_password has NO default. If it is not set, the admin
     # endpoint refuses every request (fail-closed) instead of silently

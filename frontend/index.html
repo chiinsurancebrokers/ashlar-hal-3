@@ -354,6 +354,22 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 </div>
 
 <!-- Lead form modal -->
+<div class="modal-backdrop" id="saveQuoteModal" onclick="if(event.target===this)closeModal('saveQuoteModal')">
+  <div class="modal">
+    <h3 id="sqTitle"></h3>
+    <p id="sqSubtitle" style="color:var(--muted);font-size:13px"></p>
+    <label id="sqLblEmail">Email</label><input id="sqEmail" type="email" autocomplete="email">
+    <label id="sqLblDob"></label><input id="sqDob" type="date" autocomplete="bday">
+    <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
+      <input type="checkbox" id="sqConsent" style="width:auto;margin-top:3px"><span id="sqConsentText"></span>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="q-primary" type="button" id="sqSave" onclick="submitSaveQuote()"></button>
+      <button class="q-secondary" type="button" id="sqCancel" onclick="closeModal('saveQuoteModal')"></button>
+    </div>
+    <div id="sqStatus" style="margin-top:10px;font-size:13px"></div>
+  </div>
+</div>
 <div class="modal-backdrop" id="leadModal" onclick="if(event.target===this)closeModal('leadModal')">
   <div class="modal">
     <h3 id="leadTitle">Request a proposal</h3>
@@ -406,7 +422,12 @@ const I18N = {
     needs:'Your needs', edit:'Edit', online:'● Online', voiceOn:'🔊 Voice on', voiceOff:'🔇 Voice off',
     startAgain:'Start again', restartConfirm:'Start a new conversation? This clears your current answers.',
     step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
-    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
+    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', saveQuote:'💾 Save my quote', sqTitle:'Save your quote',
+    sqSubtitle:'We will email you a quote reference and a link. You can reopen the quote any time within its validity using the reference and your date of birth.',
+    sqDob:'Date of birth', sqConsent:'I agree that Ashlar Assurance may keep this quote and my email so I can retrieve it, and contact me about it.',
+    sqSave:'Save quote', sqCancel:'Cancel', sqFill:'Please enter your email and date of birth and confirm consent.', sqSaving:'Saving…',
+    sqSaved:(r,v)=>`Your quote is saved. Reference: ${r} (valid until ${v}). We have emailed you a link — open it with your date of birth.`,
+    sqSavedNoEmail:(r,v,u)=>`Your quote is saved. Reference: ${r} (valid until ${v}). Keep this reference — you can reopen the quote at ${u} with your date of birth.`, send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
     editNeeds:'Edit your needs', age:'Age', residence:'Country of residence', coverageArea:'Coverage area',
     annualBudgetOptional:'Annual budget (optional)', mustHaves:'Must-haves', cancel:'Cancel', saveRecalculate:'Save & recalculate',
     comparePlans:'Compare plans', close:'Close', sendComparison:'✉ Send me this comparison', emailComparison:'Email me this comparison',
@@ -460,7 +481,12 @@ const I18N = {
     needs:'Οι ανάγκες σας', edit:'Επεξεργασία', online:'● Online', voiceOn:'🔊 Φωνή ενεργή', voiceOff:'🔇 Φωνή ανενεργή',
     startAgain:'Από την αρχή', restartConfirm:'Να ξεκινήσουμε νέα συνομιλία; Οι τρέχουσες απαντήσεις σας θα διαγραφούν.',
     step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
-    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
+    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', saveQuote:'💾 Αποθήκευση προσφοράς', sqTitle:'Αποθήκευση της προσφοράς σας',
+    sqSubtitle:'Θα σας στείλουμε email με τον αριθμό προσφοράς και έναν σύνδεσμο. Μπορείτε να ξανανοίξετε την προσφορά όσο ισχύει, με τον αριθμό και την ημερομηνία γέννησής σας.',
+    sqDob:'Ημερομηνία γέννησης', sqConsent:'Συμφωνώ η Ashlar Assurance να διατηρήσει αυτή την προσφορά και το email μου ώστε να μπορώ να την ανακτήσω, και να επικοινωνήσει μαζί μου γι\' αυτήν.',
+    sqSave:'Αποθήκευση', sqCancel:'Ακύρωση', sqFill:'Συμπληρώστε email και ημερομηνία γέννησης και επιβεβαιώστε τη συναίνεση.', sqSaving:'Αποθήκευση…',
+    sqSaved:(r,v)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Σας στείλαμε email με σύνδεσμο — ανοίξτε τον με την ημερομηνία γέννησής σας.`,
+    sqSavedNoEmail:(r,v,u)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Κρατήστε τον αριθμό — μπορείτε να την ξανανοίξετε στο ${u} με την ημερομηνία γέννησής σας.`, send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
     editNeeds:'Επεξεργασία αναγκών', age:'Ηλικία', residence:'Χώρα κατοικίας', coverageArea:'Περιοχή κάλυψης',
     annualBudgetOptional:'Ετήσιος προϋπολογισμός (προαιρετικό)', mustHaves:'Απαραίτητες παροχές', cancel:'Ακύρωση', saveRecalculate:'Αποθήκευση & επανυπολογισμός',
     comparePlans:'Σύγκριση προγραμμάτων', close:'Κλείσιμο', sendComparison:'✉ Στείλτε μου τη σύγκριση', emailComparison:'Αποστολή σύγκρισης με email',
@@ -691,7 +717,9 @@ function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[
     html+=currentPolicy
       ? `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
       : `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()">${esc(t('uploadCurrentPolicy'))}</button>`;
-    html+=`<button class="comparison-primary-cta" onclick="openCompareWithGuard()">${esc(t('compareNow'))}</button></div>`;
+    html+=`<button class="comparison-primary-cta" onclick="openCompareWithGuard()">${esc(t('compareNow'))}</button>`;
+    if(currentJourney!=='travel')html+=`<button class="current-policy-cta save-quote-cta" onclick="openSaveQuote()">${esc(t('saveQuote'))}</button>`;
+    html+=`</div>`;
     if(excluded&&excluded.length){
       const suffix=lang()==='el'?'':'s';
       const label=t('whyExcluded').replace('{n}',excluded.length).replace('{s}',excluded.length===1?'':suffix);
@@ -1288,6 +1316,27 @@ function openLeadForm(journey){
   document.getElementById('leadStatus').textContent='';applyStaticI18n();document.getElementById('leadModal').classList.add('open');
 }
 
+function openSaveQuote(){
+  [['sqTitle','sqTitle'],['sqSubtitle','sqSubtitle'],['sqLblDob','sqDob'],['sqConsentText','sqConsent'],['sqSave','sqSave'],['sqCancel','sqCancel']]
+    .forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
+  document.getElementById('sqStatus').textContent='';
+  document.getElementById('saveQuoteModal').classList.add('open');
+}
+
+async function submitSaveQuote(){
+  const email=document.getElementById('sqEmail').value.trim(),dob=document.getElementById('sqDob').value,consent=document.getElementById('sqConsent').checked,s=document.getElementById('sqStatus');
+  if(!email||!dob||!consent){s.textContent=t('sqFill');s.style.color='#b3261e';return;}
+  s.textContent=t('sqSaving');s.style.color='var(--muted)';
+  try{
+    const r=await fetch(API+'/saved-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,email,date_of_birth:dob,consent})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
+    state.saved_quote_reference=d.reference;closeModal('saveQuoteModal');
+    const until=new Date(d.valid_until+'T00:00:00').toLocaleDateString(lang()==='el'?'el-GR':'en-GB');
+    addMsg(d.email_sent?t('sqSaved')(d.reference,until):t('sqSavedNoEmail')(d.reference,until,d.retrieve_url),'hal');
+    if(!document.getElementById('leadEmail').value)document.getElementById('leadEmail').value=email;
+  }catch(e){s.textContent=e.message||t('genericError');s.style.color='#b3261e';}
+}
+
 function buildHalContext(){
   const st=state||{},needKeys=['outpatient_required','maternity_required','dental_required','mental_health_required','wellness_required','optical_required','evacuation_required','chronic_required','chronic_conditions_disclosed'];
   const needs={};needKeys.forEach(k=>{if(typeof st[k]==='boolean'&&(st[k.replace('_required','_answered')]||k==='chronic_conditions_disclosed'||st[k]))needs[k]=st[k];});
@@ -1301,6 +1350,7 @@ function buildHalContext(){
     shortlist:(lastHousehold&&lastHousehold.length)?[]:(lastShortlist||[]).slice(0,6).map(q=>({product_name:q.product_name,insurer:q.insurer,premium:q.premium,currency:q.currency})),
     plan_documents:(lastShortlist||[]).slice(0,6).filter(q=>(q.plan_documents||[]).length).map(q=>({product_name:q.product_name,documents:(q.plan_documents||[]).map(d=>({label:planDocLabel(d.type),url:d.url}))})),
     session_reference:st.session_reference||'',
+    saved_quote_reference:st.saved_quote_reference||'',
   };
 }
 
