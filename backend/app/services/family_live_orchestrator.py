@@ -92,13 +92,35 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         top = household["options"][0]
         total = top["total_premium"]
         currency = top["currency"]
-        result["reply"] = (
-            f"Έχω πλέον επαληθευμένη σύνθεση για όλα τα μέλη του νοικοκυριού. "
-            f"Η χαμηλότερη πλήρης επιλογή είναι {currency} {total:,.2f}/έτος για όλο το νοικοκυριό."
-            if greek else
-            f"I now have a verified composition for every household member. "
-            f"The lowest complete option is {currency} {total:,.2f}/year for the whole household."
-        )
+        labels = _member_labels(current, greek)
+        maternity_ids = _maternity_member_ids(current)
+        lines = []
+        for alloc in top["allocations"]:
+            mid = alloc["member_id"]
+            note = ""
+            if mid in maternity_ids:
+                note = " (με κάλυψη μητρότητας)" if greek else " (includes maternity)"
+            lines.append(
+                f"• {labels.get(mid, mid)}: {alloc['product_name']}{note} — "
+                f"{alloc['currency']} {alloc['premium']:,.2f}/{'έτος' if greek else 'year'}"
+            )
+        split = top.get("plan_count", 1) > 1
+        if greek:
+            head = ("Έχω πλέον επαληθευμένη σύνθεση για όλα τα μέλη. "
+                    + ("Για χαμηλότερο συνολικό κόστος, τα μέλη κατανέμονται σε διαφορετικά προγράμματα ανάλογα με τις ανάγκες του καθενός:"
+                       if split else "Όλα τα μέλη καλύπτονται στο ίδιο πρόγραμμα:"))
+            tail = f"Σύνολο νοικοκυριού: {currency} {total:,.2f}/έτος."
+        else:
+            head = ("I now have a verified composition for every household member. "
+                    + ("To keep the total cost down, members are placed on different plans according to their individual needs:"
+                       if split else "All members are covered on the same plan:"))
+            tail = f"Household total: {currency} {total:,.2f}/year."
+        result["reply"] = "\n".join([head, *lines, tail])
+        result["household_breakdown"] = [
+            {**alloc, "label": labels.get(alloc["member_id"], alloc["member_id"]),
+             "maternity": alloc["member_id"] in maternity_ids}
+            for alloc in top["allocations"]
+        ]
         result["ai_status"] = "verified_household_shortlist"
     else:
         result["reply"] = (
@@ -111,6 +133,49 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         result["ai_status"] = "personal_family_quotation_required"
 
     return result
+
+
+_REL_LABELS = {
+    "spouse": ("Spouse", "Σύζυγος"),
+    "partner": ("Partner", "Σύντροφος"),
+    "child": ("Child", "Παιδί"),
+    "other": ("Family member", "Μέλος"),
+}
+
+
+def _member_labels(state: dict[str, Any], greek: bool) -> dict[str, str]:
+    """Client-facing, non-identifying labels such as 'Spouse (35)'."""
+    name = state.get("applicant_name")
+    age = state.get("age")
+    if greek:
+        primary = f"{name or 'Εσείς'} ({age})" if age else (name or "Εσείς")
+    else:
+        primary = f"{name or 'You'} ({age})" if age else (name or "You")
+    labels = {"primary": primary}
+    counts: dict[str, int] = {}
+    members = [m for m in state.get("household_members") or [] if isinstance(m, dict)]
+    totals: dict[str, int] = {}
+    for m in members:
+        totals[m.get("relationship", "other")] = totals.get(m.get("relationship", "other"), 0) + 1
+    for m in members:
+        rel = m.get("relationship", "other")
+        en, el = _REL_LABELS.get(rel, _REL_LABELS["other"])
+        base = el if greek else en
+        counts[rel] = counts.get(rel, 0) + 1
+        if totals[rel] > 1:
+            base = f"{base} {counts[rel]}"
+        if m.get("age") is not None:
+            base = f"{base} ({m['age']})"
+        labels[str(m.get("member_id"))] = base
+    return labels
+
+
+def _maternity_member_ids(state: dict[str, Any]) -> set[str]:
+    ids = {str(m.get("member_id")) for m in state.get("household_members") or []
+           if isinstance(m, dict) and m.get("maternity_required")}
+    if state.get("maternity_required"):
+        ids.add("primary")
+    return ids
 
 
 def _applicant_from_member_state(member_state: dict[str, Any]):

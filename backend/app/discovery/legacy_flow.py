@@ -28,6 +28,41 @@ def _has_any(text: str, terms: set[str]) -> bool:
     return any(t in text for t in terms)
 
 
+# Negation markers that, at the start of an answer, always mean "no" —
+# regardless of any later word such as "needed" or "important".
+_NEGATION_PREFIX = re.compile(
+    r"^(?:no|nope|not|don'?t|do not|without|όχι|οχι|δεν|χωρίς|χωρις)(?:\b|\s|,|$)"
+)
+
+
+def _has_word(text: str, terms: set[str]) -> bool:
+    """Whole-word / whole-phrase match. Never matches inside another word,
+    so "y" no longer matches "priority" and "no" no longer matches "know"."""
+    for term in terms:
+        if re.search(r"(?<![\w])" + re.escape(term) + r"(?![\w])", text):
+            return True
+    return False
+
+
+def _polarity(text: str) -> bool | None:
+    """Deterministic yes/no reading of an answer.
+
+    Order matters: an explicit negation at the start wins over any positive
+    word later in the sentence ("No mental health cover needed" is a NO).
+    Returns True/False, or None when the answer is neither.
+    """
+    t = _norm(text).strip(" .,!?:;")
+    if not t:
+        return None
+    if t in NO or _NEGATION_PREFIX.match(t):
+        return False
+    if t in YES or _has_word(t, YES):
+        return True
+    if _has_word(t, NO):
+        return False
+    return None
+
+
 def _is_skip(text: str) -> bool:
     return _norm(text) in SKIP
 
@@ -246,22 +281,24 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
     elif pending == "outpatient":
         if any(x in text for x in ["hospital only", "inpatient only", "νοσοκομειακη μονο"]):
             out.update(outpatient_required=False, outpatient_answered=True)
-        elif _has_any(text, {"outpatient", "comprehensive", "doctor visits", "diagnostic", "εξωνοσοκομ"}) or _has_any(text, YES):
-            out.update(outpatient_required=True, outpatient_answered=True)
-        elif _has_any(text, NO):
+        elif _polarity(text) is False:
             out.update(outpatient_required=False, outpatient_answered=True)
+        elif _has_any(text, {"outpatient", "comprehensive", "doctor visits", "diagnostic", "εξωνοσοκομ"}) or _polarity(text) is True:
+            out.update(outpatient_required=True, outpatient_answered=True)
 
     elif pending == "chronic":
         # Two distinct facts can come out of one answer: does the applicant
         # want the plan to cover chronic conditions going forward
         # (chronic_required), and separately, do they have one to disclose
         # now (chronic_conditions_disclosed) — never conflate the two.
-        if _has_any(text, {"i have", "i have a condition", "diagnosed", "already have",
+        if _polarity(text) is False:
+            out.update(chronic_required=False, chronic_answered=True)
+        elif _has_any(text, {"i have", "i have a condition", "diagnosed", "already have",
                             "έχω", "εχω", "διαγνωσμ"}):
             out.update(chronic_conditions_disclosed=True, chronic_required=True, chronic_answered=True)
-        elif _has_any(text, YES):
+        elif _polarity(text) is True:
             out.update(chronic_required=True, chronic_answered=True)
-        elif _has_any(text, NO):
+        elif _polarity(text) is False:
             out.update(chronic_required=False, chronic_answered=True)
 
     elif pending in {"maternity", "dental", "mental_health", "wellness", "optical", "evacuation"}:
@@ -271,9 +308,10 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
             "optical": "optical_required", "evacuation": "evacuation_required",
         }[pending]
         answered = f"{pending}_answered"
-        if _has_any(text, YES):
+        polarity = _polarity(text)
+        if polarity is True:
             out.update({field: True, answered: True})
-        elif _has_any(text, NO):
+        elif polarity is False:
             out.update({field: False, answered: True})
         else:
             keywords = {
