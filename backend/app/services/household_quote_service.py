@@ -17,6 +17,13 @@ INHERITED_REQUIREMENTS = (
 )
 
 
+def _maternity_eligible(sex: Any, age: Any) -> bool:
+    try:
+        return str(sex or "").lower() == "female" and 18 <= int(age) <= 47
+    except (TypeError, ValueError):
+        return False
+
+
 def household_member_states(state: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     """Build deterministic per-member quote states without inferring personal facts.
 
@@ -25,7 +32,11 @@ def household_member_states(state: dict[str, Any]) -> list[tuple[str, dict[str, 
     inherited from another person.
     """
     primary = deepcopy(state)
-    primary["maternity_required"] = bool(state.get("maternity_required"))
+    # Maternity is only ever applied to someone it can apply to (female 18-47),
+    # whatever stray value the state may hold.
+    primary["maternity_required"] = bool(state.get("maternity_required")) and _maternity_eligible(
+        state.get("sex"), state.get("age")
+    )
     members: list[tuple[str, dict[str, Any]]] = [("primary", primary)]
 
     for raw in state.get("household_members") or []:
@@ -34,7 +45,9 @@ def household_member_states(state: dict[str, Any]) -> list[tuple[str, dict[str, 
         member = deepcopy(state)
         member["age"] = int(raw["age"])
         member["sex"] = raw.get("sex", "unspecified")
-        member["maternity_required"] = bool(raw.get("maternity_required", False))
+        member["maternity_required"] = bool(raw.get("maternity_required", False)) and _maternity_eligible(
+            raw.get("sex"), raw.get("age")
+        )
         member["household_members"] = []
         member["family_requested"] = False
         for key in INHERITED_REQUIREMENTS:

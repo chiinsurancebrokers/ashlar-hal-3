@@ -278,6 +278,12 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
         for key in protected_by_question.get(prior_pending, set()):
             if key in deterministic_updates:
                 ai_updates.pop(key, None)
+        # Answers to household questions describe a FAMILY MEMBER, never the
+        # primary applicant. The AI intake must not turn "yes" to a spouse's
+        # or daughter's maternity question (or a member's age/sex) into the
+        # primary applicant's own facts. Household data is deterministic only.
+        if str(prior_pending or "").startswith("family_"):
+            ai_updates = {}
         state = _merge(state, ai_updates)
         claude_ack = intake.get("acknowledgement", "")
 
@@ -336,6 +342,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     if next_q is not None:
         state["pending_question"] = next_q["key"]
         state["discovery_complete"] = False
+        if next_q.pop("suppress_ack", False):
+            claude_ack = ""  # a correction must not follow an AI line like "25, noted"
         reply = ((claude_ack.rstrip() + " " + next_q["reply"]) if claude_ack else next_q["reply"]).strip()
         return {
             "reply": reply, "state": state, "quotes": [], "excluded_plans": [],

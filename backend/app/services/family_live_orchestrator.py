@@ -176,7 +176,11 @@ def _member_labels(state: dict[str, Any], greek: bool) -> dict[str, str]:
 def _maternity_member_ids(state: dict[str, Any]) -> set[str]:
     ids = {str(m.get("member_id")) for m in state.get("household_members") or []
            if isinstance(m, dict) and m.get("maternity_required")}
-    if state.get("maternity_required"):
+    try:
+        primary_eligible = str(state.get("sex") or "").lower() == "female" and 18 <= int(state.get("age") or 0) <= 47
+    except (TypeError, ValueError):
+        primary_eligible = False
+    if state.get("maternity_required") and primary_eligible:
         ids.add("primary")
     return ids
 
