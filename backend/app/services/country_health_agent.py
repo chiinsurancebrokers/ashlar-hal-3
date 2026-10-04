@@ -111,7 +111,7 @@ def validate_note(text: str, evidence: dict) -> list[str]:
     problems += [f"fairness: {flag}" for flag in fairness_check(text)]
     if "Health at a Glance 2025" not in text:
         problems.append("missing source")
-    if len(text) > 1400:
+    if len(text) > 900:
         problems.append("too long")
     return problems
 
@@ -208,6 +208,14 @@ def deterministic_note(country: str | None, greek: bool = False) -> str:
 # AI note
 # ---------------------------------------------------------------------------
 
+def fix_decimals(text: str, greek: bool) -> str:
+    """Percentages use the language's decimal mark: 39.1% in English,
+    39,1% in Greek."""
+    if greek:
+        return re.sub(r"(\d)\.(\d+\s?%)", r"\1,\2", text)
+    return re.sub(r"(\d),(\d+\s?%)", r"\1.\2", text)
+
+
 def address_client(text: str, name: str | None, greek: bool) -> str:
     """Safety net: never call the client 'the applicant' in client-facing text."""
     if greek:
@@ -218,13 +226,15 @@ def address_client(text: str, name: str | None, greek: bool) -> str:
     return re.sub(r"\bthe applicant\b", name or "you", text, flags=re.I)
 
 
-def build_instructions(evidence: dict, greek: bool, wanted: list[str], household: bool, name: str | None = None) -> str:
+def build_instructions(evidence: dict, greek: bool, wanted: list[str], household: bool, name: str | None = None,
+                       lives_there: bool = True) -> str:
     facts = "\n".join(f"- [p.{f['page']}] {f['text']}" for f in evidence["facts"])
     source = evidence["source_short_el" if greek else "source_short_en"]
     country = evidence["country"]
     return f"""You are HAL, an insurance adviser at Ashlar Assurance. Write a short note, in {"Greek" if greek else "English"}, about the healthcare system in {country}, where the applicant will live, explaining why international private medical insurance can add value there.
 
 Client: {name or "not given"}; {"a family / household quote" if household else "an individual quote"}; benefits they asked for: {", ".join(wanted) or "in-patient cover"}.
+{f"The client ALREADY LIVES in {country}. Do not describe a move or relocation." if lives_there else f"The client lives elsewhere but will spend most of the year in {country}."}
 Speak directly to the client as "you"{f" and you may address them once by their first name, {name}" if name else ""}. Never call them "the applicant".
 
 The ONLY facts you may use (official OECD data for {country}):
@@ -238,7 +248,7 @@ Hard rules:
 - Only use gaps where {country} is worse than the OECD average. Do not mention figures where {country} does better than the OECD average.
 - Explain plainly that international cover can pay for care that the public system leaves to the patient, depending on the plan's benefits. Do not promise that any specific cost is covered.
 - Do not insult or disparage the public system or its staff.
-- 4-5 sentences, warm and professional, no headings, no bullet points, no markdown.
+- 3-4 short sentences (at most 90 words before the source line), warm and professional, no headings, no bullet points, no markdown.
 - End with exactly: "{"Πηγή" if greek else "Source"}: {source}."
 """
 
@@ -257,13 +267,16 @@ async def country_health_note(state: dict, greek: bool, household: bool = False)
         wanted.append("maternity")
     try:
         text = await claude_response(
-            instructions=build_instructions(evidence, greek, sorted(set(wanted)), household, state.get("applicant_name")),
+            instructions=build_instructions(
+                evidence, greek, sorted(set(wanted)), household, state.get("applicant_name"),
+                lives_there=resolve_country(state.get("residence_country")) == resolve_country(country),
+            ),
             message="Write the note now.",
             max_tokens=600,
         )
     except Exception:
         return fallback
-    text = address_client((text or "").strip(), state.get("applicant_name"), greek)
+    text = address_client(fix_decimals((text or "").strip(), greek), state.get("applicant_name"), greek)
     if not text or validate_note(text, evidence):
         return fallback
     return text
