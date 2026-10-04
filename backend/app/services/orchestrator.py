@@ -12,6 +12,7 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
+from backend.app.services.healthcare_context import healthcare_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
 
@@ -409,8 +410,14 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "verification": verification_payload,
         }
 
+    # Context on the country where the applicant will live, appended after
+    # verification so it never interferes with the shortlist consistency check.
+    note = healthcare_note(state.get("primary_healthcare_country") or state.get("residence_country"), greek)
+    if note:
+        reply = f"{reply}\n\n{note}"
     return {
         "reply": reply, "followup_message": followup, "state": state, "quotes": quotes, "excluded_plans": excluded,
+        "healthcare_note": note,
         "ai_status": "verified_shortlist" if verification.model_used else "deterministic_shortlist",
         "journey": journey if journey != "undetermined" else "ipmi",
         "lead_cta": {"show": True, "journey": "ipmi", "label": label},

@@ -1,4 +1,6 @@
 country=Greece
+country_el=Ελλάδα
+country_in_el=στην Ελλάδα
 updated=2025
 title_en=Healthcare context: Greece
 title_el=Πλαίσιο περίθαλψης: Ελλάδα

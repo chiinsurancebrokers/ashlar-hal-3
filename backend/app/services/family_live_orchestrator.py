@@ -7,6 +7,7 @@ from backend.app.rates.quote_engine import quote_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.services.household_quote_service import household_member_states, compose_verified_household
 from backend.app.services.orchestrator import chat_turn as base_chat_turn
+from backend.app.services.healthcare_context import healthcare_note
 
 
 _SHORTLIST_STATUSES = {"verified_shortlist", "deterministic_shortlist"}
@@ -116,6 +117,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
                        if split else "All members are covered on the same plan:"))
             tail = f"Household total: {currency} {total:,.2f}/year."
         result["reply"] = "\n".join([head, *lines, tail])
+        note = healthcare_note(current.get("primary_healthcare_country") or current.get("residence_country"), greek)
+        if note:
+            result["reply"] += "\n\n" + note
+        result["healthcare_note"] = note
         result["household_breakdown"] = [
             {**alloc, "label": labels.get(alloc["member_id"], alloc["member_id"]),
              "maternity": alloc["member_id"] in maternity_ids}
