@@ -789,7 +789,10 @@ function openSourceViewer(url,title){
   if(!/^https?:\/\//i.test(url||'')) return;
   const modal=document.getElementById('sourceViewerModal');
   document.getElementById('sourceViewerTitle').textContent=title||t('source');
-  document.getElementById('sourceViewerFrame').src=url;
+  // Carriers such as morgan-price.eu refuse to be framed by other sites, so
+  // their official PDFs are served through HAL's own origin (allow-listed).
+  const frameUrl=/^https:\/\/(www\.)?morgan-price\.eu\//i.test(url)?(API+'/documents/view?url='+encodeURIComponent(url)):url;
+  document.getElementById('sourceViewerFrame').src=frameUrl;
   modal.classList.add('open');
 }
 function closeSourceViewer(){

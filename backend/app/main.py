@@ -14,6 +14,7 @@ from backend.app.api.voice import router as voice_router
 from backend.app.api.healthcare import router as healthcare_router
 from backend.app.api.corporate import router as corporate_router
 from backend.app.api.sessions import router as sessions_router
+from backend.app.api.documents import router as documents_router
 from backend.app.services.architecture_auditor_agent import audit_architecture
 
 settings = get_settings()
@@ -47,6 +48,7 @@ app.include_router(voice_router, prefix=settings.api_prefix)
 app.include_router(healthcare_router, prefix=settings.api_prefix)
 app.include_router(corporate_router, prefix=settings.api_prefix)
 app.include_router(sessions_router, prefix=settings.api_prefix)
+app.include_router(documents_router, prefix=settings.api_prefix)
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
