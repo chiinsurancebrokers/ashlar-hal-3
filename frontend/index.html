@@ -64,6 +64,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .q-doc-open{background:none;border:0;padding:0;color:var(--text);cursor:pointer;text-align:left;font:inherit}
 .q-doc-open:hover{text-decoration:underline}
 .q-doc-pdf{color:var(--muted);text-decoration:none;font-size:11.5px;white-space:nowrap}
+.country-select select{width:100%;min-width:220px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);font:inherit;font-size:15px}
 .q-members{margin:10px 0 2px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:12.5px}
 .q-member{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
 .q-member em{font-style:normal;color:var(--muted)}
@@ -1059,6 +1060,12 @@ async function saveNeeds(){
   document.querySelectorAll('#needToggleBox .need-chip.must').forEach(el=>state[el.dataset.field]=true);
   closeModal('needsModal');renderState();
   if(!state.age||!state.residence_country||!state.coverage_area)return;
+  if(state.family_requested&&(state.household_members||[]).length&&state.discovery_complete){
+    // A family quote must be recomposed per member, never re-priced as one person.
+    document.getElementById('input').value='Update my quote with these needs';
+    sendMessage();
+    return;
+  }
   try{
     const r=await fetch(API+'/quotes/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));lastQuotes=d.shortlist||[];excludedPlans=d.exclusions||[];
@@ -1108,6 +1115,30 @@ function _orTypeLabel(){
   el.textContent=lang()==='el'?'ή γράψτε τη δική σας απάντηση παρακάτω':'or type your own answer below';return el;
 }
 
+// [English value sent to HAL, Greek label]. Values are country names HAL's
+// parser understands; the first block is shown as "Common".
+const COUNTRY_OPTIONS_COMMON=[["Greece","Ελλάδα"],["Cyprus","Κύπρος"],["United Kingdom","Ηνωμένο Βασίλειο"],["Germany","Γερμανία"],["France","Γαλλία"],["Italy","Ιταλία"],["Spain","Ισπανία"],["Portugal","Πορτογαλία"],["Netherlands","Ολλανδία"],["Switzerland","Ελβετία"],["United Arab Emirates","Ηνωμένα Αραβικά Εμιράτα"],["United States","ΗΠΑ"]];
+const COUNTRY_OPTIONS_ALL=[["Albania","Αλβανία"],["Argentina","Αργεντινή"],["Armenia","Αρμενία"],["Australia","Αυστραλία"],["Austria","Αυστρία"],["Bahrain","Μπαχρέιν"],["Belgium","Βέλγιο"],["Brazil","Βραζιλία"],["Bulgaria","Βουλγαρία"],["Canada","Καναδάς"],["Chile","Χιλή"],["China","Κίνα"],["Colombia","Κολομβία"],["Croatia","Κροατία"],["Cyprus","Κύπρος"],["Czechia","Τσεχία"],["Denmark","Δανία"],["Egypt","Αίγυπτος"],["Estonia","Εσθονία"],["Finland","Φινλανδία"],["France","Γαλλία"],["Georgia","Γεωργία"],["Germany","Γερμανία"],["Greece","Ελλάδα"],["Hong Kong","Χονγκ Κονγκ"],["Hungary","Ουγγαρία"],["Iceland","Ισλανδία"],["India","Ινδία"],["Indonesia","Ινδονησία"],["Ireland","Ιρλανδία"],["Israel","Ισραήλ"],["Italy","Ιταλία"],["Japan","Ιαπωνία"],["Kenya","Κένυα"],["Kuwait","Κουβέιτ"],["Latvia","Λετονία"],["Lebanon","Λίβανος"],["Lithuania","Λιθουανία"],["Luxembourg","Λουξεμβούργο"],["Malaysia","Μαλαισία"],["Malta","Μάλτα"],["Mexico","Μεξικό"],["Netherlands","Ολλανδία"],["New Zealand","Νέα Ζηλανδία"],["Nigeria","Νιγηρία"],["North Macedonia","Βόρεια Μακεδονία"],["Norway","Νορβηγία"],["Oman","Ομάν"],["Philippines","Φιλιππίνες"],["Poland","Πολωνία"],["Portugal","Πορτογαλία"],["Qatar","Κατάρ"],["Romania","Ρουμανία"],["Russia","Ρωσία"],["Saudi Arabia","Σαουδική Αραβία"],["Serbia","Σερβία"],["Singapore","Σιγκαπούρη"],["Slovakia","Σλοβακία"],["Slovenia","Σλοβενία"],["South Africa","Νότια Αφρική"],["South Korea","Νότια Κορέα"],["Spain","Ισπανία"],["Sweden","Σουηδία"],["Switzerland","Ελβετία"],["Thailand","Ταϊλάνδη"],["Türkiye","Τουρκία"],["Ukraine","Ουκρανία"],["United Arab Emirates","Ηνωμένα Αραβικά Εμιράτα"],["United Kingdom","Ηνωμένο Βασίλειο"],["United States","ΗΠΑ"],["Vietnam","Βιετνάμ"]];
+const COUNTRY_KEYS=['residence','primary_healthcare_country','nationality'];
+
+function _countrySelect(){
+  const el=lang()==='el',label=([en,gr])=>el?gr:en;
+  const sorted=[...COUNTRY_OPTIONS_ALL].sort((a,b)=>label(a).localeCompare(label(b),el?'el':'en'));
+  const opts=list=>list.map(c=>`<option value="${esc(c[0])}">${esc(label(c))}</option>`).join('');
+  const wrap=document.createElement('div');wrap.className='stepper-input country-select';
+  wrap.innerHTML=`<select id="countrySelect" aria-label="${el?'Επιλέξτε χώρα':'Choose a country'}">
+    <option value="" selected disabled>${el?'Επιλέξτε χώρα…':'Choose a country…'}</option>
+    <optgroup label="${el?'Συχνές':'Common'}">${opts(COUNTRY_OPTIONS_COMMON)}</optgroup>
+    <optgroup label="${el?'Όλες οι χώρες':'All countries'}">${opts(sorted)}</optgroup></select>`;
+  return wrap;
+}
+
+function submitCountry(){
+  const sel=document.getElementById('countrySelect');
+  if(!sel||!sel.value){if(sel)sel.focus();return;}
+  sendQuickReply(encodeURIComponent(sel.value));
+}
+
 function updateDynamicInput(quickReplies){
   const row=document.getElementById('dynamicInputRow'),composer=document.querySelector('.composer'),key=currentPendingKey();
   row.querySelectorAll('.pill-row, .stepper-input, .dynamic-continue, .or-type-label').forEach(el=>el.remove());
@@ -1118,7 +1149,15 @@ function updateDynamicInput(quickReplies){
     if(quickReplies.some(r=>r.value==='skip')){
       const skipReply=quickReplies.find(r=>r.value==='skip'),s=document.createElement('button');s.className='pill-choice';s.style.background='var(--bg)';s.style.color='var(--muted)';s.textContent=(skipReply&&skipReply.label)||t('skip');s.onclick=()=>sendQuickReply('skip');wrap.appendChild(s);
     }
-    row.insertBefore(wrap,composer);row.insertBefore(_orTypeLabel(),composer);
+    row.insertBefore(wrap,composer);
+    if(!COUNTRY_KEYS.includes(key))row.insertBefore(_orTypeLabel(),composer);
+  }
+  if(COUNTRY_KEYS.includes(key)){
+    const select=_countrySelect(),btn=document.createElement('button');
+    btn.className='dynamic-continue';btn.textContent=lang()==='el'?'Συνέχεια':'Continue';btn.onclick=submitCountry;
+    select.querySelector('select').addEventListener('change',()=>btn.focus());
+    row.insertBefore(select,composer);row.insertBefore(btn,composer);row.insertBefore(_orTypeLabel(),composer);
+  }else if(quickReplies&&quickReplies.length){
   }else if(key==='age'||key==='travel_age'){
     const stepper=document.createElement('div');stepper.className='stepper-input';
     stepper.innerHTML=`<input type="number" id="stepperInput" min="0" max="120" placeholder="${t('age')}"><div class="stepper-btns"><button type="button" onclick="stepperAdjust(1)">▲</button><button type="button" onclick="stepperAdjust(-1)">▼</button></div>`;

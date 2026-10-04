@@ -140,13 +140,15 @@ async def intake_analysis(message: str, state: dict, history: list[dict] | None,
         return {"acknowledgement": "", "applicant_updates": {}}
 
 
-def build_explain_plan_instructions(quote: QuoteResult, greek: bool, household_lines: list[str] | None = None) -> str:
+def build_explain_plan_instructions(quote: QuoteResult, greek: bool, household_lines: list[str] | None = None,
+                                    name: str | None = None) -> str:
     """The ONLY facts this prompt is allowed to state about the plan are the
     ones explicitly listed below, all sourced from the evidence layer. It
     cannot see the internet, training data, or "general knowledge" about
     this insurer — only this list."""
     facts = "\n".join(f"- {f}" for f in quote.verified_facts) or "- (no additional verified facts loaded for this plan)"
-    return f"""You are HAL, explaining ONE specific insurance plan to an applicant, in {"Greek" if greek else "English"}.
+    return f"""You are HAL, explaining ONE specific insurance plan to a client, in {"Greek" if greek else "English"}.
+Speak directly to the client as "you"{f" and you may address them once by their first name, {name}" if name else ""}. Never call them "the applicant".
 
 Plan: {quote.insurer} — {quote.product_name}
 Annual premium: {quote.currency} {quote.premium:,.2f}{" (total for the household members on this plan)" if household_lines else ""}
@@ -167,12 +169,15 @@ Hard rules:
 """
 
 
-async def explain_plan(quote: QuoteResult, question: str, greek: bool, household_lines: list[str] | None = None) -> str:
+async def explain_plan(quote: QuoteResult, question: str, greek: bool, household_lines: list[str] | None = None,
+                       name: str | None = None) -> str:
     try:
+        from backend.app.services.country_health_agent import address_client
         text = await adviser_response(
-            instructions=build_explain_plan_instructions(quote, greek, household_lines),
+            instructions=build_explain_plan_instructions(quote, greek, household_lines, name),
             message=question, max_tokens=900,
         )
+        text = address_client(text or "", name, greek)
         flags = fairness_check(text)
         if flags or _looks_truncated(text) or (household_lines and not _mentions_premium(text, quote.premium)):
             # Fail closed to a safe deterministic fallback rather than ever

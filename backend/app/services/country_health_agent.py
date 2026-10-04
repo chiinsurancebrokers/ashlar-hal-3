@@ -208,13 +208,24 @@ def deterministic_note(country: str | None, greek: bool = False) -> str:
 # AI note
 # ---------------------------------------------------------------------------
 
-def build_instructions(evidence: dict, greek: bool, wanted: list[str], household: bool) -> str:
+def address_client(text: str, name: str | None, greek: bool) -> str:
+    """Safety net: never call the client 'the applicant' in client-facing text."""
+    if greek:
+        text = re.sub(r"\b(?:στον|στην)\s+αιτ(?:ούντα|ούσα)\b", "σε εσάς", text)
+        text = re.sub(r"\b(?:του|της)\s+αιτ(?:ούντος|ούσας)\b", "σας", text)
+        return re.sub(r"\b(?:ο|η|τον|την)\s+αιτ(?:ών|ούσα|ούντα)\b", name or "εσείς", text)
+    text = re.sub(r"\bthe applicant's\b", "your", text, flags=re.I)
+    return re.sub(r"\bthe applicant\b", name or "you", text, flags=re.I)
+
+
+def build_instructions(evidence: dict, greek: bool, wanted: list[str], household: bool, name: str | None = None) -> str:
     facts = "\n".join(f"- [p.{f['page']}] {f['text']}" for f in evidence["facts"])
     source = evidence["source_short_el" if greek else "source_short_en"]
     country = evidence["country"]
     return f"""You are HAL, an insurance adviser at Ashlar Assurance. Write a short note, in {"Greek" if greek else "English"}, about the healthcare system in {country}, where the applicant will live, explaining why international private medical insurance can add value there.
 
-Applicant context: {"a family / household quote" if household else "an individual quote"}; benefits the applicant asked for: {", ".join(wanted) or "in-patient cover"}.
+Client: {name or "not given"}; {"a family / household quote" if household else "an individual quote"}; benefits they asked for: {", ".join(wanted) or "in-patient cover"}.
+Speak directly to the client as "you"{f" and you may address them once by their first name, {name}" if name else ""}. Never call them "the applicant".
 
 The ONLY facts you may use (official OECD data for {country}):
 {facts}
@@ -246,13 +257,13 @@ async def country_health_note(state: dict, greek: bool, household: bool = False)
         wanted.append("maternity")
     try:
         text = await claude_response(
-            instructions=build_instructions(evidence, greek, sorted(set(wanted)), household),
+            instructions=build_instructions(evidence, greek, sorted(set(wanted)), household, state.get("applicant_name")),
             message="Write the note now.",
             max_tokens=600,
         )
     except Exception:
         return fallback
-    text = (text or "").strip()
+    text = address_client((text or "").strip(), state.get("applicant_name"), greek)
     if not text or validate_note(text, evidence):
         return fallback
     return text

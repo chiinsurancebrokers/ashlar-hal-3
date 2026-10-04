@@ -47,6 +47,10 @@ LANGUAGE_NEUTRAL_UI_VALUES = {
     "yes, optical is important", "no optical cover needed",
     "yes, evacuation is important", "no evacuation priority",
     "no fixed budget", "budget €3000", "budget €5000",
+    "show the option without optical cover", "show the option without dental cover",
+    "show the option without mental health cover", "show the option without check-up / wellness cover",
+    "show the option without medical evacuation cover", "show the option without outpatient cover",
+    "update my quote with these needs",
 }
 
 
@@ -59,6 +63,10 @@ def _resolve_language(message: str, state: dict) -> bool:
     """
     raw = (message or "").strip()
     low = raw.lower()
+    # Country answers come from a dropdown whose values are English country
+    # names; choosing one must never switch a Greek conversation to English.
+    if state.get("pending_question") in {"residence", "primary_healthcare_country", "nationality"} and not _is_greek(raw):
+        return state.get("language") == "el"
     if _is_greek(raw):
         state["language"] = "el"
     elif low in LANGUAGE_NEUTRAL_UI_VALUES:
@@ -312,7 +320,7 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             quote_objects = _quote_objects(state, settings)
             quote = _pick_quote_from_message(message, quote_objects)
             if quote is not None:
-                reply = await explain_plan(quote, message, greek)
+                reply = await explain_plan(quote, message, greek, name=state.get("applicant_name"))
                 state["last_explained_plan_key"] = quote.plan_key
                 return {
                     "reply": reply,

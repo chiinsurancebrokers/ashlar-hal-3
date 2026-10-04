@@ -97,7 +97,8 @@ async def explain(req: ExplainPlanRequest):
     if quote is None:
         raise HTTPException(status_code=404, detail="That plan is not currently eligible for this applicant.")
 
-    answer = await explain_plan(quote, req.question, greek=greek, household_lines=household_lines)
+    answer = await explain_plan(quote, req.question, greek=greek, household_lines=household_lines,
+                                name=req.applicant_state.get("applicant_name"))
     docs = [d["url"] for d in quote.plan_documents] or quote.source_documents
     return {
         "plan_key": quote.plan_key,

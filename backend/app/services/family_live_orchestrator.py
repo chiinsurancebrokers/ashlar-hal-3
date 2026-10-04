@@ -8,6 +8,9 @@ from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.services.household_quote_service import household_member_states, compose_verified_household
 from backend.app.services.orchestrator import chat_turn as base_chat_turn
 from backend.app.services.country_health_agent import country_health_note
+from backend.app.services.benefit_tradeoff_agent import (
+    DROPPABLE, find_tradeoff, requested_drop, tradeoff_message, tradeoff_quick_reply,
+)
 
 
 _SHORTLIST_STATUSES = {"verified_shortlist", "deterministic_shortlist"}
@@ -48,10 +51,24 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     approved evidence-backed rule source is wired. No evidence means no
     discount, by design.
     """
+    # The client tapped "Show the option without …": only now is their
+    # selection changed, because they asked for it.
+    dropped = requested_drop(message) if (state or {}).get("discovery_complete") else None
+    if dropped:
+        state = dict(state)
+        state[dropped] = False
+        state[dropped.replace("_required", "_answered")] = True
+        for member in state.get("household_members") or []:
+            if isinstance(member, dict):
+                member.pop(dropped, None)
+
     result = await base_chat_turn(message, state, history)
     current = result.get("state") or state
+    greek = current.get("language") == "el"
 
     if not _completed_family_shortlist(result, current):
+        if result.get("ai_status") in _SHORTLIST_STATUSES and result.get("quotes"):
+            _add_individual_tradeoff(result, current, greek, dropped)
         return result
 
     settings = get_settings()
@@ -116,7 +133,22 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
                     + ("To keep the total cost down, members are placed on different plans according to their individual needs:"
                        if split else "All members are covered on the same plan:"))
             tail = f"Household total: {currency} {total:,.2f}/year."
+        if dropped:
+            head = _dropped_intro(dropped, greek) + " " + head
         result["reply"] = "\n".join([head, *lines, tail])
+        blocked = {mid for mid, e in member_eligibility.items() if e.get("verdict") == "BLOCK"}
+        tradeoff = None if (dropped or current.get("tradeoff_suggested")) else find_tradeoff(
+            current, settings,
+            {"total": total, "currency": currency, "options": len(household["options"]),
+             "plans": sorted({a["product_name"] for a in top["allocations"]}),
+             "by_member": {a["member_id"]: a["product_name"] for a in top["allocations"]}},
+            household=True, blocked=blocked,
+        )
+        if tradeoff:
+            current["tradeoff_suggested"] = True
+            result["reply"] += "\n\n" + tradeoff_message(tradeoff, current.get("applicant_name"), greek, household=True)
+            result["quick_replies"] = [tradeoff_quick_reply(tradeoff, greek)]
+        result["tradeoff"] = tradeoff
         note = await country_health_note(current, greek, household=True)
         if note:
             result["reply"] += "\n\n" + note
@@ -139,6 +171,10 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             "A personal family quotation is required."
         )
         result["ai_status"] = "personal_family_quotation_required"
+        # No plans were shown, so the usual "walk you through these plans"
+        # follow-up would make no sense here.
+        result["followup_message"] = ""
+        result["quick_replies"] = []
 
     return result
 
@@ -149,6 +185,39 @@ _REL_LABELS = {
     "child": ("Child", "Παιδί"),
     "other": ("Family member", "Μέλος"),
 }
+
+
+def _dropped_intro(field: str, greek: bool) -> str:
+    en, el = DROPPABLE[field]
+    return (f"Όπως ζητήσατε, αυτή είναι η εναλλακτική χωρίς {el.replace('την ', '')}."
+            if greek else f"As you asked, here is the alternative without {en}.")
+
+
+def _add_individual_tradeoff(result: dict[str, Any], state: dict[str, Any], greek: bool, dropped: str | None) -> None:
+    """Same suggestion for an individual shortlist, inserted before the
+    country healthcare note."""
+    quotes = result.get("quotes") or []
+    top = quotes[0]
+    if top.get("premium") is None:
+        return
+    verified = [q for q in quotes if q.get("official_rate") and not q.get("unmatched_requirements")]
+    current = {"total": float(top["premium"]), "currency": top.get("currency", "EUR"),
+               "plans": [top.get("product_name", "")], "options": len(verified),
+               "by_member": {"primary": top.get("product_name", "")}}
+    tradeoff = None if (dropped or state.get("tradeoff_suggested")) else find_tradeoff(
+        state, get_settings(), current, household=False)
+    if tradeoff:
+        state["tradeoff_suggested"] = True
+    reply = result.get("reply") or ""
+    note = result.get("healthcare_note") or ""
+    body = reply[: reply.rfind(note)].rstrip() if note and note in reply else reply
+    if dropped:
+        body = _dropped_intro(dropped, greek) + " " + body
+    if tradeoff:
+        body += "\n\n" + tradeoff_message(tradeoff, state.get("applicant_name"), greek, household=False)
+        result["quick_replies"] = [tradeoff_quick_reply(tradeoff, greek)]
+    result["reply"] = body + (("\n\n" + note) if note and note in reply else "")
+    result["tradeoff"] = tradeoff
 
 
 def _member_labels(state: dict[str, Any], greek: bool) -> dict[str, str]:
