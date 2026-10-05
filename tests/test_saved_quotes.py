@@ -158,17 +158,13 @@ def test_saved_quote_email_has_reference_link_and_greek_steps():
     assert msg["Bcc"] == "broker@example.com"
 
 
-def test_reminders_scheduled_only_with_opt_in(store, monkeypatch):
+
+def test_reminders_scheduled_for_every_saved_quote(store, monkeypatch):
     from backend.app.services import followups
     calls = []
     monkeypatch.setattr(followups, "schedule_followups", lambda ref, **kw: calls.append((ref, kw)) or [])
-    state = _family_state()
-    plain = sq.save_quote(state=state, email="c@example.com", date_of_birth=_dob_for_age(51), consent=True)
-    assert plain["followups_scheduled"] is False and not calls
-    assert store.rows[plain["reference"]]["followup_consent"] is False
-    opted = sq.save_quote(state={**state, "residency_purpose": True}, email="c@example.com",
-                          date_of_birth=_dob_for_age(51), consent=True, followup_consent=True,
+    saved = sq.save_quote(state=_family_state(), email="c@example.com", date_of_birth=_dob_for_age(51), consent=True,
                           public_base="https://hal.ashlarassurance.com/")
-    row = store.rows[opted["reference"]]
-    assert opted["followups_scheduled"] is True and calls[0][0] == opted["reference"] and calls[0][1]["residency"] is True
-    assert row["quote_json"]["public_base"] == "https://hal.ashlarassurance.com" and row["state_json"]["residency_purpose"] is True
+    row = store.rows[saved["reference"]]
+    assert saved["followups_scheduled"] is True and calls[0][0] == saved["reference"]
+    assert row["followup_consent"] is True and row["quote_json"]["public_base"] == "https://hal.ashlarassurance.com"

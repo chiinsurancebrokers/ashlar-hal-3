@@ -15,7 +15,6 @@ class SaveQuoteRequest(BaseModel):
     email: EmailStr
     date_of_birth: str = Field(max_length=10)
     consent: bool
-    followup_consent: bool = False
 
     @field_validator("state")
     @classmethod
@@ -47,7 +46,7 @@ def _public_base(request: Request) -> str:
 async def save(req: SaveQuoteRequest, request: Request):
     try:
         saved = save_quote(state=req.state, email=str(req.email), date_of_birth=req.date_of_birth, consent=req.consent,
-                           followup_consent=req.followup_consent, public_base=_public_base(request))
+                           public_base=_public_base(request))
     except SavedQuoteError as exc:
         raise HTTPException(status_code=exc.status, detail=str(exc)) from exc
     except RuntimeError as exc:

@@ -117,8 +117,6 @@ def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
         value = ctx.get(key)
         if value not in (None, "", []):
             profile.append(f"{label}: {value}")
-    if ctx.get("residency_purpose") is True:
-        profile.append("Needs cover for a visa / residence permit: YES — check the authority's insurance requirement")
     if profile:
         sections.append(("Applicant profile", profile))
 

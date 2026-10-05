@@ -69,7 +69,6 @@ class Settings(BaseSettings):
     followup_bcc_broker: bool = True
     followup_checkin_days: int = 3
     followup_expiry_days_before: int = 5
-    followup_annual_review_days: int = 300
 
     # SECURITY: admin_password has NO default. If it is not set, the admin
     # endpoint refuses every request (fail-closed) instead of silently

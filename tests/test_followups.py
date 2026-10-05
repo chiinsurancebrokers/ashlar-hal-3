@@ -44,25 +44,20 @@ def _row(language="en", **extra):
 # ----------------------------------------------------------------- schedule
 
 def test_schedule_checkin_and_expiry(settings):
-    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=30), residency=False, settings=settings))
+    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=30), settings=settings))
     assert steps == {"checkin": NOW + timedelta(days=3), "expiry": NOW + timedelta(days=25)}
 
 
-def test_schedule_adds_annual_review_only_for_visa_quotes(settings):
-    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=30), residency=True, settings=settings))
-    assert steps["annual_review"] == NOW + timedelta(days=300)
-
-
 def test_schedule_skips_expiry_when_too_close_to_checkin(settings):
-    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=9), residency=False, settings=settings))
+    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=9), settings=settings))
     assert list(steps) == ["checkin"]
 
 
 def test_fast_mode_for_staging(settings, monkeypatch):
     monkeypatch.setenv("FOLLOWUP_FAST_MODE", "true")
     get_settings.cache_clear()
-    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=30), residency=True, settings=get_settings()))
-    assert steps["checkin"] == NOW + timedelta(minutes=2) and steps["annual_review"] == NOW + timedelta(minutes=6)
+    steps = dict(fu.plan_schedule(saved_at=NOW, valid_until=NOW + timedelta(days=30), settings=get_settings()))
+    assert steps == {"checkin": NOW + timedelta(minutes=2), "expiry": NOW + timedelta(minutes=4)}
 
 
 # ----------------------------------------------------------------- writing
@@ -120,12 +115,6 @@ def test_email_has_links_unsubscribe_and_bcc(settings):
     assert f"/api/v1/followups/unsubscribe?ref=HAL-20261005-ABCD1234&amp;t={token}" in html
     assert token in msg["List-Unsubscribe"] and msg["Bcc"] == "broker@example.com"
     assert "8,271.77" in html and "Chris (51)" in html
-
-
-def test_annual_review_links_to_new_quote_without_old_prices(settings):
-    msg = fu.build_followup_message("annual_review", _row(), "Intro.", "a@x.com", None, settings)
-    html = msg.get_body(preferencelist=("html",)).get_content()
-    assert "8,271.77" not in html and "href='https://hal.ashlarassurance.com/'" in html
 
 
 def test_unsubscribe_token_is_per_reference(settings):

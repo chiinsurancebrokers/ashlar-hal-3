@@ -1,12 +1,11 @@
 """Follow-up and reminder emails for saved HAL quotes.
 
-Only for clients who ticked the reminder box when saving their quote.
+Sent to every client who saves a quote (the save consent covers contact
+about the quote); every email carries an unsubscribe link.
 
-Sequence (per saved quote, at most three emails):
-* ``checkin``        — a few days after saving: "any questions?"
-* ``expiry``         — a few days before the quote expires
-* ``annual_review``  — only when the quote was for a visa / residence permit:
-                       ~10 months later, before a local or short-term plan renews
+Sequence (per saved quote, at most two emails):
+* ``checkin`` — a few days after saving: "any questions?"
+* ``expiry``  — a few days before the quote expires
 
 Stops automatically when the client unsubscribes, requests a proposal
 (an adviser has taken over) or the quote is deleted.
@@ -39,7 +38,7 @@ from backend.app.core.config import Settings, get_settings
 
 log = logging.getLogger("hal.followups")
 
-KINDS = ("checkin", "expiry", "annual_review")
+KINDS = ("checkin", "expiry")
 MAX_ATTEMPTS = 3
 _FORBIDDEN = re.compile(
     r"guarantee|discount|\bfree\b|best price|cheapest|last chance|urgent|act now|hurry|limited time|"
@@ -81,30 +80,23 @@ def valid_unsubscribe_token(reference: str, token: str, settings: Settings | Non
 # Scheduling
 # ---------------------------------------------------------------------------
 
-def plan_schedule(*, saved_at: datetime, valid_until: datetime, residency: bool,
-                  settings: Settings) -> list[tuple[str, datetime]]:
+def plan_schedule(*, saved_at: datetime, valid_until: datetime, settings: Settings) -> list[tuple[str, datetime]]:
     """Return [(kind, when)] for a newly saved quote."""
     if settings.followup_fast_mode:
-        steps = [("checkin", saved_at + timedelta(minutes=2)), ("expiry", saved_at + timedelta(minutes=4))]
-        if residency:
-            steps.append(("annual_review", saved_at + timedelta(minutes=6)))
-        return steps
+        return [("checkin", saved_at + timedelta(minutes=2)), ("expiry", saved_at + timedelta(minutes=4))]
     checkin = saved_at + timedelta(days=settings.followup_checkin_days)
     steps = [("checkin", checkin)]
     expiry = valid_until - timedelta(days=settings.followup_expiry_days_before)
     if expiry > checkin + timedelta(days=2):
         steps.append(("expiry", expiry))
-    if residency:
-        steps.append(("annual_review", saved_at + timedelta(days=settings.followup_annual_review_days)))
     return steps
 
 
-def schedule_followups(reference: str, *, saved_at: datetime, valid_until: datetime, residency: bool,
+def schedule_followups(reference: str, *, saved_at: datetime, valid_until: datetime,
                        settings: Settings | None = None) -> list[dict[str, Any]]:
     settings = settings or get_settings()
     rows = [{"reference": reference, "kind": kind, "scheduled_for": when.isoformat()}
-            for kind, when in plan_schedule(saved_at=saved_at, valid_until=valid_until,
-                                            residency=residency, settings=settings)]
+            for kind, when in plan_schedule(saved_at=saved_at, valid_until=valid_until, settings=settings)]
     url, headers = _base(settings)
     response = httpx.post(f"{url}/hal_followups", params={"on_conflict": "reference,kind"},
                           headers={**headers, "Prefer": "resolution=ignore-duplicates,return=minimal"},
@@ -163,7 +155,6 @@ def quote_facts(row: dict[str, Any], kind: str, now: datetime | None = None) -> 
     state = row.get("state_json") or {}
     currency = quote.get("currency") or row.get("currency") or "EUR"
     valid_until = datetime.fromisoformat(row["valid_until"])
-    created = datetime.fromisoformat(row["created_at"])
     if quote.get("kind") == "household":
         plans = [f"{b.get('label')}: {b.get('product_name')} ({_money(b.get('premium'), b.get('currency', currency), greek)})"
                  for b in quote.get("breakdown") or []]
@@ -180,9 +171,7 @@ def quote_facts(row: dict[str, Any], kind: str, now: datetime | None = None) -> 
         "plans": plans,
         "valid_until": _fmt_date(valid_until.date(), greek),
         "days_until_expiry": max(0, (valid_until.date() - now.date()).days),
-        "months_since_quote": max(0, round((now - created).days / 30)),
         "country_of_residence": state.get("residence_country"),
-        "for_visa_or_residence_permit": bool(row.get("residency_purpose") or state.get("residency_purpose")),
     }
 
 
@@ -191,10 +180,6 @@ _PURPOSE = {
                "(plans, deductible, what is covered) and say they can simply reply to this email.",
     "expiry": "a reminder that the quote expires soon (state the date) and that after that prices may change "
               "and a new quote would be needed; they can reply or request a proposal from the quote page.",
-    "annual_review": "a review prompt months after the quote: if they started with a local or short-term plan for "
-                     "their residence permit, this may be a good moment to review before it renews, because moving "
-                     "to international cover later means the insurer assesses their health at that point. "
-                     "Do not quote the old prices as current.",
 }
 
 
@@ -256,17 +241,7 @@ def deterministic_intro(facts: dict[str, Any]) -> str:
                 f"Your saved HAL quote {ref} is valid until {until}. After that date prices may change and a new quote "
                 "would be needed. If you would like to go ahead or talk it through, reply to this email or request a "
                 "proposal from your quote page.")
-    months = facts.get("months_since_quote") or 0
-    when_el = f"Πριν από περίπου {months} μήνες" if months >= 2 else "Πρόσφατα"
-    when_en = f"About {months} months ago" if months >= 2 else "Recently"
-    return (f"{when_el} κοιτάξατε διεθνή ασφάλιση υγείας με τον HAL ({ref}). Αν ξεκινήσατε με τοπικό ή βραχυπρόθεσμο "
-            "πρόγραμμα για την άδεια διαμονής σας, ίσως είναι καλή στιγμή να το επανεξετάσετε πριν ανανεωθεί: αν περάσετε "
-            "σε διεθνή κάλυψη αργότερα, ο ασφαλιστής θα αξιολογήσει την υγεία σας τότε. Μια νέα προσφορά παίρνει λίγα λεπτά."
-            if greek else
-            f"{when_en} you looked at international health insurance with HAL ({ref}). If you started with a local or "
-            "short-term plan for your residence permit, this may be a good moment to review it before it renews: if you "
-            "move to international cover later, the insurer will assess your health at that point. An updated quote "
-            "takes a few minutes.")
+    raise ValueError(f"Unknown follow-up kind: {kind}")
 
 
 async def write_intro(facts: dict[str, Any], settings: Settings | None = None) -> tuple[str, str]:
@@ -299,47 +274,40 @@ def build_followup_message(kind: str, row: dict[str, Any], intro: str, sender: s
     if not base:
         raise RuntimeError("No public link is stored for this quote.")
     quote_url = f"{base}/quote/{ref}"
-    home_url = f"{base}/"
     unsub_url = f"{base}{settings.api_prefix}/followups/unsubscribe?ref={ref}&t={unsubscribe_token(ref, settings)}"
     name = facts["client_first_name"]
     if greek:
         hello = f"Αγαπητέ/ή {name}," if name else "Γεια σας,"
         subjects = {"checkin": f"Έχετε ερωτήσεις για την προσφορά σας; — {ref}",
-                    "expiry": f"Η προσφορά σας λήγει στις {facts['valid_until']} — {ref}",
-                    "annual_review": "Ώρα να επανεξετάσετε την ασφάλιση υγείας σας;"}
+                    "expiry": f"Η προσφορά σας λήγει στις {facts['valid_until']} — {ref}"}
         labels = ("Αριθμός προσφοράς", "Σύνολο ανά έτος", "Ισχύει έως")
-        button = ("Νέα προσφορά με τον HAL", home_url) if kind == "annual_review" else ("Άνοιγμα της προσφοράς μου", quote_url)
+        button = ("Άνοιγμα της προσφοράς μου", quote_url)
         footer = ("Η προσφορά είναι ενδεικτική· η τελική τιμή, η αποδοχή και οι όροι ορίζονται από τον ασφαλιστή μετά την αίτηση. "
-                  "Λαμβάνετε αυτό το email επειδή ζητήσατε υπενθυμίσεις όταν αποθηκεύσατε την προσφορά σας.")
+                  "Λαμβάνετε αυτό το email επειδή αποθηκεύσατε την προσφορά σας στον HAL.")
         unsub = "Διακοπή υπενθυμίσεων"
     else:
         hello = f"Dear {name}," if name else "Hello,"
         subjects = {"checkin": f"Any questions about your HAL quote? — {ref}",
-                    "expiry": f"Your HAL quote expires on {facts['valid_until']} — {ref}",
-                    "annual_review": "Time to review your health cover?"}
+                    "expiry": f"Your HAL quote expires on {facts['valid_until']} — {ref}"}
         labels = ("Quote reference", "Total per year", "Valid until")
-        button = ("Get an updated quote", home_url) if kind == "annual_review" else ("Open my quote", quote_url)
+        button = ("Open my quote", quote_url)
         footer = ("This quote is indicative; the final premium, acceptance and terms are set by the insurer after application. "
-                  "You are receiving this email because you asked for reminders when you saved your quote.")
+                  "You are receiving this email because you saved your quote with HAL.")
         unsub = "Stop these reminders"
 
-    show_quote = kind != "annual_review"
-    lines = facts["plans"] if show_quote else []
-    plain = [hello, "", intro, ""]
-    if show_quote:
-        plain += [f"{labels[0]}: {ref}", f"{labels[1]}: {facts['total_annual_premium']}", f"{labels[2]}: {facts['valid_until']}", "",
-                  *[f"- {l}" for l in lines], ""]
+    lines = facts["plans"]
+    plain = [hello, "", intro, "",
+             f"{labels[0]}: {ref}", f"{labels[1]}: {facts['total_annual_premium']}", f"{labels[2]}: {facts['valid_until']}", "",
+             *[f"- {l}" for l in lines], ""]
     plain += [f"{button[0]}: {button[1]}", "", footer, f"{unsub}: {unsub_url}", "", "Ashlar Assurance"]
 
-    table = ""
-    if show_quote:
-        table = (
+    table = (
             "<table style='border-collapse:collapse;margin:8px 0 12px'>"
             f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[0])}</td><td><strong>{_safe(ref)}</strong></td></tr>"
             f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[1])}</td><td><strong>{_safe(facts['total_annual_premium'])}</strong></td></tr>"
             f"<tr><td style='padding:3px 14px 3px 0;color:#687586'>{_safe(labels[2])}</td><td>{_safe(facts['valid_until'])}</td></tr></table>"
-            + ("<ul style='margin:0 0 14px;padding-left:18px'>" + "".join(f"<li>{_safe(l)}</li>" for l in lines) + "</ul>" if lines else "")
-        )
+        + ("<ul style='margin:0 0 14px;padding-left:18px'>" + "".join(f"<li>{_safe(l)}</li>" for l in lines) + "</ul>" if lines else "")
+    )
     html_body = (
         "<html><body style='font-family:Arial,sans-serif;color:#172333;font-size:14px;line-height:1.5'>"
         f"<p>{_safe(hello)}</p><p>{_safe(intro)}</p>{table}"

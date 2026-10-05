@@ -363,9 +363,6 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
       <input type="checkbox" id="sqConsent" style="width:auto;margin-top:3px"><span id="sqConsentText"></span>
     </label>
-    <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:8px">
-      <input type="checkbox" id="sqFollowup" style="width:auto;margin-top:3px"><span id="sqFollowupText"></span>
-    </label>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="q-primary" type="button" id="sqSave" onclick="submitSaveQuote()"></button>
       <button class="q-secondary" type="button" id="sqCancel" onclick="closeModal('saveQuoteModal')"></button>
@@ -427,8 +424,7 @@ const I18N = {
     step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
     clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', saveQuote:'💾 Save my quote', sqTitle:'Save your quote',
     sqSubtitle:'We will email you a quote reference and a link. You can reopen the quote any time within its validity using the reference and your date of birth.',
-    sqDob:'Date of birth', sqConsent:'I agree that Ashlar Assurance may keep this quote and my email so I can retrieve it, and contact me about it.',
-    sqFollowup:'Send me up to 3 reminder emails about this quote (for example before it expires). You can stop them at any time.',
+    sqDob:'Date of birth', sqConsent:'I agree that Ashlar Assurance may keep this quote and my email so I can retrieve it, and contact me about it (including a reminder before it expires). I can stop the reminders at any time.',
     sqSave:'Save quote', sqCancel:'Cancel', sqFill:'Please enter your email and date of birth and confirm consent.', sqSaving:'Saving…',
     sqSaved:(r,v)=>`Your quote is saved. Reference: ${r} (valid until ${v}). We have emailed you a link — open it with your date of birth.`,
     sqSavedNoEmail:(r,v,u)=>`Your quote is saved. Reference: ${r} (valid until ${v}). Keep this reference — you can reopen the quote at ${u} with your date of birth.`, send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
@@ -487,8 +483,7 @@ const I18N = {
     step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
     clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', saveQuote:'💾 Αποθήκευση προσφοράς', sqTitle:'Αποθήκευση της προσφοράς σας',
     sqSubtitle:'Θα σας στείλουμε email με τον αριθμό προσφοράς και έναν σύνδεσμο. Μπορείτε να ξανανοίξετε την προσφορά όσο ισχύει, με τον αριθμό και την ημερομηνία γέννησής σας.',
-    sqDob:'Ημερομηνία γέννησης', sqConsent:'Συμφωνώ η Ashlar Assurance να διατηρήσει αυτή την προσφορά και το email μου ώστε να μπορώ να την ανακτήσω, και να επικοινωνήσει μαζί μου γι\' αυτήν.',
-    sqFollowup:'Στείλτε μου έως 3 υπενθυμίσεις για αυτή την προσφορά (π.χ. πριν λήξει). Μπορώ να τις σταματήσω οποιαδήποτε στιγμή.',
+    sqDob:'Ημερομηνία γέννησης', sqConsent:'Συμφωνώ η Ashlar Assurance να διατηρήσει αυτή την προσφορά και το email μου ώστε να μπορώ να την ανακτήσω, και να επικοινωνήσει μαζί μου γι\' αυτήν (και με υπενθύμιση πριν λήξει). Μπορώ να σταματήσω τις υπενθυμίσεις οποιαδήποτε στιγμή.',
     sqSave:'Αποθήκευση', sqCancel:'Ακύρωση', sqFill:'Συμπληρώστε email και ημερομηνία γέννησης και επιβεβαιώστε τη συναίνεση.', sqSaving:'Αποθήκευση…',
     sqSaved:(r,v)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Σας στείλαμε email με σύνδεσμο — ανοίξτε τον με την ημερομηνία γέννησής σας.`,
     sqSavedNoEmail:(r,v,u)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Κρατήστε τον αριθμό — μπορείτε να την ξανανοίξετε στο ${u} με την ημερομηνία γέννησής σας.`, send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
@@ -1322,7 +1317,7 @@ function openLeadForm(journey){
 }
 
 function openSaveQuote(){
-  [['sqTitle','sqTitle'],['sqSubtitle','sqSubtitle'],['sqLblDob','sqDob'],['sqConsentText','sqConsent'],['sqFollowupText','sqFollowup'],['sqSave','sqSave'],['sqCancel','sqCancel']]
+  [['sqTitle','sqTitle'],['sqSubtitle','sqSubtitle'],['sqLblDob','sqDob'],['sqConsentText','sqConsent'],['sqSave','sqSave'],['sqCancel','sqCancel']]
     .forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
   document.getElementById('sqStatus').textContent='';
   document.getElementById('saveQuoteModal').classList.add('open');
@@ -1333,7 +1328,7 @@ async function submitSaveQuote(){
   if(!email||!dob||!consent){s.textContent=t('sqFill');s.style.color='#b3261e';return;}
   s.textContent=t('sqSaving');s.style.color='var(--muted)';
   try{
-    const r=await fetch(API+'/saved-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,email,date_of_birth:dob,consent,followup_consent:document.getElementById('sqFollowup').checked})});
+    const r=await fetch(API+'/saved-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,email,date_of_birth:dob,consent})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
     state.saved_quote_reference=d.reference;closeModal('saveQuoteModal');
     const until=new Date(d.valid_until+'T00:00:00').toLocaleDateString(lang()==='el'?'el-GR':'en-GB');
@@ -1346,7 +1341,7 @@ function buildHalContext(){
   const st=state||{},needKeys=['outpatient_required','maternity_required','dental_required','mental_health_required','wellness_required','optical_required','evacuation_required','chronic_required','chronic_conditions_disclosed'];
   const needs={};needKeys.forEach(k=>{if(typeof st[k]==='boolean'&&(st[k.replace('_required','_answered')]||k==='chronic_conditions_disclosed'||st[k]))needs[k]=st[k];});
   return {
-    applicant_name:st.applicant_name||'',age:st.age||'',sex:st.sex||'',nationality:st.nationality||'',residency_purpose:st.residency_purpose===true,
+    applicant_name:st.applicant_name||'',age:st.age||'',sex:st.sex||'',nationality:st.nationality||'',
     residence_country:st.residence_country||'',primary_healthcare_country:st.primary_healthcare_country||'',
     coverage_area:st.coverage_area?areaLabel(st.coverage_area):'',deductible:(st.deductible!==undefined&&st.deductible!==null)?st.deductible:'',
     budget:st.budget_annual||st.budget_preference||'',needs,

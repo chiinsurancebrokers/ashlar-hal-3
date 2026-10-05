@@ -8,23 +8,12 @@ from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.services.household_quote_service import household_member_states, compose_verified_household
 from backend.app.services.orchestrator import chat_turn as base_chat_turn
 from backend.app.services.country_health_agent import country_health_note
-from backend.app.services.residency_agent import add_residency_note
 from backend.app.services.benefit_tradeoff_agent import (
     DROPPABLE, find_tradeoff, requested_drop, tradeoff_message, tradeoff_quick_reply,
 )
 
 
 _SHORTLIST_STATUSES = {"verified_shortlist", "deterministic_shortlist"}
-
-
-async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
-    result = await _chat_turn_inner(message, state, history)
-    shown = result.get("ai_status") in {*_SHORTLIST_STATUSES, "verified_household_shortlist"}
-    if shown:
-        current = result.get("state") or state
-        add_residency_note(result, current, current.get("language") == "el")
-        result["state"] = current
-    return result
 
 
 def _completed_family_shortlist(result: dict[str, Any], current: dict[str, Any]) -> bool:
@@ -49,7 +38,7 @@ def _completed_family_shortlist(result: dict[str, Any], current: dict[str, Any])
     )
 
 
-async def _chat_turn_inner(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
+async def chat_turn(message: str, state: dict, history: list[dict] | None = None) -> dict[str, Any]:
     """Run the established HAL flow, then safely compose a completed family quote.
 
     The existing orchestrator remains authoritative for discovery and verifier

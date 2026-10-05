@@ -1,8 +1,6 @@
 from __future__ import annotations
 import re
 
-from backend.app.services.residency_agent import is_foreign_resident, mentions_residency_purpose, residency_question
-
 YES = {"yes", "y", "sure", "include it", "include", "important", "needed", "want it",
        "ναι", "βεβαιως", "βεβαίως", "θελω", "θέλω"}
 NO = {"no", "n", "not needed", "no thanks", "none",
@@ -176,8 +174,6 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
         return _skip_result(pending)
 
     out.update(_opportunistic_extras(text, state, exclude_key=pending))
-    if pending != "residency_purpose" and not state.get("residency_purpose_answered") and mentions_residency_purpose(message):
-        out.update(residency_purpose=True, residency_purpose_answered=True)
 
     if pending == "name":
         raw = message.strip(" .,!?:;")
@@ -273,13 +269,6 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
         if "nationality" in out:
             out["nationality_answered"] = True
 
-    elif pending == "residency_purpose":
-        polarity = _polarity(text)
-        if polarity is None and mentions_residency_purpose(message):
-            polarity = True
-        if polarity is not None:
-            out.update(residency_purpose=polarity, residency_purpose_answered=True)
-
     elif pending == "coverage_area":
         if any(x in text for x in ["worldwide including usa", "including usa", "με ηπα", "με usa"]):
             out["coverage_area"] = "area4"
@@ -374,7 +363,6 @@ def _skip_result(pending: str) -> dict:
         "residence": {},
         "primary_healthcare_country": {},
         "nationality": {"nationality_answered": True},
-        "residency_purpose": {"residency_purpose": False, "residency_purpose_answered": True},
         "coverage_area": {"coverage_area": "area1"},  # Europe is the safest narrow default
         "deductible": {"deductible_answered": True, "deductible_preference": "flexible"},
         "outpatient": {"outpatient_required": False, "outpatient_answered": True},
@@ -425,10 +413,6 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
         return _q("nationality",
             "What is your nationality? This helps HAL check plan eligibility." if not greek else "Ποια είναι η υπηκοότητά σας; Αυτό βοηθά τον HAL να ελέγχει την επιλεξιμότητα των προγραμμάτων.",
             skippable=True)
-    if (not state.get("coverage_area") and not state.get("residency_purpose_answered")
-            and is_foreign_resident(state)):
-        question, choices = residency_question(greek)
-        return _q("residency_purpose", question, choices)
     if not state.get("coverage_area"):
         return _q("coverage_area",
             "Where do you want your cover to apply?" if not greek else "Πού θέλετε να ισχύει η κάλυψή σας;",

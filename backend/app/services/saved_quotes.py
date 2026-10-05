@@ -43,7 +43,7 @@ _NEED_FIELDS = (
 _STATE_FIELDS = (
     "applicant_name", "age", "sex", "nationality", "residence_country", "primary_healthcare_country",
     "coverage_area", "deductible", "budget_annual", "family_requested", "household_members",
-    "household_complete", "discovery_complete", "language", "journey", "residency_purpose", *_NEED_FIELDS,
+    "household_complete", "discovery_complete", "language", "journey", *_NEED_FIELDS,
 )
 
 
@@ -164,7 +164,7 @@ def build_snapshot(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def save_quote(*, state: dict[str, Any], email: str, date_of_birth: str, consent: bool,
-               followup_consent: bool = False, public_base: str | None = None,
+               public_base: str | None = None,
                settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or get_settings()
     if not consent:
@@ -190,8 +190,7 @@ def save_quote(*, state: dict[str, Any], email: str, date_of_birth: str, consent
         "quote_json": {**snapshot, "quoted_on": now.date().isoformat(),
                        **({"public_base": public_base.rstrip("/")} if public_base else {})},
         "total_premium": snapshot["total_premium"], "currency": snapshot["currency"],
-        "followup_consent": bool(followup_consent),
-        "residency_purpose": bool(state.get("residency_purpose")),
+        "followup_consent": True,  # reminders about the saved quote; the client can unsubscribe
     }
     url, headers = _rest(settings)
     try:
@@ -200,15 +199,12 @@ def save_quote(*, state: dict[str, Any], email: str, date_of_birth: str, consent
         raise RuntimeError("The quote store is temporarily unavailable.") from exc
     if response.status_code >= 400:
         raise RuntimeError(f"The quote store rejected the quote ({response.status_code}).")
-    followups_scheduled = False
-    if followup_consent:
-        from backend.app.services.followups import schedule_followups
-        try:
-            schedule_followups(reference, saved_at=now, valid_until=valid_until,
-                               residency=row["residency_purpose"], settings=settings)
-            followups_scheduled = True
-        except Exception:
-            followups_scheduled = False  # the quote itself is saved; reminders are a bonus
+    from backend.app.services.followups import schedule_followups
+    try:
+        schedule_followups(reference, saved_at=now, valid_until=valid_until, settings=settings)
+        followups_scheduled = True
+    except Exception:
+        followups_scheduled = False  # the quote itself is saved; reminders are a bonus
     return {"reference": reference, "valid_until": valid_until.date().isoformat(), "snapshot": row["quote_json"],
             "language": row["language"], "applicant_name": row["applicant_name"],
             "followups_scheduled": followups_scheduled}
