@@ -12,7 +12,8 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
-from backend.app.rates.quote_engine import SUPPORTED_RESIDENCE
+from backend.app.rates.quote_engine import residence_gate
+from backend.app.rates.residence import is_greek_resident
 from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
@@ -168,20 +169,30 @@ def _no_verified_price_reply(state: dict, excluded: list[dict], greek: bool) -> 
     announcing a shortlist that is empty)."""
     name = state.get("applicant_name")
     country = state.get("residence_country") or ""
-    unsupported = str(country).strip().lower() not in SUPPORTED_RESIDENCE
-    if unsupported:
-        return (f"Ευχαριστώ{', ' + name if name else ''}. Οι επαληθευμένες online τιμές του HAL αφορούν προς το παρόν κατοίκους Ελλάδας. "
-                f"Για κατοίκους {country}, ένας σύμβουλος της Ashlar ετοιμάζει την προσφορά προσωπικά, με βάση όσα μου είπατε — "
-                "πατήστε «Ζητήστε πρόταση» και θα επικοινωνήσουμε μαζί σας."
+    applicant = _applicant_from_state(state)
+    reason = residence_gate(applicant) if applicant else None
+    thanks = (f"Ευχαριστώ{', ' + name if name else ''}." if greek else f"Thank you{', ' + name if name else ''}.")
+    proposal = ("Πατήστε «Ζητήστε πρόταση» και ένας σύμβουλος της Ashlar θα επικοινωνήσει μαζί σας με επιλογές."
+                if greek else "Tap “Request a proposal” and an Ashlar adviser will come back to you with options.")
+    if reason == "us_resident":
+        body = ("Τα διεθνή προγράμματα που τιμολογεί ο HAL δεν διατίθενται σε κατοίκους ΗΠΑ."
+                if greek else "The international plans HAL prices online are not available to people living in the United States.")
+    elif reason == "sanctions_review":
+        body = (f"Για κατοίκους {country}, οι ασφαλιστές πρέπει πρώτα να ελέγξουν τους κανόνες κυρώσεων, γι' αυτό ο HAL δεν δείχνει τιμή online."
                 if greek else
-                f"Thank you{', ' + name if name else ''}. HAL's verified online prices currently cover people living in Greece. "
-                f"For residents of {country}, an Ashlar adviser prepares the quotation personally, using everything you have told me — "
-                "tap “Request a proposal” and we will come back to you with options.")
-    return ("Κανένα από τα επαληθευμένα προγράμματα δεν καλύπτει όλα όσα ζητήσατε. Μπορείτε να αλλάξετε κάποια ανάγκη, "
-            "ή να ζητήσετε πρόταση και ένας σύμβουλος της Ashlar θα ψάξει εναλλακτικές."
-            if greek else
-            "None of the verified plans covers everything you asked for. You can change one of your needs, "
-            "or request a proposal and an Ashlar adviser will look for alternatives.")
+                f"For residents of {country}, insurers must first check sanctions rules, so HAL does not show a price online.")
+    elif reason == "area_excludes_residence":
+        body = (f"Η περιοχή κάλυψης που επιλέξατε δεν περιλαμβάνει τη χώρα όπου μένετε ({country}), οπότε το πρόγραμμα δεν θα σας κάλυπτε εκεί. "
+                "Αλλάξτε την περιοχή κάλυψης σε παγκόσμια από τις ανάγκες σας."
+                if greek else
+                f"The area of cover you chose doesn't include the country where you live ({country}), so the plan wouldn't cover you there. "
+                "Change the area of cover to worldwide in your needs.")
+        return f"{thanks} {body}"
+    else:
+        body = ("Κανένα από τα επαληθευμένα προγράμματα δεν καλύπτει όλα όσα ζητήσατε. Μπορείτε να αλλάξετε κάποια ανάγκη."
+                if greek else
+                "None of the verified plans covers everything you asked for. You can change one of your needs.")
+    return f"{thanks} {body} {proposal}"
 
 
 def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) -> str:
@@ -410,9 +421,13 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     intro = (f"Τέλεια{', ' + name if name else ''} — τώρα έχω αρκετά στοιχεία. Παρακάτω είναι το shortlist του HAL."
               if greek else f"Great{', ' + name if name else ''} — I now have enough information. Here is HAL's shortlist.")
     reasoning = _shortlist_reasoning(quotes, excluded, greek)
-    followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
-                if greek else
-                "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+    if is_greek_resident(state.get("residence_country")):
+        followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
+                    if greek else
+                    "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+    else:
+        followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά;"
+                    if greek else "Want me to walk you through any of these plans in more detail?")
     if not quotes:
         intro, reasoning, followup = _no_verified_price_reply(state, excluded, greek), "", ""
     reply = f"{intro} {reasoning}".strip()

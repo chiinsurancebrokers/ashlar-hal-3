@@ -120,6 +120,21 @@ def test_benefit_checklist_present_and_honest_on_every_quote():
     ), "IMG benefits not explicitly evidenced must remain 'not confirmed', never guessed"
 
 
-def test_unsupported_residence_returns_no_quotes():
-    applicant = Applicant(age=40, residence_country="Germany", coverage_area="area1")
-    assert quote_current(applicant, _settings()) == []
+def test_residents_outside_greece_get_morgan_price_only():
+    quotes = quote_current(Applicant(age=40, residence_country="Germany", coverage_area="area1"), _settings())
+    assert quotes and {q.plan_key.split(":")[0] for q in quotes} == {"morgan_price"}
+    greek = quote_current(Applicant(age=40, residence_country="Greece", coverage_area="area1"), _settings())
+    assert {q.plan_key.split(":")[0] for q in greek} > {"morgan_price"}   # legacy Greek-resident tables too
+    same = {q.plan_key: q.premium for q in greek}
+    assert all(same[q.plan_key] == q.premium for q in quotes)            # Morgan Price rates by area, not residence
+
+
+def test_us_and_sanctioned_residents_are_not_priced():
+    assert quote_current(Applicant(age=40, residence_country="United States", coverage_area="area4"), _settings()) == []
+    assert quote_current(Applicant(age=40, residence_country="Russia", coverage_area="area1"), _settings()) == []
+
+
+def test_area_must_include_residence():
+    assert quote_current(Applicant(age=40, residence_country="United Arab Emirates", coverage_area="area1"), _settings()) == []
+    assert quote_current(Applicant(age=40, residence_country="United Arab Emirates", coverage_area="area3"), _settings())
+    assert quote_current(Applicant(age=40, residence_country="Singapore", coverage_area="area3"), _settings())
