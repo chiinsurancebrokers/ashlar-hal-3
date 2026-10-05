@@ -57,6 +57,19 @@ class Settings(BaseSettings):
     # Secret used to hash the date of birth that protects a saved quote.
     # Falls back to the Supabase service-role key when not set.
     quote_retrieval_secret: str | None = None
+    # Follow-up / reminder emails for saved quotes (opt-in by the client).
+    # Hosts allowed in links that HAL emails to clients (prevents a forged
+    # Host header from putting someone else's domain into an Ashlar email).
+    public_host_allowlist: str = ("hal.ashlarassurance.com,ashlar-hal-3-production.up.railway.app,"
+                                  "ashlar-hal-3-adviser-os-staging.up.railway.app,localhost,127.0.0.1,testserver")
+    followups_enabled: bool = False
+    followup_poll_seconds: int = 300
+    followup_fast_mode: bool = False  # staging only: send within minutes instead of days
+    followup_admin_token: str | None = None
+    followup_bcc_broker: bool = True
+    followup_checkin_days: int = 3
+    followup_expiry_days_before: int = 5
+    followup_annual_review_days: int = 300
 
     # SECURITY: admin_password has NO default. If it is not set, the admin
     # endpoint refuses every request (fail-closed) instead of silently

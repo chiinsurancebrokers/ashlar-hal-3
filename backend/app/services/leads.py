@@ -61,6 +61,8 @@ async def _send_via_resend(msg: EmailMessage) -> dict:
     if html_part: payload["html"] = html_part.get_content()
     if msg.get("Reply-To"): payload["reply_to"] = [str(msg.get("Reply-To"))]
     if msg.get("Bcc"): payload["bcc"] = [str(msg.get("Bcc"))]
+    extra = {h: str(msg.get(h)) for h in ("List-Unsubscribe", "List-Unsubscribe-Post") if msg.get(h)}
+    if extra: payload["headers"] = extra
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post("https://api.resend.com/emails", headers={"Authorization": f"Bearer {settings.resend_api_key}", "Content-Type": "application/json"}, json=payload)
     if not (200 <= response.status_code < 300):
@@ -115,6 +117,8 @@ def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
         value = ctx.get(key)
         if value not in (None, "", []):
             profile.append(f"{label}: {value}")
+    if ctx.get("residency_purpose") is True:
+        profile.append("Needs cover for a visa / residence permit: YES — check the authority's insurance requirement")
     if profile:
         sections.append(("Applicant profile", profile))
 

@@ -41,11 +41,23 @@ async def create_lead(req: LeadRequest):
     if not req.consent:
         raise HTTPException(status_code=400, detail="Consent is required before sending the enquiry.")
     try:
-        return await send_lead(req.model_dump())
+        result = await send_lead(req.model_dump())
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Lead delivery failed: {str(exc)[:180]}") from exc
+    # An adviser now has the enquiry: stop automated reminders for that quote.
+    saved_ref = str((req.hal_context or {}).get("saved_quote_reference") or "").strip().upper()
+    if saved_ref:
+        try:
+            from backend.app.services.followups import cancel_followups
+            from backend.app.services.saved_quotes import REFERENCE_RE
+            if REFERENCE_RE.match(saved_ref):
+                cancel_followups(saved_ref, f"proposal requested ({result.get('reference')})")
+        except Exception:
+            pass
+    return result
+
 
 
 class ComparisonRequest(BaseModel):

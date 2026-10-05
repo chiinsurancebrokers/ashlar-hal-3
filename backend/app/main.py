@@ -16,6 +16,7 @@ from backend.app.api.corporate import router as corporate_router
 from backend.app.api.sessions import router as sessions_router
 from backend.app.api.documents import router as documents_router
 from backend.app.api.saved_quotes import router as saved_quotes_router
+from backend.app.api.followups import router as followups_router
 from backend.app.services.architecture_auditor_agent import audit_architecture
 
 settings = get_settings()
@@ -37,7 +38,7 @@ app.add_middleware(
     limited_prefixes=(f"{settings.api_prefix}/chat", f"{settings.api_prefix}/leads",
                        f"{settings.api_prefix}/corporate", f"{settings.api_prefix}/sessions",
                        f"{settings.api_prefix}/transcribe", f"{settings.api_prefix}/speak",
-                       f"{settings.api_prefix}/saved-quotes"),
+                       f"{settings.api_prefix}/saved-quotes", f"{settings.api_prefix}/followups"),
     max_requests=20,
     window_seconds=60,
 )
@@ -52,6 +53,16 @@ app.include_router(corporate_router, prefix=settings.api_prefix)
 app.include_router(sessions_router, prefix=settings.api_prefix)
 app.include_router(documents_router, prefix=settings.api_prefix)
 app.include_router(saved_quotes_router, prefix=settings.api_prefix)
+app.include_router(followups_router, prefix=settings.api_prefix)
+
+
+@app.on_event("startup")
+async def _start_followups() -> None:
+    # Reminder emails for saved quotes; off unless FOLLOWUPS_ENABLED=true.
+    if settings.followups_enabled and settings.supabase_url and settings.supabase_service_role_key:
+        import asyncio
+        from backend.app.services.followups import followup_loop
+        app.state.followup_task = asyncio.create_task(followup_loop(settings))
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
@@ -93,6 +104,7 @@ def health():
         "deductible_model": "enabled" if settings.deductible_model_enabled else "disabled_default_pricing",
         "family_pricing": "active",
         "quote_validity_days": settings.quote_validity_days,
+        "followups": "enabled" if settings.followups_enabled else "disabled",
         "gmail_lead_delivery": "configured" if all([
             settings.gmail_client_id, settings.gmail_client_secret, settings.gmail_refresh_token,
             settings.gmail_sender_email, settings.gmail_lead_recipient,

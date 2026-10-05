@@ -12,6 +12,7 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
+from backend.app.rates.quote_engine import SUPPORTED_RESIDENCE
 from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
@@ -160,6 +161,27 @@ def _exclusions_payload(state: dict, settings: Settings) -> list[dict]:
     if not applicant:
         return []
     return quote_exclusions(applicant, settings)
+
+
+def _no_verified_price_reply(state: dict, excluded: list[dict], greek: bool) -> str:
+    """Honest text when HAL has no verified price to show (instead of
+    announcing a shortlist that is empty)."""
+    name = state.get("applicant_name")
+    country = state.get("residence_country") or ""
+    unsupported = str(country).strip().lower() not in SUPPORTED_RESIDENCE
+    if unsupported:
+        return (f"Ευχαριστώ{', ' + name if name else ''}. Οι επαληθευμένες online τιμές του HAL αφορούν προς το παρόν κατοίκους Ελλάδας. "
+                f"Για κατοίκους {country}, ένας σύμβουλος της Ashlar ετοιμάζει την προσφορά προσωπικά, με βάση όσα μου είπατε — "
+                "πατήστε «Ζητήστε πρόταση» και θα επικοινωνήσουμε μαζί σας."
+                if greek else
+                f"Thank you{', ' + name if name else ''}. HAL's verified online prices currently cover people living in Greece. "
+                f"For residents of {country}, an Ashlar adviser prepares the quotation personally, using everything you have told me — "
+                "tap “Request a proposal” and we will come back to you with options.")
+    return ("Κανένα από τα επαληθευμένα προγράμματα δεν καλύπτει όλα όσα ζητήσατε. Μπορείτε να αλλάξετε κάποια ανάγκη, "
+            "ή να ζητήσετε πρόταση και ένας σύμβουλος της Ashlar θα ψάξει εναλλακτικές."
+            if greek else
+            "None of the verified plans covers everything you asked for. You can change one of your needs, "
+            "or request a proposal and an Ashlar adviser will look for alternatives.")
 
 
 def _shortlist_reasoning(quotes: list[dict], excluded: list[dict], greek: bool) -> str:
@@ -391,6 +413,8 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
     followup = ("Θέλετε να σας εξηγήσω κάποιο από τα προγράμματα πιο αναλυτικά, ή να συγκρίνουμε αυτά τα δύο συστήματα υγείας (δημόσιο vs ιδιωτικό) στην Ελλάδα;"
                 if greek else
                 "Want me to walk you through any of these plans in more detail, or explain how they'd compare to relying on Greece's public healthcare system?")
+    if not quotes:
+        intro, reasoning, followup = _no_verified_price_reply(state, excluded, greek), "", ""
     reply = f"{intro} {reasoning}".strip()
 
     verification = await verify_shortlist(

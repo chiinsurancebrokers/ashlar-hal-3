@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from backend.app.core.config import get_settings
 from backend.app.services.leads import send_saved_quote_email
 from backend.app.services.saved_quotes import SavedQuoteError, retrieve_quote, save_quote
 
@@ -14,6 +15,7 @@ class SaveQuoteRequest(BaseModel):
     email: EmailStr
     date_of_birth: str = Field(max_length=10)
     consent: bool
+    followup_consent: bool = False
 
     @field_validator("state")
     @classmethod
@@ -32,13 +34,20 @@ class RetrieveQuoteRequest(BaseModel):
 def _public_base(request: Request) -> str:
     host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
     proto = request.headers.get("x-forwarded-proto") or ("http" if host.startswith(("localhost", "127.0.0.1")) else "https")
+    bare = host.split(":")[0].lower()
+    allowed = [h.strip().lower() for h in get_settings().public_host_allowlist.split(",") if h.strip()]
+    if not any(bare == h or (h.startswith(".") and bare.endswith(h)) for h in allowed):
+        raise HTTPException(status_code=400, detail="Unknown host.")
+    if proto not in {"http", "https"}:
+        proto = "https"
     return f"{proto}://{host}"
 
 
 @router.post("")
 async def save(req: SaveQuoteRequest, request: Request):
     try:
-        saved = save_quote(state=req.state, email=str(req.email), date_of_birth=req.date_of_birth, consent=req.consent)
+        saved = save_quote(state=req.state, email=str(req.email), date_of_birth=req.date_of_birth, consent=req.consent,
+                           followup_consent=req.followup_consent, public_base=_public_base(request))
     except SavedQuoteError as exc:
         raise HTTPException(status_code=exc.status, detail=str(exc)) from exc
     except RuntimeError as exc:
@@ -50,7 +59,8 @@ async def save(req: SaveQuoteRequest, request: Request):
     except Exception:
         email_sent = False  # the quote is saved; the client still sees the reference on screen
     return {"reference": saved["reference"], "valid_until": saved["valid_until"],
-            "retrieve_url": retrieve_url, "email_sent": email_sent}
+            "retrieve_url": retrieve_url, "email_sent": email_sent,
+            "followups_scheduled": saved.get("followups_scheduled", False)}
 
 
 @router.post("/retrieve")
