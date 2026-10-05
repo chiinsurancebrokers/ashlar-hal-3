@@ -1,6 +1,8 @@
 from __future__ import annotations
 import re
 
+from backend.app.rates.residence import area_includes, in_europe, residence_status
+
 YES = {"yes", "y", "sure", "include it", "include", "important", "needed", "want it",
        "ναι", "βεβαιως", "βεβαίως", "θελω", "θέλω"}
 NO = {"no", "n", "not needed", "no thanks", "none",
@@ -171,7 +173,10 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
     out: dict = {}
 
     if _is_skip(text):
-        return _skip_result(pending)
+        result = _skip_result(pending)
+        if pending == "coverage_area" and state.get("residence_country") and not in_europe(state.get("residence_country")):
+            result["coverage_area"] = "area3"  # Europe-only would not cover someone living outside Europe
+        return result
 
     out.update(_opportunistic_extras(text, state, exclude_key=pending))
 
@@ -278,6 +283,15 @@ def apply_discovery_answer(message: str, state: dict) -> dict:
             out["coverage_area"] = "area3"
         elif any(x in text for x in ["europe", "europe only", "ευρώπη", "ευρωπη"]):
             out["coverage_area"] = "area1"
+        residence = state.get("residence_country")
+        if (out.get("coverage_area") and residence_status(residence) == "priced"
+                and not area_includes(out["coverage_area"], residence)):
+            # The plan would not cover them where they live: ask again.
+            out.pop("coverage_area")
+            out["coverage_area_mismatch"] = True
+            return out
+        if out.get("coverage_area"):
+            out["coverage_area_mismatch"] = False
 
     elif pending == "deductible":
         if any(x in text for x in ["flexible", "no preference", "whatever", "χωρις προτιμηση", "ευελικ"]):
@@ -414,9 +428,17 @@ def next_discovery_question(state: dict, greek: bool = False) -> dict | None:
             "What is your nationality? This helps HAL check plan eligibility." if not greek else "Ποια είναι η υπηκοότητά σας; Αυτό βοηθά τον HAL να ελέγχει την επιλεξιμότητα των προγραμμάτων.",
             skippable=True)
     if not state.get("coverage_area"):
-        return _q("coverage_area",
-            "Where do you want your cover to apply?" if not greek else "Πού θέλετε να ισχύει η κάλυψή σας;",
-            [("Europe", "Europe only"), ("Worldwide excl. USA", "Worldwide excluding USA"), ("Worldwide incl. USA", "Worldwide including USA")])
+        residence = state.get("residence_country")
+        choices = [("Europe", "Europe only"), ("Worldwide excl. USA", "Worldwide excluding USA"), ("Worldwide incl. USA", "Worldwide including USA")]
+        if residence and not in_europe(residence):
+            choices = choices[1:]
+        question = "Where do you want your cover to apply?" if not greek else "Πού θέλετε να ισχύει η κάλυψή σας;"
+        if state.get("coverage_area_mismatch"):
+            question = (f"Η περιοχή που επιλέξατε δεν περιλαμβάνει τη χώρα όπου μένετε ({residence}), οπότε το πρόγραμμα δεν θα σας κάλυπτε εκεί. "
+                        "Πού θέλετε να ισχύει η κάλυψή σας;" if greek else
+                        f"The area you chose doesn't include the country where you live ({residence}), so the plan wouldn't cover you there. "
+                        "Where do you want your cover to apply?")
+        return _q("coverage_area", question, choices)
     if not state.get("deductible_answered"):
         text = ("What deductible would you prefer? A higher one usually means a lower price."
                 if not greek else

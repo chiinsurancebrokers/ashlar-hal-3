@@ -11,7 +11,22 @@ from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
 from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest, plan_documents
 
-SUPPORTED_RESIDENCE = {"greece", "gr", "hellas", "ελλάδα", "ellada"}
+from backend.app.rates.residence import area_includes, is_greek_resident, residence_status
+
+
+def residence_gate(applicant: Applicant) -> str | None:
+    """Why HAL cannot price this applicant online, or None if it can."""
+    status = residence_status(applicant.residence_country)
+    if status != "priced":
+        return status
+    if not area_includes(applicant.coverage_area, applicant.residence_country):
+        return "area_excludes_residence"
+    return None
+
+
+def _carrier_allowed_for_residence(carrier: str, applicant: Applicant) -> bool:
+    # Legacy APRIL / IMG tables were rated for residents of Greece only.
+    return carrier == "morgan_price" or is_greek_resident(applicant.residence_country)
 
 
 def _carrier_key(carrier: str) -> str:
@@ -60,8 +75,7 @@ def _enrich_card_meta(q: QuoteResult) -> None:
 def quote_current(applicant: Applicant, settings: Settings, *, today: date | None = None) -> list[QuoteResult]:
     """Every eligible product for this applicant (family-aware), hard-filtered
     on any selected MUST-HAVE, never merely down-scored."""
-    residence = applicant.residence_country.strip().lower()
-    if residence not in SUPPORTED_RESIDENCE:
+    if residence_gate(applicant):
         return []
 
     today = today or date.today()
@@ -69,6 +83,8 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
     quotes: list[QuoteResult] = []
 
     for carrier, product_code in _distinct_products(applicant.coverage_area):
+        if not _carrier_allowed_for_residence(carrier, applicant):
+            continue
         rows = _rows_for(carrier, product_code, applicant.coverage_area)
         if not rows:
             continue
@@ -222,11 +238,12 @@ def quote_shortlist(applicant: Applicant, settings: Settings, *, limit: int = 5,
 
 def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | None = None) -> list[dict]:
     """Client-safe explanation of verified plans hard-excluded by MUST-HAVEs."""
-    residence = applicant.residence_country.strip().lower()
-    if residence not in SUPPORTED_RESIDENCE:
+    if residence_gate(applicant):
         return []
     out = []
     for carrier, product_code in _distinct_products(applicant.coverage_area):
+        if not _carrier_allowed_for_residence(carrier, applicant):
+            continue
         rows = _rows_for(carrier, product_code, applicant.coverage_area)
         if not rows:
             continue

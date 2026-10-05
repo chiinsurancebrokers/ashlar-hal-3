@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Your HAL quote · Ashlar Assurance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1a2b;--accent:#5747e8;--accent-soft:#eeecfd;--bg:#f4f6f9;--white:#fff;--border:#e7ebef;--text:#172333;--muted:#687586;--good:#1f8a4c;--warn:#a15c00}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+header{background:var(--navy);color:var(--white);padding:22px 20px}
+.wrap{max-width:980px;margin:0 auto}
+.brand{font-size:12px;letter-spacing:.14em;font-weight:700;color:#aeb8c6}
+h1{margin:6px 0 0;font-size:26px;letter-spacing:-.01em}
+main{padding:24px 16px 60px}
+.panel{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:18px}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
+input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font:inherit;font-size:15px;background:var(--white);color:var(--text)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+button.primary{margin-top:16px;background:var(--navy);color:var(--white);border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}
+button.secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+.status{margin-top:12px;font-size:14px}
+.status.error{color:#b3261e}.status.ok{color:var(--good)}
+.lang{float:right;display:flex;gap:6px}
+.lang button{background:transparent;border:1px solid #3a475b;color:var(--white);border-radius:999px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}
+.lang button.on{background:var(--white);color:var(--navy)}
+.summary{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;justify-content:space-between}
+.total{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.total small{font-size:13px;font-weight:400;color:var(--muted)}
+.meta{color:var(--muted);font-size:13px}
+.banner{background:#fdf3e5;color:var(--warn);border-radius:12px;padding:10px 14px;margin:14px 0 0;font-size:14px}
+table.members{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+table.members td{padding:8px 0;border-top:1px solid var(--border)}
+table.members td:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mat{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:999px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px}
+.head{display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44px;border-radius:12px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.plan{font-weight:700;font-size:16px;line-height:1.25}.insurer{color:var(--muted);font-size:12px}
+.stats{font-size:12px;color:var(--muted);margin-top:8px}
+.price{font-size:24px;font-weight:800;margin-top:12px;font-variant-numeric:tabular-nums}.price small{font-size:12px;font-weight:400;color:var(--muted)}
+.spec{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:12.5px;margin-top:12px}.spec b{display:block;color:var(--muted);font-weight:600}
+.benefits{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:14px;font-size:12.5px}
+.benefits .yes::before{content:"✓ ";color:var(--good);font-weight:800}.benefits .no{color:#a7afba}.benefits .no::before{content:"– "}
+.benefits .unk{color:var(--warn)}.benefits .unk::before{content:"? "}
+.docs{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);font-size:13px}
+.docs a{display:block;color:var(--text);text-decoration:none;padding:3px 0}.docs a:hover{text-decoration:underline}
+.hidden{display:none}
+.note{font-size:12px;color:var(--muted);margin-top:16px}
+@media (max-width:640px){.row{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="lang"><button type="button" id="btnEn" onclick="setLang('en')">EN</button><button type="button" id="btnEl" onclick="setLang('el')">ΕΛ</button></div>
+  <div class="brand">ASHLAR ASSURANCE · HAL</div>
+  <h1 id="title"></h1>
+</div></header>
+<main><div class="wrap">
+  <section class="panel" id="formPanel">
+    <p id="intro" style="margin-top:0"></p>
+    <div class="row">
+      <div><label for="ref" id="lblRef"></label><input id="ref" autocomplete="off" placeholder="HAL-20261004-XXXXXXXX"></div>
+      <div><label for="dob" id="lblDob"></label><input id="dob" type="date" autocomplete="bday"></div>
+    </div>
+    <button class="primary" type="button" id="btnOpen" onclick="openQuote()"></button>
+    <div class="status" id="status"></div>
+  </section>
+
+  <div id="result" class="hidden">
+    <section class="panel">
+      <div class="summary">
+        <div><div class="meta" id="hello"></div><div class="total" id="total"></div></div>
+        <div class="meta" id="refMeta"></div>
+      </div>
+      <div class="banner hidden" id="expired"></div>
+      <table class="members" id="members"></table>
+      <button class="primary" type="button" id="btnProposal" onclick="toggleProposal()"></button>
+      <div id="proposal" class="hidden">
+        <div class="row">
+          <div><label for="pFirst" id="lblFirst"></label><input id="pFirst" autocomplete="given-name"></div>
+          <div><label for="pLast" id="lblLast"></label><input id="pLast" autocomplete="family-name"></div>
+          <div><label for="pEmail" id="lblEmail"></label><input id="pEmail" type="email" autocomplete="email"></div>
+          <div><label for="pPhone" id="lblPhone"></label><input id="pPhone" type="tel" autocomplete="tel"></div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input id="pConsent" type="checkbox" style="width:auto;margin-top:4px"><span id="lblConsent"></span></label>
+        <button class="primary" type="button" id="btnSend" onclick="sendProposal()"></button>
+        <div class="status" id="pStatus"></div>
+      </div>
+    </section>
+    <div class="cards" id="cards"></div>
+    <p class="note" id="disclaimer"></p>
+  </div>
+</div></main>
+
+<script>
+const API='/api/v1';
+const T={
+  en:{title:'Your HAL quote',intro:'Enter your quote reference and date of birth to open the quote you saved with HAL.',ref:'Quote reference',dob:'Date of birth',open:'Open my quote',
+      opening:'Opening your quote…',total:'Total',top:'Top option',perYear:'/year',hello:n=>n?`Hello ${n}, here is your saved quote.`:'Here is your saved quote.',
+      refMeta:(r,v)=>`Reference <b>${r}</b><br>Valid until ${v}`,expired:'This quote has expired. Prices may have changed — request a proposal and we will send you an updated price.',
+      proposal:'Request a proposal',first:'First name',last:'Last name',email:'Email',phone:'Phone',consent:'I agree that Ashlar Assurance may contact me about this quote.',send:'Send request',
+      sending:'Sending…',sent:r=>`Thank you — your request was sent (reference ${r}). We will be in touch shortly.`,fill:'Please fill in your name and email and confirm consent.',
+      limit:'Annual limit',coverage:'Coverage',deductible:'Deductible',evacuation:'Evacuation',docs:'Official plan documents',maternity:'maternity',
+      ipid:'Plan summary (IPID)',tob:'Table of Benefits',wording:'Policy Wording',error:'Something went wrong. Please try again.',
+      disclaimer:'Indicative quote calculated by HAL from official rate data. The final premium, acceptance and terms are set by the insurer after application.'},
+  el:{title:'Η προσφορά σας από τον HAL',intro:'Συμπληρώστε τον αριθμό προσφοράς και την ημερομηνία γέννησής σας για να ανοίξετε την προσφορά που αποθηκεύσατε.',ref:'Αριθμός προσφοράς',dob:'Ημερομηνία γέννησης',open:'Άνοιγμα της προσφοράς μου',
+      opening:'Ανοίγουμε την προσφορά σας…',total:'Σύνολο',top:'Πρώτη επιλογή',perYear:'/έτος',hello:n=>n?`Γεια σας ${n}, αυτή είναι η αποθηκευμένη προσφορά σας.`:'Αυτή είναι η αποθηκευμένη προσφορά σας.',
+      refMeta:(r,v)=>`Αριθμός <b>${r}</b><br>Ισχύει έως ${v}`,expired:'Η προσφορά έχει λήξει. Οι τιμές μπορεί να έχουν αλλάξει — ζητήστε πρόταση και θα σας στείλουμε ενημερωμένη τιμή.',
+      proposal:'Ζητήστε πρόταση',first:'Όνομα',last:'Επώνυμο',email:'Email',phone:'Τηλέφωνο',consent:'Συμφωνώ η Ashlar Assurance να επικοινωνήσει μαζί μου για αυτή την προσφορά.',send:'Αποστολή αιτήματος',
+      sending:'Αποστολή…',sent:r=>`Ευχαριστούμε — το αίτημά σας στάλθηκε (αριθμός ${r}). Θα επικοινωνήσουμε σύντομα μαζί σας.`,fill:'Συμπληρώστε όνομα, email και επιβεβαιώστε τη συναίνεση.',
+      limit:'Ετήσιο όριο',coverage:'Κάλυψη',deductible:'Απαλλαγή',evacuation:'Ιατρική διακομιδή',docs:'Επίσημα έντυπα προγράμματος',maternity:'μητρότητα',
+      ipid:'Σύνοψη προγράμματος (IPID)',tob:'Πίνακας Παροχών',wording:'Όροι Ασφάλισης',error:'Κάτι πήγε στραβά. Δοκιμάστε ξανά.',
+      disclaimer:'Ενδεικτική προσφορά από τον HAL με βάση επίσημα τιμολόγια. Η τελική τιμή, η αποδοχή και οι όροι ορίζονται από τον ασφαλιστή μετά την αίτηση.'}
+};
+let L=(new URLSearchParams(location.search).get('lang')||navigator.language||'en').toLowerCase().startsWith('el')?'el':'en';
+let current=null;
+const t=k=>T[L][k];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=iso=>{const d=new Date((iso||'')+'T00:00:00');return isNaN(d)?(iso||''):d.toLocaleDateString(L==='el'?'el-GR':'en-GB',{day:'2-digit',month:L==='el'?'2-digit':'long',year:'numeric'});};
+const money=(v,c)=>{const n=Number(v||0);return (c==='EUR'||!c?'€':c+' ')+n.toLocaleString(L==='el'?'el-GR':'en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});};
+
+function applyText(){
+  document.documentElement.lang=L;
+  [['title','title'],['intro','intro'],['lblRef','ref'],['lblDob','dob'],['btnOpen','open'],['btnProposal','proposal'],['lblFirst','first'],['lblLast','last'],
+   ['lblEmail','email'],['lblPhone','phone'],['lblConsent','consent'],['btnSend','send'],['disclaimer','disclaimer']].forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
+  document.getElementById('btnEn').classList.toggle('on',L==='en');document.getElementById('btnEl').classList.toggle('on',L==='el');
+  if(current)render(current);
+}
+function setLang(l){L=l;applyText();}
+
+async function openQuote(){
+  const ref=document.getElementById('ref').value.trim().toUpperCase(),dob=document.getElementById('dob').value,status=document.getElementById('status');
+  if(!ref||!dob){status.className='status error';status.textContent=t('fill').split('.')[0]+'.';return;}
+  status.className='status';status.textContent=t('opening');
+  try{
+    const r=await fetch(API+'/saved-quotes/retrieve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reference:ref,date_of_birth:dob})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('error'));
+    current=d;if(!new URLSearchParams(location.search).get('lang'))L=d.language==='el'?'el':L;
+    status.textContent='';document.getElementById('formPanel').classList.add('hidden');applyText();
+  }catch(e){status.className='status error';status.textContent=e.message||t('error');}
+}
+
+function docLabel(type){return type==='ipid'?t('ipid'):type==='table_of_benefits'?t('tob'):t('wording');}
+
+function render(d){
+  const q=d.quote||{},household=q.kind==='household';
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('hello').textContent=t('hello')(d.applicant_name);
+  document.getElementById('total').innerHTML=`${esc(household?t('total'):t('top'))}: ${money(q.total_premium,q.currency)}<small>${esc(t('perYear'))}</small>`;
+  document.getElementById('refMeta').innerHTML=t('refMeta')(esc(d.reference),esc(fmtDate(d.valid_until)));
+  const exp=document.getElementById('expired');exp.classList.toggle('hidden',!d.expired);exp.textContent=t('expired');
+  document.getElementById('members').innerHTML=(q.breakdown||[]).map(b=>`<tr><td>${esc(b.label)}${b.maternity?`<span class="mat">${esc(t('maternity'))}</span>`:''}<br><span class="meta">${esc(b.product_name)}</span></td><td>${money(b.premium,b.currency)}</td></tr>`).join('');
+  document.getElementById('cards').innerHTML=(q.cards||[]).map(c=>{
+    const members=(c.household_members||[]).map(m=>`<tr><td>${esc(m.label)}${m.maternity?`<span class="mat">${esc(t('maternity'))}</span>`:''}</td><td>${money(m.premium,m.currency)}</td></tr>`).join('');
+    const benefits=(c.benefit_checklist||[]).map(b=>`<div class="${b.covered===true?'yes':b.covered===false?'no':'unk'}">${esc(b.label)}</div>`).join('');
+    const docs=(c.plan_documents||[]).filter(x=>/^https:\/\//.test(x.url||'')).map(x=>`<a href="${API}/documents/view?url=${encodeURIComponent(x.url)}" target="_blank" rel="noopener">📄 ${esc(docLabel(x.type))}</a>`).join('');
+    return `<article class="card"><div class="head"><div class="logo">${esc(c.card_badge||'MP')}</div><div><div class="plan">${esc(c.product_name)}</div><div class="insurer">${esc(c.insurer)}</div></div></div>
+      <div class="stats">${[c.card_annual_limit?`${esc(t('limit'))}: <b>${esc(c.card_annual_limit)}</b>`:'',esc(c.coverage_area_label||'')].filter(Boolean).join(' · ')}</div>
+      <div class="price">${money(c.premium,c.currency)}<small>${esc(t('perYear'))}</small></div>
+      ${members?`<table class="members">${members}</table>`:''}
+      <div class="spec"><div><b>${esc(t('coverage'))}</b>${esc(c.card_coverage||'—')}</div><div><b>${esc(t('deductible'))}</b>${esc(c.card_deductible||'—')}</div><div><b>${esc(t('evacuation'))}</b>${esc(c.card_evacuation||'—')}</div></div>
+      ${benefits?`<div class="benefits">${benefits}</div>`:''}
+      ${docs?`<div class="docs"><div class="meta" style="font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.05em">${esc(t('docs'))}</div>${docs}</div>`:''}
+    </article>`;}).join('');
+}
+
+function toggleProposal(){document.getElementById('proposal').classList.toggle('hidden');}
+
+async function sendProposal(){
+  const s=document.getElementById('pStatus'),q=(current&&current.quote)||{},st=(current&&current.state)||{};
+  const payload={insurance_interest:'International Health Insurance',first_name:document.getElementById('pFirst').value.trim(),last_name:document.getElementById('pLast').value.trim(),
+    email:document.getElementById('pEmail').value.trim(),phone:document.getElementById('pPhone').value.trim(),residence_country:st.residence_country||'',age:String(st.age||''),
+    coverage_area:st.coverage_area||'',message:`Saved HAL quote ${current.reference}`,consent:document.getElementById('pConsent').checked,website:'',
+    hal_context:{saved_quote_reference:current.reference,applicant_name:st.applicant_name||'',age:st.age||'',residence_country:st.residence_country||'',
+      primary_healthcare_country:st.primary_healthcare_country||'',needs:q.needs||{},household_members:st.household_members||[],
+      household_breakdown:q.breakdown||[],shortlist:q.kind==='household'?[]:(q.cards||[]).slice(0,6).map(c=>({product_name:c.product_name,insurer:c.insurer,premium:c.premium,currency:c.currency})),
+      plan_documents:(q.cards||[]).map(c=>({product_name:c.product_name,documents:(c.plan_documents||[]).map(x=>({label:docLabel(x.type),url:x.url}))}))}};
+  if(!payload.first_name||!payload.last_name||!payload.email||!payload.consent){s.className='status error';s.textContent=t('fill');return;}
+  s.className='status';s.textContent=t('sending');
+  try{const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
+    if(!r.ok)throw new Error(d.detail||t('error'));s.className='status ok';s.textContent=t('sent')(d.reference||'');}
+  catch(e){s.className='status error';s.textContent=e.message||t('error');}
+}
+
+const m=location.pathname.match(/\/quote\/(HAL-\d{8}-[A-Z0-9]{8})/i);
+if(m)document.getElementById('ref').value=m[1].toUpperCase();
+applyText();
+(m?document.getElementById('dob'):document.getElementById('ref')).focus();
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('formPanel').classList.contains('hidden'))openQuote();});
+</script>
+</body>
+</html>
