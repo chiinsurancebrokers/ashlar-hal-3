@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -5,6 +7,7 @@ from pydantic import BaseModel, Field
 from backend.app.services.voice import transcribe_audio, synthesize_speech
 
 router = APIRouter(tags=["voice"])
+log = logging.getLogger("hal.voice")
 
 
 @router.post("/transcribe")
@@ -16,8 +19,10 @@ async def transcribe(file: UploadFile = File(...), language: str | None = Form(N
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
+        log.error("transcribe: 503 %s", exc)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
+        log.error("transcribe: 502 %s", exc)
         raise HTTPException(status_code=502, detail=f"Transcription failed: {str(exc)[:180]}") from exc
 
 
@@ -34,6 +39,8 @@ async def speak(req: SpeakRequest):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
+        log.error("speak: 503 %s", exc)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
+        log.error("speak: 502 %s", exc)
         raise HTTPException(status_code=502, detail=f"Speech synthesis failed: {str(exc)[:180]}") from exc
