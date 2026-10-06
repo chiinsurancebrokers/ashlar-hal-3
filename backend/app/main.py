@@ -1,7 +1,9 @@
+import logging
+import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import get_settings
@@ -20,6 +22,15 @@ from backend.app.api.followups import router as followups_router
 from backend.app.services.architecture_auditor_agent import audit_architecture
 
 settings = get_settings()
+
+# Make "hal.*" errors (lead delivery, voice, follow-ups) visible in Railway logs
+# with their reason, not just the HTTP status code.
+_hal_log = logging.getLogger("hal")
+if not _hal_log.handlers:
+    _handler = logging.StreamHandler(sys.stderr)
+    _handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    _hal_log.addHandler(_handler)
+    _hal_log.setLevel(logging.INFO)
 BASE_DIR = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = BASE_DIR / "frontend"
 
@@ -87,6 +98,39 @@ if FRONTEND_DIR.exists():
             (FRONTEND_DIR / "retrieve.html").read_text(encoding="utf-8"),
             headers={"Cache-Control": "no-store", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer"},
         )
+
+
+ICONS_DIR = FRONTEND_DIR / "icons"
+_ICON_CACHE = {"Cache-Control": "public, max-age=604800"}
+
+if ICONS_DIR.exists():
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return FileResponse(ICONS_DIR / "favicon.ico", media_type="image/x-icon", headers=_ICON_CACHE)
+
+    @app.get("/favicon.svg", include_in_schema=False)
+    def favicon_svg():
+        return FileResponse(ICONS_DIR / "favicon.svg", media_type="image/svg+xml", headers=_ICON_CACHE)
+
+    # iOS asks for these names (and the -120x120 variants) when a page is bookmarked.
+    @app.get("/apple-touch-icon.png", include_in_schema=False)
+    @app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
+    @app.get("/apple-touch-icon-120x120.png", include_in_schema=False)
+    @app.get("/apple-touch-icon-120x120-precomposed.png", include_in_schema=False)
+    def apple_touch_icon():
+        return FileResponse(ICONS_DIR / "apple-touch-icon.png", media_type="image/png", headers=_ICON_CACHE)
+
+
+ROBOTS_TXT = """User-agent: *
+Allow: /
+Disallow: /quote
+Disallow: /api/
+"""
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots():
+    return PlainTextResponse(ROBOTS_TXT, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/health")
