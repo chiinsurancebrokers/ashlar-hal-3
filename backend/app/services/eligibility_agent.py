@@ -169,6 +169,8 @@ async def _explain_with_openai(
         },
         "store": False,
     }
+    from backend.app.services import usage_guard
+    usage_guard.check(settings)
     async with httpx.AsyncClient(timeout=settings.openai_chat_timeout_seconds) as client:
         response = await client.post(
             "https://api.openai.com/v1/responses",
@@ -180,7 +182,9 @@ async def _explain_with_openai(
         )
     if not (200 <= response.status_code < 300):
         raise RuntimeError(f"OpenAI eligibility agent returned {response.status_code}: {(response.text or '')[:200]}")
-    parsed = json.loads(_extract_output_text(response.json()))
+    data = response.json()
+    usage_guard.record_from_payload(data, settings)
+    parsed = json.loads(_extract_output_text(data))
     explanation = str(parsed.get("explanation") or deterministic.explanation).strip()
     questions = [str(q).strip() for q in (parsed.get("questions") or []) if str(q).strip()]
     if questions:

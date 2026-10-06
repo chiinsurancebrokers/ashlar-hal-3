@@ -228,11 +228,15 @@ async def _openai_verify(*, state: dict[str, Any], quotes: list[dict[str, Any]],
         "Return WARN for presentation/language/evidence-quality concerns. Never propose a new premium or rewrite factual values."
     )
     request = {"model": settings.openai_chat_model, "instructions": instructions, "input": json.dumps(packet, ensure_ascii=False, default=str), "max_output_tokens": settings.openai_verifier_max_output_tokens, "text": {"format": {"type": "json_schema", "name": "hal_verifier_decision", "strict": True, "schema": _VERIFIER_SCHEMA}}, "store": False}
+    from backend.app.services import usage_guard
+    usage_guard.check(settings)
     async with httpx.AsyncClient(timeout=settings.openai_verifier_timeout_seconds) as client:
         response = await client.post("https://api.openai.com/v1/responses", headers={"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"}, json=request)
     if not (200 <= response.status_code < 300):
         raise RuntimeError(f"OpenAI verifier returned {response.status_code}: {(response.text or '')[:240]}")
-    parsed = json.loads(_extract_output_text(response.json()))
+    data = response.json()
+    usage_guard.record_from_payload(data, settings)
+    parsed = json.loads(_extract_output_text(data))
     decision = VerificationDecision.model_validate(parsed)
     decision.model_used = True
     decision.model_status = "ok"

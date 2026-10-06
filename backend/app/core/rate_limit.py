@@ -7,6 +7,19 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 
+def client_ip(request: Request) -> str:
+    """The visitor's address. HAL runs behind Railway's proxy, so the socket
+    address is the proxy; Railway puts the visitor in X-Real-IP and appends
+    it as the last X-Forwarded-For entry (earlier entries can be forged)."""
+    real = (request.headers.get("x-real-ip") or "").strip()
+    if real:
+        return real
+    forwarded = [p.strip() for p in (request.headers.get("x-forwarded-for") or "").split(",") if p.strip()]
+    if forwarded:
+        return forwarded[-1]
+    return request.client.host if request.client else "unknown"
+
+
 class SimpleRateLimitMiddleware(BaseHTTPMiddleware):
     """Per-IP sliding-window rate limit for expensive/abusable POST routes.
 
@@ -27,8 +40,7 @@ class SimpleRateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
         if request.method == "POST" and any(path.startswith(p) for p in self.limited_prefixes):
-            client_ip = request.client.host if request.client else "unknown"
-            key = f"{client_ip}:{path}"
+            key = f"{client_ip(request)}:{path}"
             now = time.monotonic()
             hits = self._hits[key]
             while hits and now - hits[0] > self.window_seconds:

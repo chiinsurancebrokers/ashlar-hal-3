@@ -293,8 +293,18 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
 
     claude_ack = ""
     provisional = classify_journey(message, state)
+    # A short answer that the deterministic parser already understood (a
+    # button tap such as "Yes" or "€0 deductible") gains nothing from an AI
+    # call; household answers never use AI. This is most turns.
+    answered_deterministically = bool(
+        prior_pending and deterministic_updates
+        and deterministic_updates.get("pending_question", "unset") is None
+        and len(message.strip()) <= 40
+    )
     if (settings.anthropic_api_key and provisional not in {"travel", "local_review"}
-            and not state.get("discovery_complete") and prior_pending != "name"):
+            and not state.get("discovery_complete") and prior_pending != "name"
+            and not str(prior_pending or "").startswith("family_")
+            and not answered_deterministically):
         intake = await intake_analysis(message, state, history, greek)
         ai_updates = dict(intake.get("applicant_updates", {}) or {})
         # Deterministic answers to the actual pending question are authoritative.

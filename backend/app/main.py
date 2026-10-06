@@ -20,6 +20,7 @@ from backend.app.api.documents import router as documents_router
 from backend.app.api.saved_quotes import router as saved_quotes_router
 from backend.app.api.followups import router as followups_router
 from backend.app.services.architecture_auditor_agent import audit_architecture
+from backend.app.services.usage_guard import snapshot as usage_snapshot
 
 settings = get_settings()
 
@@ -149,6 +150,7 @@ def health():
         "family_pricing": "active",
         "quote_validity_days": settings.quote_validity_days,
         "followups": "enabled" if settings.followups_enabled else "disabled",
+        "ai_usage_today": usage_snapshot(),
         "gmail_lead_delivery": "configured" if all([
             settings.gmail_client_id, settings.gmail_client_secret, settings.gmail_refresh_token,
             settings.gmail_sender_email, settings.gmail_lead_recipient,

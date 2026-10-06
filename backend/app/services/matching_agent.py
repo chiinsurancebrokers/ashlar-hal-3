@@ -76,6 +76,8 @@ async def explain_matching(quotes: list[dict[str, Any]], excluded: list[dict[str
         "text":{"format":{"type":"json_schema","name":"hal_matching_explanation","strict":True,"schema":schema}}, "store":False,
     }
     try:
+        from backend.app.services import usage_guard
+        usage_guard.check(settings)
         async with httpx.AsyncClient(timeout=settings.openai_chat_timeout_seconds) as client:
             response = await client.post("https://api.openai.com/v1/responses", headers={"Authorization":f"Bearer {settings.openai_api_key}","Content-Type":"application/json"}, json=request)
         if not (200 <= response.status_code < 300):

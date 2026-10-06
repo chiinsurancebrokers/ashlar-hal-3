@@ -412,6 +412,7 @@ let lastShortlist = [];
 let excludedPlans = [];
 let currentPolicy = null;
 let currentPolicyToken = null;
+const engagement = {tell_more:[], docs_opened:[], compared:0};
 const compareSelected = new Set();
 
 const I18N = {
@@ -820,6 +821,7 @@ function toggleCompare(key,btn){
 
 function openSourceViewer(url,title){
   if(!/^https?:\/\//i.test(url||'')) return;
+  {const plan=((url.match(/(standard-plus|standard|comprehensive|premium|elite)/i)||[])[1]||'');const label=(String(title||'Document')+(plan?' · '+plan:'')).slice(0,80);if(engagement.docs_opened.length<20&&!engagement.docs_opened.includes(label))engagement.docs_opened.push(label);}
   const modal=document.getElementById('sourceViewerModal');
   document.getElementById('sourceViewerTitle').textContent=title||t('source');
   // Carriers such as morgan-price.eu refuse to be framed by other sites, so
@@ -859,6 +861,7 @@ function addPlanExplanationMsg(answer, docs){
 
 async function tellMeMore(i){
   const q=lastQuotes[i];if(!q)return;
+  if(q.product_name&&!engagement.tell_more.includes(q.product_name))engagement.tell_more.push(q.product_name);
   showThinking(lang()==='el'?'Αναλύω το πρόγραμμα':'Reviewing the plan evidence');
   try{
     const r=await fetch(API+'/quotes/explain',{
@@ -918,6 +921,7 @@ function currentPolicyBenefitForRow(row){
 }
 
 function openCompareWithGuard(){
+  engagement.compared++;
   const minimum=currentPolicy?1:2;
   if(compareSelected.size<minimum){
     alert(currentPolicy
@@ -1332,6 +1336,8 @@ function buildHalContext(){
     plan_documents:(lastShortlist||[]).slice(0,6).filter(q=>(q.plan_documents||[]).length).map(q=>({product_name:q.product_name,documents:(q.plan_documents||[]).map(d=>({label:planDocLabel(d.type),url:d.url}))})),
     session_reference:st.session_reference||'',
     saved_quote_reference:st.saved_quote_reference||'',
+    engagement:{messages:history.filter(h=>h.role==='user').length,plans_shown:(lastShortlist||[]).length||(lastHousehold||[]).length,
+      tell_more:engagement.tell_more.slice(0,10),docs_opened:engagement.docs_opened.slice(0,20),compared:engagement.compared},
   };
 }
 

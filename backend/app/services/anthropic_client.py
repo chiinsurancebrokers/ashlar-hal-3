@@ -55,6 +55,8 @@ async def claude_response(*, instructions: str, message: str, history: list[dict
     if not settings.anthropic_api_key:
         raise RuntimeError("ANTHROPIC_API_KEY is not configured.")
 
+    from backend.app.services import usage_guard
+    usage_guard.check(settings)
     body = build_request_body(instructions=instructions, message=message, history=history,
                                json_mode=json_mode, max_tokens=max_tokens)
     headers = {
@@ -67,6 +69,7 @@ async def claude_response(*, instructions: str, message: str, history: list[dict
         response = await client.post(MESSAGES_URL, headers=headers, json=body)
         response.raise_for_status()
         payload = response.json()
+    usage_guard.record_from_payload(payload, settings)
 
     text = extract_text(payload)
     if not text:

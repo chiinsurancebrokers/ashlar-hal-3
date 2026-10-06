@@ -97,6 +97,38 @@ def _fmt_money(amount: object, currency: object) -> str:
         return ""
 
 
+def engagement_summary(payload: dict) -> tuple[str, str]:
+    """(stage, details) for the lead email: how far this person got with HAL."""
+    ctx = payload.get("hal_context") if isinstance(payload.get("hal_context"), dict) else {}
+    eng = ctx.get("engagement") if isinstance(ctx.get("engagement"), dict) else {}
+    plans = int(eng.get("plans_shown") or 0) or len(ctx.get("shortlist") or []) or len(ctx.get("household_breakdown") or [])
+    tell = [str(x) for x in (eng.get("tell_more") or [])][:10]
+    docs = [str(x) for x in (eng.get("docs_opened") or [])][:20]
+    compared = int(eng.get("compared") or 0)
+    saved = bool(ctx.get("saved_quote_reference"))
+    contactable = bool(str(payload.get("phone") or "").strip() or str(payload.get("date_of_birth") or "").strip())
+    if plans and (contactable or saved or tell or docs or compared):
+        stage = "HOT"
+    elif plans:
+        stage = "WARM"
+    else:
+        stage = "EARLY (no prices seen yet)"
+    details = []
+    if plans:
+        details.append(f"saw {plans} plan option{'s' if plans != 1 else ''}")
+    if tell:
+        details.append("asked about " + ", ".join(tell))
+    if docs:
+        details.append(f"opened {len(docs)} document{'s' if len(docs) != 1 else ''} (" + "; ".join(docs[:6]) + ")")
+    if compared:
+        details.append("used the comparison")
+    if saved:
+        details.append("saved the quote")
+    if eng.get("messages"):
+        details.append(f"{int(eng['messages'])} messages with HAL")
+    return stage, " · ".join(details)
+
+
 def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
     """Turn the HAL conversation context into email sections.
 
@@ -245,7 +277,9 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
     sections, context_html = _context_sections(payload.get("hal_context") or {})
     context_plain = "\n\n".join(h + ":\n" + "\n".join(f"- {l}" for l in lines) for h, lines in sections)
 
+    stage, stage_details = engagement_summary(payload)
     contact_rows = [
+        ("Engagement", f"{stage} — {stage_details}" if stage_details else stage),
         ("Interest", payload.get("insurance_interest", "")), ("Name", name),
         ("Email", payload.get("email", "")), ("Phone", payload.get("phone", "")),
         ("Residence", payload.get("residence_country", "")), ("Age", payload.get("age", "")),
@@ -288,7 +322,7 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
         "Prices are indicative figures shown by HAL and remain subject to insurer underwriting and confirmation.</p>"
         "</body></html>"
     )
-    msg = EmailMessage(); msg["From"] = sender; msg["To"] = recipient; msg["Subject"] = (("REPEAT — HOT — " if repeat else "") + f"New HAL Lead — {payload.get('insurance_interest','Insurance Enquiry')} — {reference}")[:240]
+    msg = EmailMessage(); msg["From"] = sender; msg["To"] = recipient; msg["Subject"] = (("REPEAT — HOT — " if repeat else "") + f"New HAL Lead — {payload.get('insurance_interest','Insurance Enquiry')} — {reference}" + ("" if repeat else f" — {stage.split(' ')[0]}"))[:240]
     if payload.get("email"): msg["Reply-To"] = str(payload["email"]).strip()
     msg.set_content(plain); msg.add_alternative(html_body, subtype="html"); return msg
 

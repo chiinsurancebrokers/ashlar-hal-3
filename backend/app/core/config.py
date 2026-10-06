@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     # Host header from putting someone else's domain into an Ashlar email).
     public_host_allowlist: str = ("hal.ashlarassurance.com,ashlar-hal-3-production.up.railway.app,"
                                   "ashlar-hal-3-adviser-os-staging.up.railway.app,localhost,127.0.0.1,testserver")
+    # AI usage limits (HAL keeps working without AI when one is reached).
+    ai_calls_per_conversation: int = 60
+    ai_calls_per_ip_per_day: int = 150
+    ai_daily_budget_usd: float = 15.0
+    ai_cost_per_mtok_input: float = 3.0
+    ai_cost_per_mtok_output: float = 15.0
     followups_enabled: bool = False
     followup_poll_seconds: int = 300
     followup_fast_mode: bool = False  # staging only: send within minutes instead of days
