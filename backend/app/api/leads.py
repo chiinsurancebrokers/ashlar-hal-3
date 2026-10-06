@@ -6,7 +6,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from backend.app.services.lead_store import mark_delivery, store_lead
+from backend.app.services.lead_store import mark_delivery, previous_proposals, store_lead
 from backend.app.services.leads import send_lead, send_comparison_email, send_lead_ack
 
 router = APIRouter(prefix="/leads", tags=["leads"])
@@ -68,6 +68,17 @@ async def create_lead(req: LeadRequest):
         raise HTTPException(status_code=400, detail="Consent is required before sending the enquiry.")
     payload = req.model_dump()
     reference = new_lead_reference()
+    saved_ref = str((req.hal_context or {}).get("saved_quote_reference") or "").strip().upper()
+    # A second request from the same person (or for the same saved quote) is a
+    # strong buying signal: flag it so the adviser email stands out.
+    try:
+        earlier = await previous_proposals(str(req.email), saved_ref)
+    except Exception as exc:
+        log.warning("proposal %s: could not check for earlier requests: %s", reference, exc)
+        earlier = []
+    if earlier:
+        payload["repeat_of"] = {"reference": earlier[0].get("reference"),
+                                "requested_at": earlier[0].get("created_at"), "count": len(earlier)}
     # 1. Save first: a broken mail key must never lose a prospect.
     stored = await _store("proposal", reference, payload)
     # 2. Then email the adviser.
@@ -84,6 +95,7 @@ async def create_lead(req: LeadRequest):
             await mark_delivery(reference, sent=True, transport=result.get("transport"))
         result["delivered"] = True
     result["stored"] = stored
+    result["repeat"] = bool(earlier)
     # Confirmation to the client (best effort: the enquiry itself is already with Ashlar).
     try:
         await send_lead_ack(payload, str(result.get("reference") or reference))
@@ -93,7 +105,6 @@ async def create_lead(req: LeadRequest):
         result["ack_sent"] = False
     # An adviser now has the enquiry: the "any questions?" check-in is no
     # longer needed (the expiry reminder stays).
-    saved_ref = str((req.hal_context or {}).get("saved_quote_reference") or "").strip().upper()
     if saved_ref:
         try:
             from backend.app.services.followups import cancel_followups

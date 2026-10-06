@@ -49,6 +49,12 @@ def calls(monkeypatch):
             raise RuntimeError("Resend API returned 401: invalid key")
         return {"status": "sent", "transport": "resend", "message_id": "m2", "plans_sent": keys}
 
+    async def previous(email, saved_ref="", settings=None, limit=5):
+        log.append(("previous", email, saved_ref))
+        return list(earlier)
+
+    earlier: list = []
+    monkeypatch.setattr(api, "previous_proposals", previous)
     monkeypatch.setattr(api, "store_lead", store)
     monkeypatch.setattr(api, "mark_delivery", mark)
     monkeypatch.setattr(api, "send_lead", send)
@@ -64,9 +70,10 @@ def test_lead_is_stored_before_the_email_and_marked_sent(calls):
     body = r.json()
     assert body["delivered"] is True and body["stored"] is True and body["ack_sent"] is True
     ref = body["reference"]
-    assert [c[0] for c in log] == ["store", "send", "mark", "ack"]
-    assert log[0] == ("store", "proposal", ref) and log[1] == ("send", ref)
-    assert log[2] == ("mark", ref, True, None) and log[3] == ("ack", ref)
+    assert [c[0] for c in log] == ["previous", "store", "send", "mark", "ack"]
+    assert log[1] == ("store", "proposal", ref) and log[2] == ("send", ref)
+    assert log[3] == ("mark", ref, True, None) and log[4] == ("ack", ref)
+    assert body["repeat"] is False
 
 
 def test_email_failure_still_accepts_a_stored_lead(calls, caplog):
@@ -173,3 +180,102 @@ def test_robots_txt_keeps_quotes_and_api_out_of_search():
     r = client.get("/robots.txt")
     assert r.status_code == 200
     assert "Disallow: /quote" in r.text and "Disallow: /api/" in r.text and "Allow: /" in r.text
+
+
+# ---------------------------------------------------------------------------
+# Returning clients: repeat requests are flagged as hot
+# ---------------------------------------------------------------------------
+
+def test_second_request_is_flagged_repeat_and_carries_the_earlier_reference(calls, monkeypatch):
+    log, _ = calls
+    stored_payloads = []
+
+    async def store(kind, reference, payload, settings=None):
+        stored_payloads.append(payload)
+
+    async def previous(email, saved_ref="", settings=None, limit=5):
+        assert email == "maria@example.com" and saved_ref == "HAL-20261006-J0PD12F7"
+        return [{"reference": "HAL-20261006-3A92AECF", "created_at": "2026-10-06T06:32:41+00:00"}]
+
+    sent = {}
+
+    async def send(payload, *, reference=None):
+        sent["payload"] = payload
+        return {"status": "sent", "reference": reference, "transport": "resend"}
+
+    monkeypatch.setattr(api, "store_lead", store)
+    monkeypatch.setattr(api, "previous_proposals", previous)
+    monkeypatch.setattr(api, "send_lead", send)
+    lead = {**LEAD, "hal_context": {"saved_quote_reference": "hal-20261006-j0pd12f7"}}
+    r = client.post("/api/v1/leads", json=lead)
+    assert r.status_code == 200 and r.json()["repeat"] is True
+    repeat = stored_payloads[0]["repeat_of"]
+    assert repeat == {"reference": "HAL-20261006-3A92AECF", "requested_at": "2026-10-06T06:32:41+00:00", "count": 1}
+    assert sent["payload"]["repeat_of"] == repeat
+
+
+def test_repeat_lookup_failure_never_blocks_a_lead(calls, monkeypatch):
+    log, _ = calls
+
+    async def broken(*args, **kwargs):
+        raise RuntimeError("Supabase returned 503")
+    monkeypatch.setattr(api, "previous_proposals", broken)
+    r = client.post("/api/v1/leads", json=LEAD)
+    assert r.status_code == 200 and r.json()["repeat"] is False and r.json()["delivered"] is True
+
+
+def test_repeat_email_subject_and_banner():
+    from datetime import datetime, timedelta, timezone
+    from backend.app.services.leads import _build_lead_message
+    earlier = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
+    msg = _build_lead_message({**LEAD, "repeat_of": {"reference": "HAL-20261006-3A92AECF",
+                                                     "requested_at": earlier, "count": 1}},
+                              "HAL-20261006-NEW00001", "Ashlar <q@a.com>", "broker@example.com")
+    assert msg["Subject"].startswith("REPEAT — HOT — New HAL Lead")
+    plain = msg.get_body(preferencelist=("plain",)).get_content()
+    assert plain.startswith("REPEAT — HOT LEAD") and "HAL-20261006-3A92AECF (3 hours ago)" in plain
+    assert "REPEAT — HOT LEAD" in msg.get_body(preferencelist=("html",)).get_content()
+    first = _build_lead_message(dict(LEAD), "HAL-1", "Ashlar <q@a.com>", "broker@example.com")
+    assert first["Subject"].startswith("New HAL Lead") and "REPEAT" not in first.get_body(preferencelist=("plain",)).get_content()
+
+
+def test_previous_proposals_queries_by_email_or_saved_quote(monkeypatch):
+    import asyncio
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+    get_settings.cache_clear()
+    seen = {}
+
+    async def fake_get(self, url, **kwargs):
+        seen["url"], seen["params"] = url, kwargs["params"]
+        return httpx.Response(200, json=[{"reference": "HAL-A", "created_at": "2026-10-06T06:32:41+00:00"}])
+
+    monkeypatch.setattr(httpx.AsyncClient, "get", fake_get)
+    try:
+        rows = asyncio.run(lead_store.previous_proposals("Maria@Example.com", "HAL-20261006-J0PD12F7"))
+    finally:
+        get_settings.cache_clear()
+    assert rows[0]["reference"] == "HAL-A"
+    p = seen["params"]
+    assert p["kind"] == "eq.proposal" and p["order"] == "created_at.desc"
+    assert p["or"] == ('(email.eq."maria@example.com",'
+                       'payload->hal_context->>saved_quote_reference.eq."HAL-20261006-J0PD12F7")')
+
+
+def test_stored_email_is_lowercased(monkeypatch):
+    import asyncio
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test")
+    get_settings.cache_clear()
+    sent = {}
+
+    async def fake_post(self, url, **kwargs):
+        sent["json"] = kwargs["json"]
+        return httpx.Response(201)
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
+    try:
+        asyncio.run(lead_store.store_lead("proposal", "HAL-X", {**LEAD, "email": "Maria@Example.COM"}))
+    finally:
+        get_settings.cache_clear()
+    assert sent["json"]["email"] == "maria@example.com"

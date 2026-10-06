@@ -9,6 +9,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0c1727">
+<script src="/static/dob-input.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -69,7 +70,7 @@ table.members td:last-child{text-align:right;font-weight:700;font-variant-numeri
     <p id="intro" style="margin-top:0"></p>
     <div class="row">
       <div><label for="ref" id="lblRef"></label><input id="ref" autocomplete="off" placeholder="HAL-20261004-XXXXXXXX"></div>
-      <div><label for="dob" id="lblDob"></label><input id="dob" type="date" autocomplete="bday"></div>
+      <div><label for="dob" id="lblDob"></label><input id="dob" data-dob></div>
     </div>
     <button class="primary" type="button" id="btnOpen" onclick="openQuote()"></button>
     <div class="status" id="status"></div>
@@ -83,6 +84,7 @@ table.members td:last-child{text-align:right;font-weight:700;font-variant-numeri
       </div>
       <div class="banner hidden" id="expired"></div>
       <table class="members" id="members"></table>
+      <div class="banner hidden" id="already" style="background:#eef7f1;border-color:#1a7a4c;color:#14532d"></div>
       <button class="primary" type="button" id="btnProposal" onclick="toggleProposal()"></button>
       <div id="proposal" class="hidden">
         <div class="row">
@@ -91,6 +93,8 @@ table.members td:last-child{text-align:right;font-weight:700;font-variant-numeri
           <div><label for="pEmail" id="lblEmail"></label><input id="pEmail" type="email" autocomplete="email"></div>
           <div><label for="pPhone" id="lblPhone"></label><input id="pPhone" type="tel" autocomplete="tel"></div>
         </div>
+        <label for="pMessage" id="lblMessage"></label>
+        <textarea id="pMessage" rows="3" maxlength="1500" style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font:inherit;font-size:15px;margin-bottom:6px"></textarea>
         <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input id="pConsent" type="checkbox" style="width:auto;margin-top:4px"><span id="lblConsent"></span></label>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="primary" type="button" id="btnSend" onclick="sendProposal()"></button>
@@ -118,7 +122,7 @@ const T={
       refMeta:(r,v)=>`Reference <b>${r}</b><br>Valid until ${v}`,expired:'This quote has expired. Prices may have changed — request a proposal and we will send you an updated price.',
       proposal:'Request a proposal',first:'First name',last:'Last name',email:'Email',phone:'Phone',consent:'I agree that Ashlar Assurance may contact me about this quote.',send:'Send request',cancel:'Cancel',back:'Back to HAL',thanksTitle:n=>n?`Thank you, ${n}!`:'Thank you!',
       thanksBody:r=>`We have received your request (reference ${r}). An Ashlar adviser will contact you shortly — we have also sent you a confirmation email.`,
-      sending:'Sending…',sent:r=>`Thank you — your request was sent (reference ${r}). We will be in touch shortly.`,fill:'Please fill in your name and email and confirm consent.',
+      sending:'Sending…',sent:r=>`Thank you — your request was sent (reference ${r}). We will be in touch shortly.`,fill:'Please fill in your name and email and confirm consent.',openFill:'Please enter your quote reference and date of birth.',dobInvalid:'Please enter a valid date of birth as DD/MM/YYYY.',already:(r,d)=>`We received your proposal request (reference ${r}) on ${d}. An Ashlar adviser will contact you shortly.`,note:'Add a note or ask for a call sooner',message:'Message (optional)',messagePh:'e.g. the best time to call you, or anything you would like to add',noteThanksBody:r=>`Thank you — we have added your note (reference ${r}) and an adviser will be in touch soon.`,
       limit:'Annual limit',coverage:'Coverage',deductible:'Deductible',evacuation:'Evacuation',docs:'Official plan documents',maternity:'maternity',
       ipid:'Plan summary (IPID)',tob:'Table of Benefits',wording:'Policy Wording',error:'Something went wrong. Please try again.',
       disclaimer:'Indicative quote calculated by HAL from official rate data. The final premium, acceptance and terms are set by the insurer after application.'},
@@ -127,7 +131,7 @@ const T={
       refMeta:(r,v)=>`Αριθμός <b>${r}</b><br>Ισχύει έως ${v}`,expired:'Η προσφορά έχει λήξει. Οι τιμές μπορεί να έχουν αλλάξει — ζητήστε πρόταση και θα σας στείλουμε ενημερωμένη τιμή.',
       proposal:'Ζητήστε πρόταση',first:'Όνομα',last:'Επώνυμο',email:'Email',phone:'Τηλέφωνο',consent:'Συμφωνώ η Ashlar Assurance να επικοινωνήσει μαζί μου για αυτή την προσφορά.',send:'Αποστολή αιτήματος',cancel:'Ακύρωση',back:'Επιστροφή στον HAL',thanksTitle:n=>n?`Ευχαριστούμε, ${n}!`:'Ευχαριστούμε!',
       thanksBody:r=>`Λάβαμε το αίτημά σας (αριθμός ${r}). Ένας σύμβουλος της Ashlar θα επικοινωνήσει σύντομα μαζί σας — σας στείλαμε και email επιβεβαίωσης.`,
-      sending:'Αποστολή…',sent:r=>`Ευχαριστούμε — το αίτημά σας στάλθηκε (αριθμός ${r}). Θα επικοινωνήσουμε σύντομα μαζί σας.`,fill:'Συμπληρώστε όνομα, email και επιβεβαιώστε τη συναίνεση.',
+      sending:'Αποστολή…',sent:r=>`Ευχαριστούμε — το αίτημά σας στάλθηκε (αριθμός ${r}). Θα επικοινωνήσουμε σύντομα μαζί σας.`,fill:'Συμπληρώστε όνομα, email και επιβεβαιώστε τη συναίνεση.',openFill:'Συμπληρώστε τον αριθμό προσφοράς και την ημερομηνία γέννησής σας.',dobInvalid:'Συμπληρώστε μια έγκυρη ημερομηνία γέννησης (ΗΗ/ΜΜ/ΕΕΕΕ).',already:(r,d)=>`Λάβαμε το αίτημά σας για πρόταση (αριθμός ${r}) στις ${d}. Ένας σύμβουλος της Ashlar θα επικοινωνήσει σύντομα μαζί σας.`,note:'Προσθέστε σημείωση ή ζητήστε να σας καλέσουμε νωρίτερα',message:'Μήνυμα (προαιρετικό)',messagePh:'π.χ. την καλύτερη ώρα να σας καλέσουμε ή ό,τι άλλο θέλετε να προσθέσετε',noteThanksBody:r=>`Ευχαριστούμε — προσθέσαμε τη σημείωσή σας (αριθμός ${r}) και ένας σύμβουλος θα επικοινωνήσει σύντομα μαζί σας.`,
       limit:'Ετήσιο όριο',coverage:'Κάλυψη',deductible:'Απαλλαγή',evacuation:'Ιατρική διακομιδή',docs:'Επίσημα έντυπα προγράμματος',maternity:'μητρότητα',
       ipid:'Σύνοψη προγράμματος (IPID)',tob:'Πίνακας Παροχών',wording:'Όροι Ασφάλισης',error:'Κάτι πήγε στραβά. Δοκιμάστε ξανά.',
       disclaimer:'Ενδεικτική προσφορά από τον HAL με βάση επίσημα τιμολόγια. Η τελική τιμή, η αποδοχή και οι όροι ορίζονται από τον ασφαλιστή μετά την αίτηση.'}
@@ -142,15 +146,16 @@ const money=(v,c)=>{const n=Number(v||0);return (c==='EUR'||!c?'€':c+' ')+n.to
 function applyText(){
   document.documentElement.lang=L;
   [['title','title'],['intro','intro'],['lblRef','ref'],['lblDob','dob'],['btnOpen','open'],['btnProposal','proposal'],['lblFirst','first'],['lblLast','last'],
-   ['lblEmail','email'],['lblPhone','phone'],['lblConsent','consent'],['btnSend','send'],['btnCancel','cancel'],['thanksBack','back'],['disclaimer','disclaimer']].forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
+   ['lblEmail','email'],['lblPhone','phone'],['lblMessage','message'],['lblConsent','consent'],['btnSend','send'],['btnCancel','cancel'],['thanksBack','back'],['disclaimer','disclaimer']].forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
+  document.getElementById('pMessage').placeholder=t('messagePh');
   document.getElementById('btnEn').classList.toggle('on',L==='en');document.getElementById('btnEl').classList.toggle('on',L==='el');
   if(current)render(current);
 }
 function setLang(l){L=l;applyText();}
 
 async function openQuote(){
-  const ref=document.getElementById('ref').value.trim().toUpperCase(),dob=document.getElementById('dob').value,status=document.getElementById('status');
-  if(!ref||!dob){status.className='status error';status.textContent=t('fill').split('.')[0]+'.';return;}
+  const ref=document.getElementById('ref').value.trim().toUpperCase(),dobEl=document.getElementById('dob'),dob=dobISO(dobEl),status=document.getElementById('status');
+  if(!ref||!dob){status.className='status error';status.textContent=(ref&&dobEl.value.trim())?t('dobInvalid'):t('openFill');return;}
   status.className='status';status.textContent=t('opening');
   try{
     const r=await fetch(API+'/saved-quotes/retrieve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reference:ref,date_of_birth:dob})});
@@ -168,6 +173,12 @@ function render(d){
   document.getElementById('hello').textContent=t('hello')(d.applicant_name);
   document.getElementById('total').innerHTML=`${esc(household?t('total'):t('top'))}: ${money(q.total_premium,q.currency)}<small>${esc(t('perYear'))}</small>`;
   document.getElementById('refMeta').innerHTML=t('refMeta')(esc(d.reference),esc(fmtDate(d.valid_until)));
+  const al=document.getElementById('already'),prior=d.proposal;
+  al.classList.toggle('hidden',!prior);
+  if(prior)al.textContent=t('already')(prior.reference,fmtDate(String(prior.requested_at||'').slice(0,10)));
+  const bp=document.getElementById('btnProposal');
+  bp.textContent=prior?t('note'):t('proposal');
+  bp.style.background=prior?'none':'';bp.style.color=prior?'var(--text)':'';bp.style.border=prior?'1px solid var(--border)':'';
   const exp=document.getElementById('expired');exp.classList.toggle('hidden',!d.expired);exp.textContent=t('expired');
   document.getElementById('members').innerHTML=(q.breakdown||[]).map(b=>`<tr><td>${esc(b.label)}${b.maternity?`<span class="mat">${esc(t('maternity'))}</span>`:''}<br><span class="meta">${esc(b.product_name)}</span></td><td>${money(b.premium,b.currency)}</td></tr>`).join('');
   document.getElementById('cards').innerHTML=(q.cards||[]).map(c=>{
@@ -184,14 +195,18 @@ function render(d){
     </article>`;}).join('');
 }
 
+function savedContact(){try{return JSON.parse(localStorage.getItem('hal_contact')||'{}')||{};}catch(e){return {};}}
+function rememberContact(c){try{localStorage.setItem('hal_contact',JSON.stringify(c));}catch(e){}}
 function toggleProposal(){const p=document.getElementById('proposal');p.classList.toggle('hidden');
+  const c=savedContact();
+  [['pFirst','first_name'],['pLast','last_name'],['pEmail','email'],['pPhone','phone']].forEach(([id,k])=>{const el=document.getElementById(id);if(!el.value&&c[k])el.value=c[k];});
   const f=document.getElementById('pFirst');if(!f.value&&current&&current.applicant_name)f.value=current.applicant_name;}
 
 async function sendProposal(){
   const s=document.getElementById('pStatus'),q=(current&&current.quote)||{},st=(current&&current.state)||{};
   const payload={insurance_interest:'International Health Insurance',first_name:document.getElementById('pFirst').value.trim(),last_name:document.getElementById('pLast').value.trim(),
     email:document.getElementById('pEmail').value.trim(),phone:document.getElementById('pPhone').value.trim(),residence_country:st.residence_country||'',age:String(st.age||''),
-    coverage_area:st.coverage_area||'',message:`Saved HAL quote ${current.reference}`,consent:document.getElementById('pConsent').checked,website:'',
+    coverage_area:st.coverage_area||'',message:[`Saved HAL quote ${current.reference}`,document.getElementById('pMessage').value.trim()].filter(Boolean).join(' — '),consent:document.getElementById('pConsent').checked,website:'',
     hal_context:{saved_quote_reference:current.reference,language:L,retrieve_url:location.origin+'/quote/'+current.reference,applicant_name:st.applicant_name||'',age:st.age||'',residence_country:st.residence_country||'',
       primary_healthcare_country:st.primary_healthcare_country||'',needs:q.needs||{},household_members:st.household_members||[],
       household_breakdown:q.breakdown||[],shortlist:q.kind==='household'?[]:(q.cards||[]).slice(0,6).map(c=>({product_name:c.product_name,insurer:c.insurer,premium:c.premium,currency:c.currency})),
@@ -201,7 +216,9 @@ async function sendProposal(){
   try{const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
     if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:t('error'));s.textContent='';
     document.getElementById('proposal').classList.add('hidden');document.getElementById('btnProposal').classList.add('hidden');
-    document.getElementById('thanksTitle').textContent=t('thanksTitle')(payload.first_name);document.getElementById('thanksBody').textContent=t('thanksBody')(d.reference||'');
+    document.getElementById('thanksTitle').textContent=t('thanksTitle')(payload.first_name);document.getElementById('thanksBody').textContent=(current.proposal?t('noteThanksBody'):t('thanksBody'))(d.reference||'');
+    rememberContact({first_name:payload.first_name,last_name:payload.last_name,email:payload.email,phone:payload.phone});
+    current.proposal=current.proposal||{reference:d.reference,requested_at:new Date().toISOString()};
     document.getElementById('thanks').classList.remove('hidden');document.getElementById('thanks').scrollIntoView({behavior:'smooth',block:'center'});}
   catch(e){s.className='status error';s.textContent=e.message||t('error');}
 }
