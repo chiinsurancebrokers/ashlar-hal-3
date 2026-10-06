@@ -209,8 +209,36 @@ def _context_sections(ctx: dict) -> tuple[list[tuple[str, list[str]]], str]:
     return sections, html_parts
 
 
+def _ago(iso: object, now: datetime | None = None) -> str:
+    """'3 hours ago', '2 days ago' for an ISO timestamp ('' if unparseable)."""
+    try:
+        then = datetime.fromisoformat(str(iso).replace("Z", "+00:00").replace(" ", "T", 1))
+    except ValueError:
+        return ""
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
+    minutes = max(0, int(((now or datetime.now(timezone.utc)) - then).total_seconds() // 60))
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    hours = minutes // 60
+    if hours < 48:
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    return f"{hours // 24} days ago"
+
+
+def _repeat_lines(repeat: object) -> list[str]:
+    if not isinstance(repeat, dict) or not repeat.get("reference"):
+        return []
+    count = int(repeat.get("count") or 1)
+    when = _ago(repeat.get("requested_at"))
+    earlier = f"Earlier request: {repeat['reference']}" + (f" ({when})" if when else "")
+    lines = [f"This client has asked before — {count} earlier request{'s' if count != 1 else ''}. Treat as a hot lead.", earlier]
+    return lines
+
+
 def _build_lead_message(payload: dict, reference: str, sender: str, recipient: str) -> EmailMessage:
     submitted = datetime.now(timezone.utc).isoformat()
+    repeat = _repeat_lines(payload.get("repeat_of"))
     name = " ".join(x for x in [payload.get("first_name", "").strip(), payload.get("last_name", "").strip()] if x)
     fact_find = payload.get("fact_find") if isinstance(payload.get("fact_find"), dict) else {}
     fact_lines = "\n".join(f"- {k}: {v}" for k, v in fact_find.items())
@@ -227,7 +255,8 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
         ("Approx. budget", payload.get("budget", "")),
     ]
     plain = (
-        "New Ashlar HAL enquiry\n\n"
+        ("REPEAT — HOT LEAD\n" + "\n".join(repeat) + "\n\n" if repeat else "")
+        + "New Ashlar HAL enquiry\n\n"
         f"Reference: {reference}\nSubmitted: {submitted}\n\n"
         + "\n".join(f"{k}: {v}" for k, v in contact_rows)
         + "\n\n"
@@ -247,7 +276,10 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
     ) if fact_find else ""
     html_body = (
         "<html><body style='font-family:Arial,sans-serif;color:#172333;font-size:14px'>"
-        "<h2 style='margin-bottom:4px'>New Ashlar HAL enquiry</h2>"
+        + ("<div style='background:#fdecea;border:1px solid #b3261e;border-radius:10px;padding:10px 14px;margin-bottom:14px'>"
+           "<strong style='color:#b3261e'>REPEAT — HOT LEAD</strong><br>"
+           + "<br>".join(_safe(line) for line in repeat) + "</div>" if repeat else "")
+        + "<h2 style='margin-bottom:4px'>New Ashlar HAL enquiry</h2>"
         f"<p style='margin-top:0'>Reference: <strong>{_safe(reference)}</strong></p>"
         f"<table style='border-collapse:collapse'>{contact_html}</table>"
         f"{context_html}{fact_html}"
@@ -256,7 +288,7 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
         "Prices are indicative figures shown by HAL and remain subject to insurer underwriting and confirmation.</p>"
         "</body></html>"
     )
-    msg = EmailMessage(); msg["From"] = sender; msg["To"] = recipient; msg["Subject"] = f"New HAL Lead — {payload.get('insurance_interest','Insurance Enquiry')} — {reference}"[:240]
+    msg = EmailMessage(); msg["From"] = sender; msg["To"] = recipient; msg["Subject"] = (("REPEAT — HOT — " if repeat else "") + f"New HAL Lead — {payload.get('insurance_interest','Insurance Enquiry')} — {reference}")[:240]
     if payload.get("email"): msg["Reply-To"] = str(payload["email"]).strip()
     msg.set_content(plain); msg.add_alternative(html_body, subtype="html"); return msg
 

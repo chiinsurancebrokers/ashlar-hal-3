@@ -168,3 +168,33 @@ def test_reminders_scheduled_for_every_saved_quote(store, monkeypatch):
     row = store.rows[saved["reference"]]
     assert saved["followups_scheduled"] is True and calls[0][0] == saved["reference"]
     assert row["followup_consent"] is True and row["quote_json"]["public_base"] == "https://hal.ashlarassurance.com"
+
+
+def test_retrieve_reports_an_earlier_proposal_without_contact_details(store, monkeypatch):
+    from backend.app.services import lead_store
+    dob = _dob_for_age(51)
+    saved = sq.save_quote(state=_family_state(), email="c@example.com", date_of_birth=dob, consent=True)
+    asked = {}
+
+    def fake_latest(ref, settings=None):
+        asked["ref"] = ref
+        return {"reference": "HAL-20261006-3A92AECF", "created_at": "2026-10-06T06:32:41+00:00"}
+
+    monkeypatch.setattr(lead_store, "latest_proposal_for_saved_quote", fake_latest)
+    got = sq.retrieve_quote(reference=saved["reference"], date_of_birth=dob)
+    assert asked["ref"] == saved["reference"]
+    assert got["proposal"] == {"reference": "HAL-20261006-3A92AECF", "requested_at": "2026-10-06T06:32:41+00:00"}
+    assert "email" not in got and "phone" not in str(got["proposal"])
+
+
+def test_retrieve_still_works_when_the_proposal_lookup_fails(store, monkeypatch):
+    from backend.app.services import lead_store
+
+    def broken(ref, settings=None):
+        raise RuntimeError("Supabase returned 503")
+
+    monkeypatch.setattr(lead_store, "latest_proposal_for_saved_quote", broken)
+    dob = _dob_for_age(51)
+    saved = sq.save_quote(state=_family_state(), email="c@example.com", date_of_birth=dob, consent=True)
+    got = sq.retrieve_quote(reference=saved["reference"], date_of_birth=dob)
+    assert got["proposal"] is None and got["quote"]["total_premium"] == 8271.77

@@ -202,6 +202,10 @@ def test_proposal_request_cancels_reminders(settings, monkeypatch):
         return None
     monkeypatch.setattr("backend.app.api.leads.store_lead", fake_store)
     monkeypatch.setattr("backend.app.api.leads.mark_delivery", fake_store)
+
+    async def no_previous(*args, **kwargs):
+        return []
+    monkeypatch.setattr("backend.app.api.leads.previous_proposals", no_previous)
     monkeypatch.setattr(fu, "cancel_followups",
                         lambda ref, reason, settings=None, kinds=None: cancelled.append((ref, kinds)))
     from backend.app.main import app

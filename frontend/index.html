@@ -7,6 +7,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#0c1727">
+<script src="/static/dob-input.js"></script>
 <title>Ashlar Assurance — HAL Insurance Adviser</title>
 <style>
 :root{
@@ -368,7 +369,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <label id="lblLeadPhone">Phone</label><input id="leadPhone" type="tel" autocomplete="tel">
     <label id="lblLeadResidence">Country of residence</label><input id="leadResidence">
     <label id="lblLeadAge">Age</label><input id="leadAge" type="number">
-    <label id="lblLeadDob">Date of birth</label><input id="leadDob" type="date" autocomplete="bday">
+    <label id="lblLeadDob">Date of birth</label><input id="leadDob" data-dob>
     <label id="lblLeadCoverage">Coverage area / destination</label><input id="leadCoverage">
     <label id="lblLeadFamily">Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
     <label id="lblLeadBudget">Approx. annual budget</label><input id="leadBudget">
@@ -423,7 +424,7 @@ const I18N = {
     needs:'Your needs', edit:'Edit', online:'● Online', voiceOn:'🔊 Voice on', voiceOff:'🔇 Voice off',
     startAgain:'Start again', restartConfirm:'Start a new conversation? This clears your current answers.',
     step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
-    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', phoneLabel:'Phone', dobLabel:'Date of birth', dobRequired:'Please enter your date of birth.',
+    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', phoneLabel:'Phone', dobLabel:'Date of birth', dobRequired:'Please enter your date of birth.', dobInvalid:'Please enter a valid date of birth as DD/MM/YYYY.',
     saveTick:'Save my quote and email me its reference, so I can reopen it while it is valid (with a reminder before it expires).',
     thanksTitle:n=>n?`Thank you, ${n}!`:'Thank you!', thanksBody:r=>`We have received your request (reference ${r}). An Ashlar adviser will contact you shortly — we have also sent you a confirmation email.`,
     thanksSaved:(r,v)=>`Your quote is saved as ${r} (valid until ${v}). We have emailed you a link to reopen it with your date of birth.`, send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
@@ -480,7 +481,7 @@ const I18N = {
     needs:'Οι ανάγκες σας', edit:'Επεξεργασία', online:'● Online', voiceOn:'🔊 Φωνή ενεργή', voiceOff:'🔇 Φωνή ανενεργή',
     startAgain:'Από την αρχή', restartConfirm:'Να ξεκινήσουμε νέα συνομιλία; Οι τρέχουσες απαντήσεις σας θα διαγραφούν.',
     step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
-    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', phoneLabel:'Τηλέφωνο', dobLabel:'Ημερομηνία γέννησης', dobRequired:'Συμπληρώστε την ημερομηνία γέννησής σας.',
+    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', phoneLabel:'Τηλέφωνο', dobLabel:'Ημερομηνία γέννησης', dobRequired:'Συμπληρώστε την ημερομηνία γέννησής σας.', dobInvalid:'Συμπληρώστε μια έγκυρη ημερομηνία γέννησης (ΗΗ/ΜΜ/ΕΕΕΕ).',
     saveTick:'Αποθήκευση της προσφοράς μου και αποστολή του αριθμού της με email, ώστε να μπορώ να την ξανανοίξω όσο ισχύει (με υπενθύμιση πριν λήξει).',
     thanksTitle:n=>n?`Ευχαριστούμε, ${n}!`:'Ευχαριστούμε!', thanksBody:r=>`Λάβαμε το αίτημά σας (αριθμός ${r}). Ένας σύμβουλος της Ashlar θα επικοινωνήσει σύντομα μαζί σας — σας στείλαμε και email επιβεβαίωσης.`,
     thanksSaved:(r,v)=>`Η προσφορά σας αποθηκεύτηκε με αριθμό ${r} (ισχύει έως ${v}). Σας στείλαμε email με σύνδεσμο για να την ξανανοίξετε με την ημερομηνία γέννησής σας.`, send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
@@ -1303,6 +1304,8 @@ function openLeadForm(journey){
   document.getElementById('leadSubtitle').textContent=t(subKey);
   if(state.residence_country)document.getElementById('leadResidence').value=state.residence_country;
   if(state.applicant_name)document.getElementById('leadFirstName').value=state.applicant_name;
+  try{const c=JSON.parse(localStorage.getItem('hal_contact')||'{}')||{};
+    [['leadFirstName','first_name'],['leadLastName','last_name'],['leadEmail','email'],['leadPhone','phone']].forEach(([id,k])=>{const el=document.getElementById(id);if(!el.value&&c[k])el.value=c[k];});}catch(e){}
   if(state.age)document.getElementById('leadAge').value=state.age;
   if(state.coverage_area)document.getElementById('leadCoverage').value=areaLabel(state.coverage_area);
   if(state.budget_annual)document.getElementById('leadBudget').value=state.budget_annual;
@@ -1334,7 +1337,7 @@ function buildHalContext(){
 
 async function submitLead(){
   const travel=currentJourney==='travel';
-  const dob=document.getElementById('leadDob').value;
+  const dobEl=document.getElementById('leadDob'),dob=dobISO(dobEl);
   const payload={
     insurance_interest:travel?'Travel Insurance':'International Health Insurance',
     first_name:document.getElementById('leadFirstName').value.trim(),last_name:document.getElementById('leadLastName').value.trim(),
@@ -1347,7 +1350,7 @@ async function submitLead(){
   const status=document.getElementById('leadStatus'),sendBtn=document.getElementById('leadSendBtn');
   const fail=m=>{status.textContent=m;status.style.color='#b3261e';};
   if(!payload.first_name||!payload.last_name||!payload.email)return fail(t('fillNameEmail'));
-  if(!travel&&!dob)return fail(t('dobRequired'));
+  if(!travel&&!dob)return fail(dobEl.value.trim()?t('dobInvalid'):t('dobRequired'));
   if(!payload.consent)return fail(t('confirmConsent'));
   status.textContent=t('sending');status.style.color='var(--muted)';sendBtn.disabled=true;
   let saved=(window.lastSavedQuote&&window.lastSavedQuote.reference===state.saved_quote_reference)?window.lastSavedQuote:null;
@@ -1366,6 +1369,7 @@ async function submitLead(){
     if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:t('couldNotSend'));
     document.getElementById('leadThanksTitle').textContent=t('thanksTitle')(payload.first_name);
     document.getElementById('leadThanksBody').textContent=t('thanksBody')(d.reference||'');
+    try{localStorage.setItem('hal_contact',JSON.stringify({first_name:payload.first_name,last_name:payload.last_name,email:payload.email,phone:payload.phone}));}catch(e){}
     const until=saved?new Date(saved.valid_until+'T00:00:00').toLocaleDateString(lang()==='el'?'el-GR':'en-GB'):'';
     document.getElementById('leadThanksSaved').textContent=saved?t('thanksSaved')(saved.reference,until):'';
     document.getElementById('leadThanksClose').textContent=t('close');

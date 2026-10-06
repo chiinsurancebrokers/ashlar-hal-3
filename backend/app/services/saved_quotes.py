@@ -257,6 +257,14 @@ def retrieve_quote(*, reference: str, date_of_birth: str, settings: Settings | N
                        "retrieve_count": int(row.get("retrieve_count") or 0) + 1,
                        "last_retrieved_at": now.isoformat()}, settings)
     valid_until = datetime.fromisoformat(row["valid_until"])
+    proposal = None
+    try:
+        from backend.app.services.lead_store import latest_proposal_for_saved_quote
+        found = latest_proposal_for_saved_quote(reference, settings)
+        if found and found.get("reference"):
+            proposal = {"reference": found["reference"], "requested_at": found.get("created_at")}
+    except Exception:
+        proposal = None  # unknown: the page simply offers "Request a proposal"
     return {
         "reference": reference,
         "applicant_name": row.get("applicant_name"),
@@ -267,4 +275,6 @@ def retrieve_quote(*, reference: str, date_of_birth: str, settings: Settings | N
         "status": row.get("status"),
         "quote": row.get("quote_json") or {},
         "state": row.get("state_json") or {},
+        # Earlier proposal request for this quote (reference + time only).
+        "proposal": proposal,
     }
