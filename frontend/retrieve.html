@@ -20,7 +20,7 @@ main{padding:24px 16px 60px}
 label{display:block;font-size:13px;font-weight:600;margin:12px 0 5px}
 input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font:inherit;font-size:15px;background:var(--white);color:var(--text)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-button.primary{margin-top:16px;background:var(--navy);color:var(--white);border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}
+button.primary,a.primary{margin-top:16px;background:var(--navy);color:var(--white);border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer}
 button.secondary{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
 .status{margin-top:12px;font-size:14px}
 .status.error{color:#b3261e}.status.ok{color:var(--good)}
@@ -57,7 +57,7 @@ table.members td:last-child{text-align:right;font-weight:700;font-variant-numeri
 <body>
 <header><div class="wrap">
   <div class="lang"><button type="button" id="btnEn" onclick="setLang('en')">EN</button><button type="button" id="btnEl" onclick="setLang('el')">ΕΛ</button></div>
-  <div class="brand">ASHLAR ASSURANCE · HAL</div>
+  <div class="brand"><a href="/" id="backHal" style="color:inherit;text-decoration:none">← ASHLAR ASSURANCE · HAL</a></div>
   <h1 id="title"></h1>
 </div></header>
 <main><div class="wrap">
@@ -88,8 +88,17 @@ table.members td:last-child{text-align:right;font-weight:700;font-variant-numeri
           <div><label for="pPhone" id="lblPhone"></label><input id="pPhone" type="tel" autocomplete="tel"></div>
         </div>
         <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input id="pConsent" type="checkbox" style="width:auto;margin-top:4px"><span id="lblConsent"></span></label>
-        <button class="primary" type="button" id="btnSend" onclick="sendProposal()"></button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="primary" type="button" id="btnSend" onclick="sendProposal()"></button>
+          <button type="button" id="btnCancel" onclick="toggleProposal()" style="margin-top:16px;background:none;border:1px solid #cfd6df;border-radius:10px;padding:12px 16px;font:inherit;cursor:pointer"></button>
+        </div>
         <div class="status" id="pStatus"></div>
+      </div>
+      <div id="thanks" class="hidden" style="text-align:center;padding:18px 6px 6px">
+        <div style="font-size:40px;line-height:1;color:var(--good)">✓</div>
+        <h2 id="thanksTitle" style="margin:10px 0 6px"></h2>
+        <p id="thanksBody" style="margin:0 0 16px;line-height:1.55"></p>
+        <a class="primary" id="thanksBack" href="/" style="display:inline-block;text-decoration:none;padding:12px 20px"></a>
       </div>
     </section>
     <div class="cards" id="cards"></div>
@@ -103,7 +112,8 @@ const T={
   en:{title:'Your HAL quote',intro:'Enter your quote reference and date of birth to open the quote you saved with HAL.',ref:'Quote reference',dob:'Date of birth',open:'Open my quote',
       opening:'Opening your quote…',total:'Total',top:'Top option',perYear:'/year',hello:n=>n?`Hello ${n}, here is your saved quote.`:'Here is your saved quote.',
       refMeta:(r,v)=>`Reference <b>${r}</b><br>Valid until ${v}`,expired:'This quote has expired. Prices may have changed — request a proposal and we will send you an updated price.',
-      proposal:'Request a proposal',first:'First name',last:'Last name',email:'Email',phone:'Phone',consent:'I agree that Ashlar Assurance may contact me about this quote.',send:'Send request',
+      proposal:'Request a proposal',first:'First name',last:'Last name',email:'Email',phone:'Phone',consent:'I agree that Ashlar Assurance may contact me about this quote.',send:'Send request',cancel:'Cancel',back:'Back to HAL',thanksTitle:n=>n?`Thank you, ${n}!`:'Thank you!',
+      thanksBody:r=>`We have received your request (reference ${r}). An Ashlar adviser will contact you shortly — we have also sent you a confirmation email.`,
       sending:'Sending…',sent:r=>`Thank you — your request was sent (reference ${r}). We will be in touch shortly.`,fill:'Please fill in your name and email and confirm consent.',
       limit:'Annual limit',coverage:'Coverage',deductible:'Deductible',evacuation:'Evacuation',docs:'Official plan documents',maternity:'maternity',
       ipid:'Plan summary (IPID)',tob:'Table of Benefits',wording:'Policy Wording',error:'Something went wrong. Please try again.',
@@ -111,7 +121,8 @@ const T={
   el:{title:'Η προσφορά σας από τον HAL',intro:'Συμπληρώστε τον αριθμό προσφοράς και την ημερομηνία γέννησής σας για να ανοίξετε την προσφορά που αποθηκεύσατε.',ref:'Αριθμός προσφοράς',dob:'Ημερομηνία γέννησης',open:'Άνοιγμα της προσφοράς μου',
       opening:'Ανοίγουμε την προσφορά σας…',total:'Σύνολο',top:'Πρώτη επιλογή',perYear:'/έτος',hello:n=>n?`Γεια σας ${n}, αυτή είναι η αποθηκευμένη προσφορά σας.`:'Αυτή είναι η αποθηκευμένη προσφορά σας.',
       refMeta:(r,v)=>`Αριθμός <b>${r}</b><br>Ισχύει έως ${v}`,expired:'Η προσφορά έχει λήξει. Οι τιμές μπορεί να έχουν αλλάξει — ζητήστε πρόταση και θα σας στείλουμε ενημερωμένη τιμή.',
-      proposal:'Ζητήστε πρόταση',first:'Όνομα',last:'Επώνυμο',email:'Email',phone:'Τηλέφωνο',consent:'Συμφωνώ η Ashlar Assurance να επικοινωνήσει μαζί μου για αυτή την προσφορά.',send:'Αποστολή αιτήματος',
+      proposal:'Ζητήστε πρόταση',first:'Όνομα',last:'Επώνυμο',email:'Email',phone:'Τηλέφωνο',consent:'Συμφωνώ η Ashlar Assurance να επικοινωνήσει μαζί μου για αυτή την προσφορά.',send:'Αποστολή αιτήματος',cancel:'Ακύρωση',back:'Επιστροφή στον HAL',thanksTitle:n=>n?`Ευχαριστούμε, ${n}!`:'Ευχαριστούμε!',
+      thanksBody:r=>`Λάβαμε το αίτημά σας (αριθμός ${r}). Ένας σύμβουλος της Ashlar θα επικοινωνήσει σύντομα μαζί σας — σας στείλαμε και email επιβεβαίωσης.`,
       sending:'Αποστολή…',sent:r=>`Ευχαριστούμε — το αίτημά σας στάλθηκε (αριθμός ${r}). Θα επικοινωνήσουμε σύντομα μαζί σας.`,fill:'Συμπληρώστε όνομα, email και επιβεβαιώστε τη συναίνεση.',
       limit:'Ετήσιο όριο',coverage:'Κάλυψη',deductible:'Απαλλαγή',evacuation:'Ιατρική διακομιδή',docs:'Επίσημα έντυπα προγράμματος',maternity:'μητρότητα',
       ipid:'Σύνοψη προγράμματος (IPID)',tob:'Πίνακας Παροχών',wording:'Όροι Ασφάλισης',error:'Κάτι πήγε στραβά. Δοκιμάστε ξανά.',
@@ -127,7 +138,7 @@ const money=(v,c)=>{const n=Number(v||0);return (c==='EUR'||!c?'€':c+' ')+n.to
 function applyText(){
   document.documentElement.lang=L;
   [['title','title'],['intro','intro'],['lblRef','ref'],['lblDob','dob'],['btnOpen','open'],['btnProposal','proposal'],['lblFirst','first'],['lblLast','last'],
-   ['lblEmail','email'],['lblPhone','phone'],['lblConsent','consent'],['btnSend','send'],['disclaimer','disclaimer']].forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
+   ['lblEmail','email'],['lblPhone','phone'],['lblConsent','consent'],['btnSend','send'],['btnCancel','cancel'],['thanksBack','back'],['disclaimer','disclaimer']].forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
   document.getElementById('btnEn').classList.toggle('on',L==='en');document.getElementById('btnEl').classList.toggle('on',L==='el');
   if(current)render(current);
 }
@@ -169,21 +180,25 @@ function render(d){
     </article>`;}).join('');
 }
 
-function toggleProposal(){document.getElementById('proposal').classList.toggle('hidden');}
+function toggleProposal(){const p=document.getElementById('proposal');p.classList.toggle('hidden');
+  const f=document.getElementById('pFirst');if(!f.value&&current&&current.applicant_name)f.value=current.applicant_name;}
 
 async function sendProposal(){
   const s=document.getElementById('pStatus'),q=(current&&current.quote)||{},st=(current&&current.state)||{};
   const payload={insurance_interest:'International Health Insurance',first_name:document.getElementById('pFirst').value.trim(),last_name:document.getElementById('pLast').value.trim(),
     email:document.getElementById('pEmail').value.trim(),phone:document.getElementById('pPhone').value.trim(),residence_country:st.residence_country||'',age:String(st.age||''),
     coverage_area:st.coverage_area||'',message:`Saved HAL quote ${current.reference}`,consent:document.getElementById('pConsent').checked,website:'',
-    hal_context:{saved_quote_reference:current.reference,applicant_name:st.applicant_name||'',age:st.age||'',residence_country:st.residence_country||'',
+    hal_context:{saved_quote_reference:current.reference,language:L,retrieve_url:location.origin+'/quote/'+current.reference,applicant_name:st.applicant_name||'',age:st.age||'',residence_country:st.residence_country||'',
       primary_healthcare_country:st.primary_healthcare_country||'',needs:q.needs||{},household_members:st.household_members||[],
       household_breakdown:q.breakdown||[],shortlist:q.kind==='household'?[]:(q.cards||[]).slice(0,6).map(c=>({product_name:c.product_name,insurer:c.insurer,premium:c.premium,currency:c.currency})),
       plan_documents:(q.cards||[]).map(c=>({product_name:c.product_name,documents:(c.plan_documents||[]).map(x=>({label:docLabel(x.type),url:x.url}))}))}};
   if(!payload.first_name||!payload.last_name||!payload.email||!payload.consent){s.className='status error';s.textContent=t('fill');return;}
   s.className='status';s.textContent=t('sending');
   try{const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
-    if(!r.ok)throw new Error(d.detail||t('error'));s.className='status ok';s.textContent=t('sent')(d.reference||'');}
+    if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:t('error'));s.textContent='';
+    document.getElementById('proposal').classList.add('hidden');document.getElementById('btnProposal').classList.add('hidden');
+    document.getElementById('thanksTitle').textContent=t('thanksTitle')(payload.first_name);document.getElementById('thanksBody').textContent=t('thanksBody')(d.reference||'');
+    document.getElementById('thanks').classList.remove('hidden');document.getElementById('thanks').scrollIntoView({behavior:'smooth',block:'center'});}
   catch(e){s.className='status error';s.textContent=e.message||t('error');}
 }
 
