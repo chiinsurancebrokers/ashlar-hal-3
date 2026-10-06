@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from backend.app.services.leads import send_lead, send_comparison_email
+from backend.app.services.leads import send_lead, send_comparison_email, send_lead_ack
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -16,6 +16,7 @@ class LeadRequest(BaseModel):
     phone: str = Field(default="", max_length=60)
     residence_country: str = Field(default="", max_length=100)
     age: str = Field(default="", max_length=10)
+    date_of_birth: str = Field(default="", max_length=10)
     coverage_area: str = Field(default="", max_length=120)
     family_members: str = Field(default="", max_length=120)
     budget: str = Field(default="", max_length=80)
@@ -46,14 +47,21 @@ async def create_lead(req: LeadRequest):
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Lead delivery failed: {str(exc)[:180]}") from exc
-    # An adviser now has the enquiry: stop automated reminders for that quote.
+    # Confirmation to the client (best effort: the enquiry itself is already with Ashlar).
+    try:
+        await send_lead_ack(req.model_dump(), str(result.get("reference") or ""))
+        result["ack_sent"] = True
+    except Exception:
+        result["ack_sent"] = False
+    # An adviser now has the enquiry: the "any questions?" check-in is no
+    # longer needed (the expiry reminder stays).
     saved_ref = str((req.hal_context or {}).get("saved_quote_reference") or "").strip().upper()
     if saved_ref:
         try:
             from backend.app.services.followups import cancel_followups
             from backend.app.services.saved_quotes import REFERENCE_RE
             if REFERENCE_RE.match(saved_ref):
-                cancel_followups(saved_ref, f"proposal requested ({result.get('reference')})")
+                cancel_followups(saved_ref, f"proposal requested ({result.get('reference')})", kinds=("checkin",))
         except Exception:
             pass
     return result

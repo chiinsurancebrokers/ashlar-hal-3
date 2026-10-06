@@ -354,31 +354,18 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 </div>
 
 <!-- Lead form modal -->
-<div class="modal-backdrop" id="saveQuoteModal" onclick="if(event.target===this)closeModal('saveQuoteModal')">
-  <div class="modal">
-    <h3 id="sqTitle"></h3>
-    <p id="sqSubtitle" style="color:var(--muted);font-size:13px"></p>
-    <label id="sqLblEmail">Email</label><input id="sqEmail" type="email" autocomplete="email">
-    <label id="sqLblDob"></label><input id="sqDob" type="date" autocomplete="bday">
-    <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:12px">
-      <input type="checkbox" id="sqConsent" style="width:auto;margin-top:3px"><span id="sqConsentText"></span>
-    </label>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="q-primary" type="button" id="sqSave" onclick="submitSaveQuote()"></button>
-      <button class="q-secondary" type="button" id="sqCancel" onclick="closeModal('saveQuoteModal')"></button>
-    </div>
-    <div id="sqStatus" style="margin-top:10px;font-size:13px"></div>
-  </div>
-</div>
 <div class="modal-backdrop" id="leadModal" onclick="if(event.target===this)closeModal('leadModal')">
   <div class="modal">
+   <div id="leadFormBody">
     <h3 id="leadTitle">Request a proposal</h3>
     <p id="leadSubtitle" style="color:var(--muted);font-size:13px">Tell us about you and Ashlar will follow up.</p>
     <label id="lblLeadFirst">First name</label><input id="leadFirstName">
     <label id="lblLeadLast">Last name</label><input id="leadLastName">
-    <label>Email</label><input id="leadEmail" type="email">
+    <label>Email</label><input id="leadEmail" type="email" autocomplete="email">
+    <label id="lblLeadPhone">Phone</label><input id="leadPhone" type="tel" autocomplete="tel">
     <label id="lblLeadResidence">Country of residence</label><input id="leadResidence">
     <label id="lblLeadAge">Age</label><input id="leadAge" type="number">
+    <label id="lblLeadDob">Date of birth</label><input id="leadDob" type="date" autocomplete="bday">
     <label id="lblLeadCoverage">Coverage area / destination</label><input id="leadCoverage">
     <label id="lblLeadFamily">Family / travellers</label><input id="leadFamily" placeholder="e.g. 2 adults + 1 child">
     <label id="lblLeadBudget">Approx. annual budget</label><input id="leadBudget">
@@ -389,11 +376,22 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
       <input type="checkbox" id="leadConsent" style="width:auto;margin-top:3px">
       <span id="leadConsentText">I agree that Ashlar Assurance may use the information above to contact me about my insurance enquiry. This form is not an insurance application and does not confirm cover.</span>
     </label>
+    <label id="leadSaveRow" style="display:flex;align-items:flex-start;gap:8px;font-weight:400;margin-top:8px">
+      <input type="checkbox" id="leadSaveQuote" checked style="width:auto;margin-top:3px"><span id="leadSaveText"></span>
+    </label>
     <div id="leadStatus" style="font-size:12px;margin-top:8px"></div>
     <div class="modal-actions">
       <button class="btn-secondary" id="leadCancelBtn" onclick="closeModal('leadModal')">Cancel</button>
       <button class="btn-primary" id="leadSendBtn" onclick="submitLead()">Send enquiry</button>
     </div>
+   </div>
+   <div id="leadThanks" style="display:none;text-align:center;padding:12px 4px">
+    <div style="font-size:40px;line-height:1">✓</div>
+    <h3 id="leadThanksTitle" style="margin:10px 0 6px"></h3>
+    <p id="leadThanksBody" style="color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 10px"></p>
+    <p id="leadThanksSaved" style="font-size:14px;line-height:1.55;margin:0 0 16px"></p>
+    <button class="btn-primary" id="leadThanksClose" onclick="closeModal('leadModal')" style="min-width:160px;padding:12px 22px;border-radius:12px;font-size:15px"></button>
+   </div>
   </div>
 </div>
 
@@ -422,12 +420,10 @@ const I18N = {
     needs:'Your needs', edit:'Edit', online:'● Online', voiceOn:'🔊 Voice on', voiceOff:'🔇 Voice off',
     startAgain:'Start again', restartConfirm:'Start a new conversation? This clears your current answers.',
     step1:'1 Understand needs', step2:'2 Compare plans', step3:'3 Request proposal',
-    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', saveQuote:'💾 Save my quote', sqTitle:'Save your quote',
-    sqSubtitle:'We will email you a quote reference and a link. You can reopen the quote any time within its validity using the reference and your date of birth.',
-    sqDob:'Date of birth', sqConsent:'I agree that Ashlar Assurance may keep this quote and my email so I can retrieve it, and contact me about it (including a reminder before it expires). I can stop the reminders at any time.',
-    sqSave:'Save quote', sqCancel:'Cancel', sqFill:'Please enter your email and date of birth and confirm consent.', sqSaving:'Saving…',
-    sqSaved:(r,v)=>`Your quote is saved. Reference: ${r} (valid until ${v}). We have emailed you a link — open it with your date of birth.`,
-    sqSavedNoEmail:(r,v,u)=>`Your quote is saved. Reference: ${r} (valid until ${v}). Keep this reference — you can reopen the quote at ${u} with your date of birth.`, send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
+    clear:'Clear', compare:'Compare', compareNow:'⚖ Compare selected plans', phoneLabel:'Phone', dobLabel:'Date of birth', dobRequired:'Please enter your date of birth.',
+    saveTick:'Save my quote and email me its reference, so I can reopen it while it is valid (with a reminder before it expires).',
+    thanksTitle:n=>n?`Thank you, ${n}!`:'Thank you!', thanksBody:r=>`We have received your request (reference ${r}). An Ashlar adviser will contact you shortly — we have also sent you a confirmation email.`,
+    thanksSaved:(r,v)=>`Your quote is saved as ${r} (valid until ${v}). We have emailed you a link to reopen it with your date of birth.`, send:'Send', composer:'Tell HAL what you need...', tapSpeak:'Tap to speak',
     editNeeds:'Edit your needs', age:'Age', residence:'Country of residence', coverageArea:'Coverage area',
     annualBudgetOptional:'Annual budget (optional)', mustHaves:'Must-haves', cancel:'Cancel', saveRecalculate:'Save & recalculate',
     comparePlans:'Compare plans', close:'Close', sendComparison:'✉ Send me this comparison', emailComparison:'Email me this comparison',
@@ -473,7 +469,7 @@ const I18N = {
     policyWordingMissing:'No supporting policy wording is attached in Proposal Studio yet.', oecdAverage:'OECD avg', viewInsideAshlar:'View inside Ashlar'
   },
   el: {
-    eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΕΥΦΥΪΑ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
+    eyebrow:'ΑΣΦΑΛΙΣΤΙΚΗ ΥΠΕΡΝΟΗΜΟΣΥΝΗ, ΜΕ ΤΕΚΜΗΡΙΩΣΗ',
     headline:'Γνωρίστε τον HAL.<br>Βρείτε σαφήνεια<br>πριν επιλέξετε.',
     lead:'Πείτε στον HAL τι χρειάζεστε. Οργανώνει τις απαιτήσεις σας, ελέγχει τα διαθέσιμα τιμολογιακά δεδομένα και δημιουργεί μια ενδεικτική shortlist από επαληθευμένες πηγές — χωρίς να επιτρέπει στην AI να επινοεί ασφάλιστρα.',
     health:'🏥 Ασφάλιση Υγείας', travel:'✈️ Ταξιδιωτική Ασφάλιση',
@@ -481,12 +477,10 @@ const I18N = {
     needs:'Οι ανάγκες σας', edit:'Επεξεργασία', online:'● Online', voiceOn:'🔊 Φωνή ενεργή', voiceOff:'🔇 Φωνή ανενεργή',
     startAgain:'Από την αρχή', restartConfirm:'Να ξεκινήσουμε νέα συνομιλία; Οι τρέχουσες απαντήσεις σας θα διαγραφούν.',
     step1:'1 Κατανόηση αναγκών', step2:'2 Σύγκριση προγραμμάτων', step3:'3 Αίτημα πρότασης',
-    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', saveQuote:'💾 Αποθήκευση προσφοράς', sqTitle:'Αποθήκευση της προσφοράς σας',
-    sqSubtitle:'Θα σας στείλουμε email με τον αριθμό προσφοράς και έναν σύνδεσμο. Μπορείτε να ξανανοίξετε την προσφορά όσο ισχύει, με τον αριθμό και την ημερομηνία γέννησής σας.',
-    sqDob:'Ημερομηνία γέννησης', sqConsent:'Συμφωνώ η Ashlar Assurance να διατηρήσει αυτή την προσφορά και το email μου ώστε να μπορώ να την ανακτήσω, και να επικοινωνήσει μαζί μου γι\' αυτήν (και με υπενθύμιση πριν λήξει). Μπορώ να σταματήσω τις υπενθυμίσεις οποιαδήποτε στιγμή.',
-    sqSave:'Αποθήκευση', sqCancel:'Ακύρωση', sqFill:'Συμπληρώστε email και ημερομηνία γέννησης και επιβεβαιώστε τη συναίνεση.', sqSaving:'Αποθήκευση…',
-    sqSaved:(r,v)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Σας στείλαμε email με σύνδεσμο — ανοίξτε τον με την ημερομηνία γέννησής σας.`,
-    sqSavedNoEmail:(r,v,u)=>`Η προσφορά σας αποθηκεύτηκε. Αριθμός: ${r} (ισχύει έως ${v}). Κρατήστε τον αριθμό — μπορείτε να την ξανανοίξετε στο ${u} με την ημερομηνία γέννησής σας.`, send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
+    clear:'Καθαρισμός', compare:'Σύγκριση', compareNow:'⚖ Σύγκριση επιλεγμένων προγραμμάτων', phoneLabel:'Τηλέφωνο', dobLabel:'Ημερομηνία γέννησης', dobRequired:'Συμπληρώστε την ημερομηνία γέννησής σας.',
+    saveTick:'Αποθήκευση της προσφοράς μου και αποστολή του αριθμού της με email, ώστε να μπορώ να την ξανανοίξω όσο ισχύει (με υπενθύμιση πριν λήξει).',
+    thanksTitle:n=>n?`Ευχαριστούμε, ${n}!`:'Ευχαριστούμε!', thanksBody:r=>`Λάβαμε το αίτημά σας (αριθμός ${r}). Ένας σύμβουλος της Ashlar θα επικοινωνήσει σύντομα μαζί σας — σας στείλαμε και email επιβεβαίωσης.`,
+    thanksSaved:(r,v)=>`Η προσφορά σας αποθηκεύτηκε με αριθμό ${r} (ισχύει έως ${v}). Σας στείλαμε email με σύνδεσμο για να την ξανανοίξετε με την ημερομηνία γέννησής σας.`, send:'Αποστολή', composer:'Πείτε στον HAL τι χρειάζεστε...', tapSpeak:'Πατήστε για να μιλήσετε',
     editNeeds:'Επεξεργασία αναγκών', age:'Ηλικία', residence:'Χώρα κατοικίας', coverageArea:'Περιοχή κάλυψης',
     annualBudgetOptional:'Ετήσιος προϋπολογισμός (προαιρετικό)', mustHaves:'Απαραίτητες παροχές', cancel:'Ακύρωση', saveRecalculate:'Αποθήκευση & επανυπολογισμός',
     comparePlans:'Σύγκριση προγραμμάτων', close:'Κλείσιμο', sendComparison:'✉ Στείλτε μου τη σύγκριση', emailComparison:'Αποστολή σύγκρισης με email',
@@ -615,7 +609,7 @@ function applyStaticI18n(){
     needsCancelBtn:'cancel',needsSaveBtn:'saveRecalculate',compareModalTitle:'comparePlans',
     compareCloseBtn:'close',compareEmailBtn:'sendComparison',emailModalTitle:'emailComparison',
     lblEmailName:'name',emailCurrentNote:'currentPremiumNote',emailCancelBtn:'cancel',emailSendBtn:'send',
-    lblLeadFirst:'firstName',lblLeadLast:'lastName',lblLeadResidence:'residence',lblLeadAge:'age',
+    lblLeadFirst:'firstName',lblLeadLast:'lastName',lblLeadResidence:'residence',lblLeadAge:'age',lblLeadPhone:'phoneLabel',lblLeadDob:'dobLabel',leadSaveText:'saveTick',leadThanksClose:'close',
     lblLeadCoverage:'coverageDestination',lblLeadFamily:'familyTravellers',lblLeadBudget:'approxBudget',
     lblLeadMessage:'anythingElse',leadConsentText:'consent',leadCancelBtn:'cancel',leadSendBtn:'sendEnquiry',
     footerDisclaimer:'footer'
@@ -718,7 +712,6 @@ function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[
       ? `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
       : `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()">${esc(t('uploadCurrentPolicy'))}</button>`;
     html+=`<button class="comparison-primary-cta" onclick="openCompareWithGuard()">${esc(t('compareNow'))}</button>`;
-    if(currentJourney!=='travel')html+=`<button class="current-policy-cta save-quote-cta" onclick="openSaveQuote()">${esc(t('saveQuote'))}</button>`;
     html+=`</div>`;
     if(excluded&&excluded.length){
       const suffix=lang()==='el'?'':'s';
@@ -1313,28 +1306,10 @@ function openLeadForm(journey){
   if((state.household_members||[]).length&&!document.getElementById('leadFamily').value){
     document.getElementById('leadFamily').value=state.household_members.map(m=>`${m.relationship} ${m.age??''}`.trim()).join(', ').slice(0,120);
   }
+  const hasQuote=journey!=='travel'&&((lastShortlist||[]).length||(lastHousehold||[]).length);
+  document.getElementById('leadSaveRow').style.display=hasQuote?'flex':'none';
+  document.getElementById('leadFormBody').style.display='';document.getElementById('leadThanks').style.display='none';
   document.getElementById('leadStatus').textContent='';applyStaticI18n();document.getElementById('leadModal').classList.add('open');
-}
-
-function openSaveQuote(){
-  [['sqTitle','sqTitle'],['sqSubtitle','sqSubtitle'],['sqLblDob','sqDob'],['sqConsentText','sqConsent'],['sqSave','sqSave'],['sqCancel','sqCancel']]
-    .forEach(([id,k])=>{document.getElementById(id).textContent=t(k);});
-  document.getElementById('sqStatus').textContent='';
-  document.getElementById('saveQuoteModal').classList.add('open');
-}
-
-async function submitSaveQuote(){
-  const email=document.getElementById('sqEmail').value.trim(),dob=document.getElementById('sqDob').value,consent=document.getElementById('sqConsent').checked,s=document.getElementById('sqStatus');
-  if(!email||!dob||!consent){s.textContent=t('sqFill');s.style.color='#b3261e';return;}
-  s.textContent=t('sqSaving');s.style.color='var(--muted)';
-  try{
-    const r=await fetch(API+'/saved-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,email,date_of_birth:dob,consent})});
-    const d=await r.json();if(!r.ok)throw new Error(d.detail||t('genericError'));
-    state.saved_quote_reference=d.reference;closeModal('saveQuoteModal');
-    const until=new Date(d.valid_until+'T00:00:00').toLocaleDateString(lang()==='el'?'el-GR':'en-GB');
-    addMsg(d.email_sent?t('sqSaved')(d.reference,until):t('sqSavedNoEmail')(d.reference,until,d.retrieve_url),'hal');
-    if(!document.getElementById('leadEmail').value)document.getElementById('leadEmail').value=email;
-  }catch(e){s.textContent=e.message||t('genericError');s.style.color='#b3261e';}
 }
 
 function buildHalContext(){
@@ -1355,23 +1330,45 @@ function buildHalContext(){
 }
 
 async function submitLead(){
+  const travel=currentJourney==='travel';
+  const dob=document.getElementById('leadDob').value;
   const payload={
-    insurance_interest:currentJourney==='travel'?'Travel Insurance':'International Health Insurance',
+    insurance_interest:travel?'Travel Insurance':'International Health Insurance',
     first_name:document.getElementById('leadFirstName').value.trim(),last_name:document.getElementById('leadLastName').value.trim(),
-    email:document.getElementById('leadEmail').value.trim(),residence_country:document.getElementById('leadResidence').value.trim(),
-    age:document.getElementById('leadAge').value.trim(),coverage_area:document.getElementById('leadCoverage').value.trim(),
+    email:document.getElementById('leadEmail').value.trim(),phone:document.getElementById('leadPhone').value.trim(),
+    residence_country:document.getElementById('leadResidence').value.trim(),
+    age:document.getElementById('leadAge').value.trim(),date_of_birth:dob,coverage_area:document.getElementById('leadCoverage').value.trim(),
     family_members:document.getElementById('leadFamily').value.trim(),budget:document.getElementById('leadBudget').value.trim(),
     message:document.getElementById('leadMessage').value.trim(),consent:document.getElementById('leadConsent').checked,website:document.getElementById('leadWebsite').value,
-    hal_context:buildHalContext(),
   };
-  const status=document.getElementById('leadStatus');
-  if(!payload.first_name||!payload.last_name||!payload.email){status.textContent=t('fillNameEmail');status.style.color='#b3261e';return;}
-  if(!payload.consent){status.textContent=t('confirmConsent');status.style.color='#b3261e';return;}
-  status.textContent=t('sending');status.style.color='var(--muted)';
+  const status=document.getElementById('leadStatus'),sendBtn=document.getElementById('leadSendBtn');
+  const fail=m=>{status.textContent=m;status.style.color='#b3261e';};
+  if(!payload.first_name||!payload.last_name||!payload.email)return fail(t('fillNameEmail'));
+  if(!travel&&!dob)return fail(t('dobRequired'));
+  if(!payload.consent)return fail(t('confirmConsent'));
+  status.textContent=t('sending');status.style.color='var(--muted)';sendBtn.disabled=true;
+  let saved=(window.lastSavedQuote&&window.lastSavedQuote.reference===state.saved_quote_reference)?window.lastSavedQuote:null;
   try{
+    const wantSave=document.getElementById('leadSaveRow').style.display!=='none'&&document.getElementById('leadSaveQuote').checked;
+    if(wantSave&&!state.saved_quote_reference){
+      const r=await fetch(API+'/saved-quotes',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({state,email:payload.email,date_of_birth:dob,consent:true,send_email:false})});
+      const d=await r.json().catch(()=>({}));
+      if(r.status===400||r.status===422){sendBtn.disabled=false;return fail(typeof d.detail==='string'?d.detail:t('couldNotSend'));}
+      if(r.ok){saved=d;window.lastSavedQuote=d;state.saved_quote_reference=d.reference;}
+    }
+    const ctx=buildHalContext();ctx.language=lang();if(saved)ctx.retrieve_url=saved.retrieve_url;
+    payload.hal_context=ctx;
     const r=await fetch(API+'/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}),d=await r.json();
-    if(!r.ok)throw new Error(d.detail||t('couldNotSend'));status.textContent=t('sentRef')+(d.reference||'');status.style.color='var(--good)';setTimeout(()=>closeModal('leadModal'),1400);
-  }catch(e){status.textContent=lang()==='el'?t('couldNotSend'):e.message;status.style.color='#b3261e';}
+    if(!r.ok)throw new Error(typeof d.detail==='string'?d.detail:t('couldNotSend'));
+    document.getElementById('leadThanksTitle').textContent=t('thanksTitle')(payload.first_name);
+    document.getElementById('leadThanksBody').textContent=t('thanksBody')(d.reference||'');
+    const until=saved?new Date(saved.valid_until+'T00:00:00').toLocaleDateString(lang()==='el'?'el-GR':'en-GB'):'';
+    document.getElementById('leadThanksSaved').textContent=saved?t('thanksSaved')(saved.reference,until):'';
+    document.getElementById('leadThanksClose').textContent=t('close');
+    document.getElementById('leadFormBody').style.display='none';document.getElementById('leadThanks').style.display='';
+  }catch(e){fail(lang()==='el'?t('couldNotSend'):(e.message||t('couldNotSend')));}
+  sendBtn.disabled=false;
 }
 
 // Initial state: HAL greets immediately and asks for the applicant's name

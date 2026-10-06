@@ -106,12 +106,16 @@ def schedule_followups(reference: str, *, saved_at: datetime, valid_until: datet
     return rows
 
 
-def cancel_followups(reference: str, reason: str, settings: Settings | None = None) -> None:
-    """Cancel every follow-up still waiting for this quote (best effort)."""
+def cancel_followups(reference: str, reason: str, settings: Settings | None = None,
+                     kinds: tuple[str, ...] | None = None) -> None:
+    """Cancel follow-ups still waiting for this quote (all, or only ``kinds``)."""
     settings = settings or get_settings()
     url, headers = _base(settings)
+    params = {"reference": f"eq.{reference}", "status": "eq.scheduled"}
+    if kinds:
+        params["kind"] = f"in.({','.join(kinds)})"
     httpx.patch(f"{url}/hal_followups", headers={**headers, "Prefer": "return=minimal"},
-                params={"reference": f"eq.{reference}", "status": "eq.scheduled"},
+                params=params,
                 json={"status": "cancelled", "error": reason[:200]}, timeout=10)
 
 

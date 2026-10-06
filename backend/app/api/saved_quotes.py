@@ -15,6 +15,9 @@ class SaveQuoteRequest(BaseModel):
     email: EmailStr
     date_of_birth: str = Field(max_length=10)
     consent: bool
+    # False when the quote is saved as part of a proposal request: the
+    # request confirmation email then carries the reference and link.
+    send_email: bool = True
 
     @field_validator("state")
     @classmethod
@@ -52,11 +55,13 @@ async def save(req: SaveQuoteRequest, request: Request):
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     retrieve_url = f"{_public_base(request)}/quote/{saved['reference']}"
-    try:
-        await send_saved_quote_email(saved, str(req.email), retrieve_url)
-        email_sent = True
-    except Exception:
-        email_sent = False  # the quote is saved; the client still sees the reference on screen
+    email_sent = False
+    if req.send_email:
+        try:
+            await send_saved_quote_email(saved, str(req.email), retrieve_url)
+            email_sent = True
+        except Exception:
+            email_sent = False  # the quote is saved; the client still sees the reference on screen
     return {"reference": saved["reference"], "valid_until": saved["valid_until"],
             "retrieve_url": retrieve_url, "email_sent": email_sent,
             "followups_scheduled": saved.get("followups_scheduled", False)}

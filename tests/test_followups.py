@@ -191,12 +191,20 @@ def test_proposal_request_cancels_reminders(settings, monkeypatch):
     async def fake_send(payload, reference=None):
         return {"status": "sent", "reference": "HAL-LEAD"}
     monkeypatch.setattr("backend.app.api.leads.send_lead", fake_send)
-    monkeypatch.setattr(fu, "cancel_followups", lambda ref, reason, settings=None: cancelled.append(ref))
+    acks = []
+
+    async def fake_ack(payload, reference):
+        acks.append((payload["email"], reference))
+        return {"status": "sent"}
+    monkeypatch.setattr("backend.app.api.leads.send_lead_ack", fake_ack)
+    monkeypatch.setattr(fu, "cancel_followups",
+                        lambda ref, reason, settings=None, kinds=None: cancelled.append((ref, kinds)))
     from backend.app.main import app
     r = TestClient(app).post("/api/v1/leads", json={
         "insurance_interest": "IPMI", "first_name": "Chris", "last_name": "P", "email": "c@example.com", "consent": True,
         "hal_context": {"saved_quote_reference": "HAL-20261005-ABCD1234"}})
-    assert r.status_code == 200 and cancelled == ["HAL-20261005-ABCD1234"]
+    assert r.status_code == 200 and cancelled == [("HAL-20261005-ABCD1234", ("checkin",))]
+    assert acks == [("c@example.com", "HAL-LEAD")] and r.json()["ack_sent"] is True
 
 
 def test_save_rejects_forged_host(settings):
@@ -204,3 +212,20 @@ def test_save_rejects_forged_host(settings):
     r = TestClient(app).post("/api/v1/saved-quotes", headers={"x-forwarded-host": "evil.example.com"},
                              json={"state": {}, "email": "a@example.com", "date_of_birth": "1980-01-01", "consent": True})
     assert r.status_code == 400
+
+
+def test_partial_cancel_filters_by_kind(settings, monkeypatch):
+    calls = []
+    monkeypatch.setattr(fu.httpx, "patch", lambda url, **kw: calls.append(kw) or httpx.Response(204))
+    fu.cancel_followups("HAL-20261005-ABCD1234", "x", settings, kinds=("checkin",))
+    assert calls[0]["params"]["kind"] == "in.(checkin)" and calls[0]["params"]["status"] == "eq.scheduled"
+
+
+def test_lead_ack_email_mentions_saved_quote():
+    from backend.app.services.leads import _build_lead_ack_message
+    msg = _build_lead_ack_message({"first_name": "Chris", "email": "c@example.com",
+                                   "hal_context": {"language": "el", "saved_quote_reference": "HAL-20261005-ABCD1234",
+                                                   "retrieve_url": "https://hal.ashlarassurance.com/quote/HAL-20261005-ABCD1234"}},
+                                  "HAL-20261006-AAAA1111", "a@x.com")
+    text = msg.get_body(preferencelist=("plain",)).get_content()
+    assert "HAL-20261006-AAAA1111" in msg["Subject"] and "HAL-20261005-ABCD1234" in text and "Αγαπητέ/ή Chris" in text

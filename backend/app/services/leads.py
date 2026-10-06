@@ -221,6 +221,7 @@ def _build_lead_message(payload: dict, reference: str, sender: str, recipient: s
         ("Interest", payload.get("insurance_interest", "")), ("Name", name),
         ("Email", payload.get("email", "")), ("Phone", payload.get("phone", "")),
         ("Residence", payload.get("residence_country", "")), ("Age", payload.get("age", "")),
+        ("Date of birth", payload.get("date_of_birth", "")),
         ("Coverage area / destination", payload.get("coverage_area", "")),
         ("Family / travellers", payload.get("family_members", "")),
         ("Approx. budget", payload.get("budget", "")),
@@ -366,3 +367,50 @@ async def send_saved_quote_email(saved: dict, email: str, retrieve_url: str) -> 
         msg["Reply-To"] = settings.resend_reply_to
     result = await _send_transactional(msg)
     return {"status": "sent", "transport": result.get("transport", "gmail"), "message_id": result.get("id")}
+
+
+# ---------------------------------------------------------------------------
+# Acknowledgement to the client after a proposal request
+# ---------------------------------------------------------------------------
+
+def _build_lead_ack_message(payload: dict, reference: str, sender: str) -> EmailMessage:
+    ctx = payload.get("hal_context") or {}
+    greek = (ctx.get("language") or "") == "el"
+    name = (payload.get("first_name") or "").strip()
+    saved = str(ctx.get("saved_quote_reference") or "").strip()
+    retrieve_url = str(ctx.get("retrieve_url") or "").strip()
+    if greek:
+        subject = f"Λάβαμε το αίτημά σας — {reference}"
+        hello = f"Αγαπητέ/ή {name}," if name else "Γεια σας,"
+        body = [f"Ευχαριστούμε που επικοινωνήσατε με την Ashlar Assurance. Λάβαμε το αίτημά σας για πρόταση (αριθμός {reference}) "
+                "και ένας σύμβουλός μας θα επικοινωνήσει σύντομα μαζί σας."]
+        if saved:
+            body.append(f"Η προσφορά σας είναι αποθηκευμένη με αριθμό {saved}. Μπορείτε να την ξανανοίξετε με την ημερομηνία γέννησής σας"
+                        + (f": {retrieve_url}" if retrieve_url else "."))
+        body.append("Αν θέλετε να προσθέσετε κάτι, απλώς απαντήστε σε αυτό το email.")
+        footer = "Η φόρμα αυτή δεν είναι αίτηση ασφάλισης και δεν επιβεβαιώνει κάλυψη."
+    else:
+        subject = f"We have received your request — {reference}"
+        hello = f"Dear {name}," if name else "Hello,"
+        body = [f"Thank you for contacting Ashlar Assurance. We have received your proposal request (reference {reference}) "
+                "and one of our advisers will be in touch shortly."]
+        if saved:
+            body.append(f"Your quote is saved under reference {saved}. You can reopen it with your date of birth"
+                        + (f": {retrieve_url}" if retrieve_url else "."))
+        body.append("If you would like to add anything, just reply to this email.")
+        footer = "This request is not an insurance application and does not confirm cover."
+    plain = "\n\n".join([hello, *body, footer, "Ashlar Assurance"])
+    html_body = ("<html><body style='font-family:Arial,sans-serif;color:#172333;font-size:14px;line-height:1.5'>"
+                 f"<p>{_safe(hello)}</p>" + "".join(f"<p>{_safe(p)}</p>" for p in body)
+                 + f"<p style='color:#687586;font-size:12px'>{_safe(footer)}</p><p>Ashlar Assurance</p></body></html>")
+    msg = EmailMessage(); msg["From"] = sender; msg["To"] = str(payload["email"]).strip(); msg["Subject"] = subject
+    msg.set_content(plain); msg.add_alternative(html_body, subtype="html"); return msg
+
+
+async def send_lead_ack(payload: dict, reference: str) -> dict:
+    settings = get_settings()
+    msg = _build_lead_ack_message(payload, reference, _mail_sender(settings))
+    if _resend_configured(settings) and settings.resend_reply_to:
+        msg["Reply-To"] = settings.resend_reply_to
+    result = await _send_transactional(msg)
+    return {"status": "sent", "message_id": result.get("id")}
