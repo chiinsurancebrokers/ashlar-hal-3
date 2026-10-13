@@ -7,7 +7,14 @@ import json
 
 RATE_DIR = Path(__file__).resolve().parents[3] / "data" / "rates"
 OFFICIAL_FILE = RATE_DIR / "morgan_price_2026_official.csv"
-LEGACY_FILE = RATE_DIR / "legacy_april_img_2025.csv"
+# Legacy APRIL / IMG rate workbook was withdrawn from online quoting on
+# 13 Oct 2026: those carriers have not sent us 2026 rate tables (IMG said it
+# will not and only offers a quote link — declined), so HAL must not price
+# them. When any carrier sends an official 2026+ workbook, add a new
+# <carrier>_<year>_official.csv file here and extend load_rates() with its
+# loader block. The legacy file is kept at data/rates/legacy_april_img_2025.csv
+# for historical reference only — do not reintroduce it until new official
+# tables arrive.
 CARD_META_FILE = Path(__file__).resolve().parents[3] / "data" / "ui" / "plan_cards.json"
 
 
@@ -48,17 +55,9 @@ def load_rates() -> tuple[RateRecord, ...]:
                 currency=row["currency"], official=True, source=row["source"],
             ))
 
-    with LEGACY_FILE.open("r", encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            records.append(RateRecord(
-                carrier=row["carrier"], carrier_name=row["carrier_name"],
-                rate_version=row["rate_version"], area=row["area"],
-                area_label=row["area"], age_min=int(row["age_min"]),
-                age_max=int(row["age_max"]), product_code=row["product_code"],
-                product_name=row["product_name"], annual_premium=float(row["annual_premium"]),
-                currency=row["currency"], official=False,
-                source=row.get("rate_note") or "Legacy rate table",
-            ))
+    # Legacy APRIL / IMG loader intentionally disabled on 13 Oct 2026.
+    # See the comment on OFFICIAL_FILE above for the policy and how to add
+    # a new carrier's official workbook when one arrives.
 
     return tuple(records)
 

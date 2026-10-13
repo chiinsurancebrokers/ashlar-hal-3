@@ -11,7 +11,7 @@ from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
 from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest, plan_documents
 
-from backend.app.rates.residence import area_includes, is_greek_resident, residence_status
+from backend.app.rates.residence import area_includes, residence_status
 
 
 def residence_gate(applicant: Applicant) -> str | None:
@@ -24,9 +24,9 @@ def residence_gate(applicant: Applicant) -> str | None:
     return None
 
 
-def _carrier_allowed_for_residence(carrier: str, applicant: Applicant) -> bool:
-    # Legacy APRIL / IMG tables were rated for residents of Greece only.
-    return carrier == "morgan_price" or is_greek_resident(applicant.residence_country)
+# As of 13 Oct 2026 only Morgan Price has an official 2026 workbook loaded in
+# registry.py. The old per-carrier residence gate (APRIL/IMG limited to
+# Greek residents) was removed with the legacy workbook — see registry.py.
 
 
 def _carrier_key(carrier: str) -> str:
@@ -83,14 +83,15 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
     quotes: list[QuoteResult] = []
 
     for carrier, product_code in _distinct_products(applicant.coverage_area):
-        if not _carrier_allowed_for_residence(carrier, applicant):
-            continue
         rows = _rows_for(carrier, product_code, applicant.coverage_area)
         if not rows:
             continue
 
         # Area 2/3/4: only Morgan Price has a verified 2026 geographic
-        # definition for these areas in our evidence set.
+        # definition for these areas in our evidence set. (Harmless with the
+        # 13 Oct 2026 workbook, which already is Morgan-Price-only, but kept
+        # so adding a Europe-only carrier later does not accidentally price
+        # worldwide requests.)
         if applicant.coverage_area in {"area2", "area3", "area4"} and carrier != "morgan_price":
             continue
 
@@ -130,24 +131,19 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
 
         family_quote = price_family(adjusted_each, family_discount_pct=settings.family_discount_pct)
 
-        if official:
-            warnings = [
-                "Official Morgan Price Europe 2026 rate from the supplied workbook.",
-                "Final premium and acceptance remain subject to insurer eligibility, underwriting and confirmation.",
-            ]
-            if applicant.chronic_conditions_disclosed:
-                warnings.append("A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.")
-            facts = verified_fact_texts(product_code)
-            docs = [d["official_url"] for d in load_manifest()["documents"] if d["document_type"] in {"policy_wording", "table_of_benefits"}]
-            evidence_status = "verified_2026_tob_and_policy"
-            card_docs = plan_documents(product_code)
-        else:
-            warnings = [
-                "Indicative quotation using a legacy rate dataset for this carrier.",
-                "Benefit matching is not scored until this carrier's current official documents are loaded.",
-            ]
-            facts, docs, card_docs = [], [], []
-            evidence_status = "legacy_unverified_benefits"
+        # Every quote in flight today is Morgan Price official (the only loaded
+        # workbook). The old "legacy" branch is unreachable and was removed on
+        # 13 Oct 2026 together with the APRIL/IMG rate loader.
+        warnings = [
+            "Official Morgan Price Europe 2026 rate from the supplied workbook.",
+            "Final premium and acceptance remain subject to insurer eligibility, underwriting and confirmation.",
+        ]
+        if applicant.chronic_conditions_disclosed:
+            warnings.append("A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.")
+        facts = verified_fact_texts(product_code)
+        docs = [d["official_url"] for d in load_manifest()["documents"] if d["document_type"] in {"policy_wording", "table_of_benefits"}]
+        evidence_status = "verified_2026_tob_and_policy"
+        card_docs = plan_documents(product_code)
 
         reasons = []
         if outcome.matched:
@@ -156,7 +152,7 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             reasons.append("Verified gap: " + ", ".join(outcome.unmatched))
 
         carrier_name = member_rows[0].carrier_name  # type: ignore[union-attr]
-        area_label = member_rows[0].area_label if official else f"{applicant.coverage_area} (legacy definition)"  # type: ignore[union-attr]
+        area_label = member_rows[0].area_label  # type: ignore[union-attr]
         rate_version = member_rows[0].rate_version  # type: ignore[union-attr]
 
         quotes.append(QuoteResult(
@@ -242,8 +238,6 @@ def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | 
         return []
     out = []
     for carrier, product_code in _distinct_products(applicant.coverage_area):
-        if not _carrier_allowed_for_residence(carrier, applicant):
-            continue
         rows = _rows_for(carrier, product_code, applicant.coverage_area)
         if not rows:
             continue
@@ -275,6 +269,8 @@ def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | 
 def _carrier_key_from_insurer(insurer: str) -> str:
     if "Morgan Price" in insurer:
         return "morgan_price"
+    # APRIL / IMG mappings retained for historical rows but neither carrier
+    # is currently quoted — see registry.py (13 Oct 2026 note).
     if "APRIL" in insurer:
         return "april"
     if "IMG" in insurer:

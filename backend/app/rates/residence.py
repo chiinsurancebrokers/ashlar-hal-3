@@ -12,8 +12,10 @@ Source: Morgan Price "Evolution Health Policy EU" policy wording (04/26):
 HAL rule (not an insurer rule): the area of cover must include the country
 where the client lives, otherwise the plan would not cover them at home.
 
-Legacy APRIL / IMG rate tables were built for Greek residents only, so they
-are offered only to residents of Greece.
+As of 13 Oct 2026, the only official rate workbook loaded is Morgan Price
+2026. Legacy APRIL / IMG rate tables (Greek-residents-only) were withdrawn
+from online quoting pending the receipt of 2026 workbooks from those
+carriers — see the comment on OFFICIAL_FILE in registry.py.
 """
 from __future__ import annotations
 

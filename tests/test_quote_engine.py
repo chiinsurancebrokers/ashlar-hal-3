@@ -1,8 +1,18 @@
 from datetime import date
 
+import pytest
+
 from backend.app.core.config import Settings
 from backend.app.schemas.applicant import Applicant, Dependent
 from backend.app.rates.quote_engine import quote_current, quote_shortlist, quote_exclusions
+
+# As of 13 Oct 2026 only Morgan Price has a loaded 2026 workbook, so tests
+# that assert the existence of an IMG quote in the current output are skipped
+# until APRIL / IMG 2026 rate tables arrive. See backend/app/rates/registry.py.
+_IMG_UNAVAILABLE = pytest.mark.skip(
+    reason="IMG not in 2026 online quoting until a 2026 rate workbook arrives; "
+           "see backend/app/rates/registry.py (13 Oct 2026 policy)."
+)
 
 
 def _settings(**overrides) -> Settings:
@@ -89,6 +99,7 @@ def test_recommended_pick_never_outranks_on_price_alone_when_unverified_against_
     assert all(q.product_name != "IMG Bronze" for q in shortlist), "IMG Bronze must be hard-excluded when outpatient is required"
 
 
+@_IMG_UNAVAILABLE
 def test_card_metadata_present_on_every_quote_current_result_not_just_shortlist():
     applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
     quotes = quote_current(applicant, _settings())
@@ -112,21 +123,21 @@ def test_benefit_checklist_present_and_honest_on_every_quote():
     checklist_p = {item["field"]: item["covered"] for item in premium.benefit_checklist}
     assert checklist_p["maternity_required"] is True
 
-    img = next(q for q in quotes if q.insurer.startswith("IMG") and q.product_code == "bronze")
-    checklist_img = {item["field"]: item["covered"] for item in img.benefit_checklist}
-    assert checklist_img["outpatient_required"] is False, "Bronze outpatient absence is an explicit catalogue fact"
-    assert all(
-        v is None for field, v in checklist_img.items() if field != "outpatient_required"
-    ), "IMG benefits not explicitly evidenced must remain 'not confirmed', never guessed"
+    # The IMG Bronze checklist assertions below were only reachable while the
+    # legacy APRIL/IMG workbook was loaded; the workbook was withdrawn on
+    # 13 Oct 2026 (see backend/app/rates/registry.py). Re-enable when IMG
+    # sends a 2026 workbook.
 
 
-def test_residents_outside_greece_get_morgan_price_only():
-    quotes = quote_current(Applicant(age=40, residence_country="Germany", coverage_area="area1"), _settings())
-    assert quotes and {q.plan_key.split(":")[0] for q in quotes} == {"morgan_price"}
-    greek = quote_current(Applicant(age=40, residence_country="Greece", coverage_area="area1"), _settings())
-    assert {q.plan_key.split(":")[0] for q in greek} > {"morgan_price"}   # legacy Greek-resident tables too
-    same = {q.plan_key: q.premium for q in greek}
-    assert all(same[q.plan_key] == q.premium for q in quotes)            # Morgan Price rates by area, not residence
+def test_only_morgan_price_is_quoted_online():
+    """As of 13 Oct 2026, HAL quotes only Morgan Price online — every other
+    carrier was withdrawn pending a 2026 rate workbook. This test guards that
+    policy: it must fail loudly if a different carrier starts appearing in
+    the output again."""
+    quotes_de = quote_current(Applicant(age=40, residence_country="Germany", coverage_area="area1"), _settings())
+    assert quotes_de and {q.plan_key.split(":")[0] for q in quotes_de} == {"morgan_price"}
+    quotes_gr = quote_current(Applicant(age=40, residence_country="Greece", coverage_area="area1"), _settings())
+    assert quotes_gr and {q.plan_key.split(":")[0] for q in quotes_gr} == {"morgan_price"}
 
 
 def test_us_and_sanctioned_residents_are_not_priced():
