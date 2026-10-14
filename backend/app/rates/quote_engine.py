@@ -222,11 +222,24 @@ def quote_shortlist(applicant: Applicant, settings: Settings, *, limit: int = 5,
         if len(shortlist) >= limit:
             break
 
+    # "Recommended" is a signal we only earn when the user has told HAL what
+    # matters. Without any must-have and without a budget, the engine's rank
+    # devolves to "cheapest eligible" — labelling that as "Recommended" would
+    # be a false signal (plain price != plain fit) and misaligns with HAL
+    # fairness rule 2 (every recommendation reviewed by a broker). When the
+    # user has stated priorities, the top of a verified ranking IS a real
+    # recommendation and we mark it.
+    meaningful_recommendation = bool(applicant.must_have_keys()) or applicant.budget_annual is not None
+
     lowest = min((q.premium for q in shortlist), default=None)
     for i, q in enumerate(shortlist):
-        q.recommended = (i == 0)
+        q.recommended = (i == 0 and meaningful_recommendation)
         q.recommendation_rank = i + 1
-        if lowest is not None and q.premium == lowest and "Best value" not in q.fit_badges:
+        # "Best value" highlights the cheapest plan — but only when it is NOT
+        # the one already carrying the Recommended ribbon, so the two badges
+        # don't tautologically label the same card.
+        is_cheapest = lowest is not None and q.premium == lowest
+        if is_cheapest and not q.recommended and "Best value" not in q.fit_badges:
             q.fit_badges = (q.fit_badges + ["Best value"])[:3]
 
     return shortlist

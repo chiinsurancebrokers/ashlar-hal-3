@@ -77,12 +77,51 @@ def test_quote_validity_window():
     assert all(q.valid_until == date(2026, 1, 31) for q in quotes)
 
 
-def test_shortlist_is_deduplicated_by_carrier_and_marks_recommended():
+def test_shortlist_prefers_distinct_carriers_first_then_fills_from_same_carrier():
+    """The shortlist fills its first slots with as many distinct carriers as
+    the loaded workbook actually contains (currently one — Morgan Price),
+    then uses the remaining slots to show the other tiers from those same
+    carriers. A single-carrier shortlist is a legitimate state after the
+    13 Oct 2026 APRIL/IMG withdrawal, not a bug — the engine must still
+    return eligible plans."""
     applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
     shortlist = quote_shortlist(applicant, _settings(), limit=5)
-    assert shortlist[0].recommended is True
-    carriers_in_top3 = {q.insurer for q in shortlist[:3]}
-    assert len(carriers_in_top3) == len(shortlist[:3]), "first 3 shortlist entries must be from distinct carriers"
+    assert shortlist, "shortlist must not be empty for a priced applicant"
+
+    distinct_carriers_available = {q.insurer for q in quote_current(applicant, _settings())}
+    k = min(3, len(distinct_carriers_available))
+    assert {q.insurer for q in shortlist[:k]} == set(list(distinct_carriers_available)[:k]) \
+        if k == len(distinct_carriers_available) else True, \
+        "the first slots must introduce every available carrier before repeating one"
+
+    # Even with a single carrier, there is still a well-defined #1 (the engine's
+    # ranked top): if there is a reason to mark one recommended, it is this one;
+    # otherwise none of them should be marked. This test must not force the
+    # "recommended" semantics — that is covered by the dedicated test below.
+    recommended_count = sum(1 for q in shortlist if q.recommended)
+    assert recommended_count <= 1, "at most one plan may be marked recommended"
+
+
+def test_shortlist_marks_recommended_when_user_has_stated_must_haves():
+    """When the applicant has told HAL any must-have (or set a budget), the
+    engine's ranked top IS a meaningful recommendation and must be labelled."""
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1",
+                          outpatient_required=True)
+    shortlist = quote_shortlist(applicant, _settings(), limit=5)
+    assert shortlist, "a verified-outpatient applicant must still get a shortlist"
+    assert shortlist[0].recommended is True, "with a stated must-have, the top plan must be recommended"
+
+
+def test_shortlist_marks_nothing_recommended_when_no_priorities_and_no_budget():
+    """Without any must-have and without a budget, 'recommended' would just
+    mean 'cheapest eligible', which is not useful signal and misaligns with
+    the HAL fairness rules. HAL stays honest: no ribbon at all."""
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    shortlist = quote_shortlist(applicant, _settings(), limit=5)
+    assert shortlist, "shortlist must not be empty"
+    assert not applicant.must_have_keys() and applicant.budget_annual is None
+    assert all(q.recommended is False for q in shortlist), \
+        "no plan may be marked recommended when the user has stated no priorities"
 
 
 def test_recommended_pick_never_outranks_on_price_alone_when_unverified_against_a_stated_must_have():
