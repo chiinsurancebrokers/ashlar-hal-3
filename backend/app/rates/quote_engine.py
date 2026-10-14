@@ -61,6 +61,16 @@ def _enrich_card_meta(q: QuoteResult) -> None:
     q.card_annual_limit = meta.get("annual_limit") or "See plan schedule"
     q.card_deductible = meta.get("deductible") or "See selected option"
     q.card_evacuation = meta.get("evacuation") or "Subject to plan terms"
+    # Deductible preference recorded but not priced in — be honest about it
+    # on the card so the user doesn't think their choice changed the number.
+    # The deductible_model_enabled flag defaults False (no carrier-confirmed
+    # tiered rates yet), so we must say the preference is saved for the
+    # broker rather than silently ignoring it.
+    if q.deductible is not None and q.deductible_note == "deductible_preference_not_used_in_pricing":
+        q.card_deductible_note = (
+            f"Your €{int(q.deductible):,} deductible preference is recorded for the broker. "
+            "The price above is the undiscounted indicative rate — the final figure is set with the insurer at proposal stage."
+        )
     q.must_have_checks = list(q.matched_requirements) if q.evidence_confidence == 1.0 else []
 
     if q.evidence_confidence == 1.0 and q.matched_requirements:

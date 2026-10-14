@@ -59,6 +59,22 @@ def test_deductible_model_off_by_default_matches_base_price():
     standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
     assert standard.premium == 1490.80  # unaffected: deductible_model_enabled defaults False
     assert standard.deductible_note == "deductible_preference_not_used_in_pricing"
+    # Client-facing card note is surfaced so the user understands their
+    # choice was recorded for the broker, not silently ignored.
+    assert standard.card_deductible_note is not None
+    assert "€1,000" in standard.card_deductible_note
+    assert "recorded for the broker" in standard.card_deductible_note
+
+
+def test_deductible_card_note_absent_when_no_deductible_chosen():
+    """No note when the applicant didn't pick a specific deductible — the
+    card stays clean. A missing/null preference is 'flexible' which means
+    'no opinion', which the broker will handle at proposal stage anyway."""
+    applicant = Applicant(age=40, residence_country="Greece", coverage_area="area1")
+    quotes = quote_current(applicant, _settings())
+    standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
+    assert standard.deductible is None
+    assert standard.card_deductible_note is None
 
 
 def test_deductible_model_on_actually_changes_price():

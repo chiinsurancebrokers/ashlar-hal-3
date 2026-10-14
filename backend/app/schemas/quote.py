@@ -47,6 +47,12 @@ class QuoteResult(BaseModel):
     card_coverage: str | None = None
     card_annual_limit: str | None = None
     card_deductible: str | None = None
+    # Honest, client-facing version of deductible_note. Set only when the
+    # applicant selected a specific deductible but the pricing model is OFF
+    # (deductible_model_enabled=False) — tells them their choice was recorded
+    # for the broker but did not affect the indicative price. Empty/None in
+    # the common case (model off AND preference "flexible").
+    card_deductible_note: str | None = None
     card_evacuation: str | None = None
     card_why: str | None = None
     client_note: str | None = None
