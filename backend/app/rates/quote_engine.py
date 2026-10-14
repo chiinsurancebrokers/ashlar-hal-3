@@ -29,10 +29,6 @@ def residence_gate(applicant: Applicant) -> str | None:
 # Greek residents) was removed with the legacy workbook — see registry.py.
 
 
-def _carrier_key(carrier: str) -> str:
-    return carrier
-
-
 def _card_meta(carrier: str, product_code: str) -> dict:
     return load_card_meta().get(carrier, {}).get(product_code, {})
 
@@ -289,13 +285,3 @@ def quote_exclusions(applicant: Applicant, settings: Settings, *, today: date | 
     return out
 
 
-def _carrier_key_from_insurer(insurer: str) -> str:
-    if "Morgan Price" in insurer:
-        return "morgan_price"
-    # APRIL / IMG mappings retained for historical rows but neither carrier
-    # is currently quoted — see registry.py (13 Oct 2026 note).
-    if "APRIL" in insurer:
-        return "april"
-    if "IMG" in insurer:
-        return "img"
-    return insurer.lower().replace(" ", "_")[:40]
