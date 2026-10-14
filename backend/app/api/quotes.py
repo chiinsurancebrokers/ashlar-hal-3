@@ -29,23 +29,85 @@ async def preview(applicant: Applicant):
     }
 
 
+_MAX_UPLOAD_BYTES = 20 * 1024 * 1024   # 20 MB per file
+
+
+async def _read_upload(upload: UploadFile | None, label: str) -> tuple[str, bytes, str] | None:
+    """Return (filename, content, content_type) or None if no file was provided.
+    Enforces 20 MB per-file cap and empty-file rejection with a label-tagged
+    message so the UI can tell the user which input to fix."""
+    if upload is None:
+        return None
+    content = await upload.read()
+    if not content:
+        raise HTTPException(status_code=400, detail=f"{label} file is empty.")
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"{label} file exceeds 20 MB.")
+    filename = (upload.filename or f"{label.lower()}.pdf").strip()
+    return filename, content, (upload.content_type or "application/octet-stream")
+
+
 @router.post("/current-policy")
-async def current_policy(file: UploadFile = File(...)):
-    """Secure proxy to Proposal Studio plus an evidence-locked policy audit."""
+async def current_policy(
+    # Mirrors the 3-document intake pattern used by /have-my-policy-reviewed/
+    # (data flow: Supabase intake → Railway worker). Here the three docs are
+    # forwarded directly to Proposal Studio for the live HAL compare flow.
+    #
+    # 'file' is the legacy single-field alias kept for backwards compat with
+    # earlier HAL versions and any client still posting one file.
+    file: UploadFile | None = File(None),
+    benefits_file: UploadFile | None = File(None),
+    wording_file: UploadFile | None = File(None),
+    brochure_file: UploadFile | None = File(None),
+    invoice_file: UploadFile | None = File(None),
+):
+    """Secure proxy to Proposal Studio plus an evidence-locked policy audit.
+
+    Accepts up to three documents:
+      - benefits_file (REQUIRED): the Table of Benefits / certificate /
+        schedule — the document HAL needs to read actual coverage figures.
+      - wording_file OR brochure_file (one REQUIRED): the full policy
+        wording or the carrier brochure, whichever the client has to hand.
+      - invoice_file (optional): the premium invoice, so the broker can
+        compare the premium currently paid against the shortlist.
+    """
     settings = get_settings()
     if not settings.proposal_studio_api_url or not settings.proposal_studio_api_key:
         raise HTTPException(status_code=503, detail="Current-policy analysis is not configured.")
 
-    filename = (file.filename or "current-policy.pdf").strip()
-    content = await file.read()
-    if not content:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-    if len(content) > 20 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Current policy file exceeds 20 MB.")
+    # Backwards compat: a single 'file' is accepted as the benefits document
+    # when benefits_file isn't present. Lets older HAL frontends keep working.
+    primary = benefits_file or file
+    if primary is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Please attach your Table of Benefits / schedule (benefits_file).",
+        )
+    if wording_file is None and brochure_file is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Please attach either the policy wording (wording_file) or the carrier brochure (brochure_file).",
+        )
+
+    benefits_tuple = await _read_upload(primary, "Benefits / schedule")
+    wording_tuple = await _read_upload(wording_file, "Policy wording")
+    brochure_tuple = await _read_upload(brochure_file, "Brochure")
+    invoice_tuple = await _read_upload(invoice_file, "Invoice")
 
     url = settings.proposal_studio_api_url.rstrip("/") + "/api/v1/current-policy/analyze"
     headers = {"x-hal-bridge-key": settings.proposal_studio_api_key}
-    files = {"file": (filename, content, file.content_type or "application/octet-stream")}
+    files: list[tuple[str, tuple[str, bytes, str]]] = []
+    # Keep 'file' field name for Proposal Studio deployments that still
+    # expect the single-file contract. New field names are sent in addition.
+    files.append(("file", benefits_tuple))                 # backwards-compat alias
+    files.append(("benefits_file", benefits_tuple))        # new canonical field
+    if wording_tuple is not None:
+        files.append(("wording_file", wording_tuple))
+    if brochure_tuple is not None:
+        files.append(("brochure_file", brochure_tuple))
+    if invoice_tuple is not None:
+        files.append(("invoice_file", invoice_tuple))
+
     try:
         async with httpx.AsyncClient(timeout=settings.proposal_studio_timeout_seconds) as client:
             response = await client.post(url, headers=headers, files=files)

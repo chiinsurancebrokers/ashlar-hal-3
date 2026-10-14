@@ -291,7 +291,34 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
     <button id="compareOpenBtn" onclick="openCompare()">Compare</button>
   </div>
 </div>
-<input id="currentPolicyFile" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html" style="display:none" onchange="uploadCurrentPolicy(this.files && this.files[0])">
+<!-- Current-policy upload modal (3-document intake: benefits + wording-or-brochure + invoice).
+     The old single hidden file input is kept as a backwards-compat alias in case any
+     automation still clicks it; the user flow now goes through openCurrentPolicyModal(). -->
+<input id="currentPolicyFile" type="file" accept=".pdf,.txt,.html,.htm,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,text/html,image/*" style="display:none" onchange="uploadCurrentPolicySingle(this.files && this.files[0])">
+
+<div class="modal-backdrop" id="currentPolicyModal" onclick="if(event.target===this)closeModal('currentPolicyModal')">
+  <div class="modal">
+    <h3 id="currentPolicyModalTitle">Compare with your current policy</h3>
+    <p id="currentPolicyModalIntro" style="font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 10px">Attach what you have. A broker reads these alongside the shortlist and HAL explains where your current cover matches, loses or gains versus the plans you&rsquo;re comparing.</p>
+    <label for="cpBenefits" id="cpBenefitsLabel" style="font-weight:600">Benefits / schedule <span style="color:var(--accent)">*</span></label>
+    <p id="cpBenefitsHelp" style="font-size:11px;color:var(--muted);margin:2px 0 6px">The Table of Benefits or the certificate / schedule — the pages that list the actual coverage figures. Required.</p>
+    <input id="cpBenefits" type="file" accept=".pdf,.txt,.html,.htm,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,text/html,image/*">
+    <label for="cpWording" id="cpWordingLabel" style="font-weight:600;margin-top:12px;display:block">Policy wording <span id="cpOrSpan" style="color:var(--muted);font-weight:400">or</span> brochure <span style="color:var(--accent)">*</span></label>
+    <p id="cpWordingHelp" style="font-size:11px;color:var(--muted);margin:2px 0 6px">The full policy wording PDF; or, if you only have the carrier brochure, attach that instead. One of the two is required.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input id="cpWording" type="file" accept=".pdf,.txt,.html,.htm,application/pdf,text/plain,text/html">
+      <input id="cpBrochure" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+    </div>
+    <label for="cpInvoice" id="cpInvoiceLabel" style="font-weight:600;margin-top:12px;display:block">Premium invoice <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+    <p id="cpInvoiceHelp" style="font-size:11px;color:var(--muted);margin:2px 0 6px">If you have the latest premium invoice, attach it so the broker can compare the figure you&rsquo;re paying today against the shortlist.</p>
+    <input id="cpInvoice" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+    <p id="cpModalPrivacy" style="font-size:11px;color:var(--muted);line-height:1.5;margin:12px 0 0">Files are read only by a licensed Ashlar broker and the HAL comparator. Kept 90 days from submission, then deleted. Max 20 MB per file.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cpCancelBtn" onclick="closeModal('currentPolicyModal')">Cancel</button>
+      <button class="btn-primary" id="cpSubmitBtn" onclick="submitCurrentPolicyModal()">Analyse policy</button>
+    </div>
+  </div>
+</div>
 
 <div class="composer" style="display:none">
   <button id="micBtn" class="mic-btn" onclick="toggleRecording()" title="Tap to speak" aria-label="Tap to speak">🎙</button>
@@ -471,6 +498,16 @@ const I18N = {
     uploadCurrentPolicy:'📄 Compare with your current policy', currentPolicy:'Current policy', policyUploading:'Analysing your current policy…',
     policyReady:'Current policy ready for comparison', policyFailed:'I could not analyse that policy. Please try another PDF or document.',
     policySelectPlan:'Select at least one plan to compare with your current policy.', replacePolicy:'Replace current policy',
+    cpModalTitle:'Compare with your current policy',
+    cpModalIntro:"Attach what you have. A broker reads these alongside the shortlist and HAL explains where your current cover matches, loses or gains versus the plans you're comparing.",
+    cpBenefitsLabel:'Benefits / schedule <span style="color:var(--accent)">*</span>',
+    cpBenefitsHelp:'The Table of Benefits or the certificate / schedule — the pages that list the actual coverage figures. Required.',
+    cpWordingLabel:'Policy wording <span style="color:var(--muted);font-weight:400">or</span> brochure <span style="color:var(--accent)">*</span>',
+    cpWordingHelp:'The full policy wording PDF; or, if you only have the carrier brochure, attach that instead. One of the two is required.',
+    cpInvoiceLabel:'Premium invoice <span style="color:var(--muted);font-weight:400">(optional)</span>',
+    cpInvoiceHelp:"If you have the latest premium invoice, attach it so the broker can compare the figure you're paying today against the shortlist.",
+    cpModalPrivacy:'Files are read only by a licensed Ashlar broker and the HAL comparator. Kept 90 days from submission, then deleted. Max 20 MB per file.',
+    cpSubmitBtn:'Analyse policy',
     confidence:'Confidence', limitations:'Key limitations',
     healthcareCountry:'Main healthcare country', healthcareContext:'Healthcare context', source:'Source', policyWordings:'Supporting policy documents',
     policyWordingMissing:'No supporting policy wording is attached in Proposal Studio yet.', oecdAverage:'OECD avg', viewInsideAshlar:'View inside Ashlar'
@@ -530,7 +567,17 @@ const I18N = {
     policySelectPlan:'Επιλέξτε τουλάχιστον ένα πρόγραμμα για σύγκριση με το τρέχον συμβόλαιό σας.', replacePolicy:'Αντικατάσταση συμβολαίου',
     confidence:'Βεβαιότητα', limitations:'Βασικοί περιορισμοί',
     healthcareCountry:'Κύρια χώρα περίθαλψης', healthcareContext:'Πλαίσιο περίθαλψης', source:'Πηγή', policyWordings:'Υποστηρικτικά ασφαλιστικά έντυπα',
-    policyWordingMissing:'Δεν έχει συνδεθεί ακόμη υποστηρικτικό policy wording στο Proposal Studio.', oecdAverage:'Μ.Ο. ΟΟΣΑ', viewInsideAshlar:'Προβολή μέσα στην Ashlar'
+    policyWordingMissing:'Δεν έχει συνδεθεί ακόμη υποστηρικτικό policy wording στο Proposal Studio.', oecdAverage:'Μ.Ο. ΟΟΣΑ', viewInsideAshlar:'Προβολή μέσα στην Ashlar',
+    cpModalTitle:'Σύγκριση με το τρέχον σας συμβόλαιο',
+    cpModalIntro:'Επισυνάψτε ό,τι έχετε. Ο διαμεσολαβητής τα διαβάζει μαζί με την shortlist και ο HAL εξηγεί πού ταιριάζει, πού υστερεί και πού κερδίζει η τρέχουσα κάλυψή σας σε σχέση με τα προγράμματα που συγκρίνετε.',
+    cpBenefitsLabel:'Πίνακας Παροχών / Πιστοποιητικό <span style="color:var(--accent)">*</span>',
+    cpBenefitsHelp:'Ο Πίνακας Παροχών ή το πιστοποιητικό / πρόγραμμα — οι σελίδες που αναφέρουν τα πραγματικά όρια κάλυψης. Απαιτείται.',
+    cpWordingLabel:'Policy wording <span style="color:var(--muted);font-weight:400">ή</span> brochure <span style="color:var(--accent)">*</span>',
+    cpWordingHelp:'Το πλήρες policy wording σε PDF· ή, αν έχετε μόνο το brochure της εταιρίας, επισυνάψτε αυτό. Ένα από τα δύο απαιτείται.',
+    cpInvoiceLabel:'Απόδειξη πληρωμής ασφαλίστρου <span style="color:var(--muted);font-weight:400">(προαιρετικό)</span>',
+    cpInvoiceHelp:'Αν έχετε την πιο πρόσφατη απόδειξη πληρωμής ασφαλίστρου, επισυνάψτε την ώστε ο διαμεσολαβητής να συγκρίνει το τρέχον ποσό με τη shortlist.',
+    cpModalPrivacy:'Τα αρχεία διαβάζονται μόνο από αδειοδοτημένο διαμεσολαβητή της Ashlar και τον συγκριτή του HAL. Διατηρούνται 90 ημέρες από την αποστολή και στη συνέχεια διαγράφονται. Μέγιστο μέγεθος 20 MB ανά αρχείο.',
+    cpSubmitBtn:'Ανάλυση συμβολαίου'
   }
 };
 
@@ -622,11 +669,20 @@ function applyStaticI18n(){
     lblLeadFirst:'firstName',lblLeadLast:'lastName',lblLeadResidence:'residence',lblLeadAge:'age',lblLeadPhone:'phoneLabel',lblLeadDob:'dobLabel',leadSaveText:'saveTick',leadThanksClose:'close',
     lblLeadCoverage:'coverageDestination',lblLeadFamily:'familyTravellers',lblLeadBudget:'approxBudget',
     lblLeadMessage:'anythingElse',leadConsentText:'consent',leadCancelBtn:'cancel',leadSendBtn:'sendEnquiry',
-    footerDisclaimer:'footer'
+    footerDisclaimer:'footer',
+    currentPolicyModalTitle:'cpModalTitle', currentPolicyModalIntro:'cpModalIntro',
+    cpBenefitsLabel:'cpBenefitsLabel', cpBenefitsHelp:'cpBenefitsHelp',
+    cpWordingLabel:'cpWordingLabel', cpWordingHelp:'cpWordingHelp',
+    cpInvoiceLabel:'cpInvoiceLabel', cpInvoiceHelp:'cpInvoiceHelp',
+    cpModalPrivacy:'cpModalPrivacy', cpCancelBtn:'cancel', cpSubmitBtn:'cpSubmitBtn'
   };
+  // Modal labels contain inline markup (asterisks, "or" spacers), so write
+  // them via innerHTML; plain-text IDs stay on textContent to keep user
+  // content safe from accidental HTML in future translations.
+  const RICH_LABELS = new Set(['uiHeadline','cpBenefitsLabel','cpWordingLabel','cpInvoiceLabel']);
   Object.entries(map).forEach(([id,key])=>{
     const el=document.getElementById(id); if(!el)return;
-    if(id==='uiHeadline') el.innerHTML=t(key); else el.textContent=t(key);
+    if(RICH_LABELS.has(id)) el.innerHTML=t(key); else el.textContent=t(key);
   });
   document.getElementById('speakerToggle').textContent=speakerOn?t('voiceOn'):t('voiceOff');
   const input=document.getElementById('input'); input.placeholder=t('composer');
@@ -726,8 +782,8 @@ function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[
     html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
     html+=`<div class="comparison-actions">`;
     html+=currentPolicy
-      ? `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
-      : `<button class="current-policy-cta" onclick="document.getElementById('currentPolicyFile').click()">${esc(t('uploadCurrentPolicy'))}</button>`;
+      ? `<button class="current-policy-cta" onclick="openCurrentPolicyModal()"><span class="current-policy-chip">✓ ${esc(t('currentPolicy'))}</span> ${esc(t('replacePolicy'))}</button>`
+      : `<button class="current-policy-cta" onclick="openCurrentPolicyModal()">${esc(t('uploadCurrentPolicy'))}</button>`;
     html+=`<button class="comparison-primary-cta" onclick="openCompareWithGuard()">${esc(t('compareNow'))}</button>`;
     html+=`</div>`;
     if(excluded&&excluded.length){
@@ -942,13 +998,60 @@ function openCompareWithGuard(){
   openCompare();
 }
 
-async function uploadCurrentPolicy(file){
-  const input=document.getElementById('currentPolicyFile');
-  if(!file) return;
-  if(file.size>20*1024*1024){addMsg(lang()==='el'?'Το αρχείο είναι μεγαλύτερο από 20 MB.':'The file is larger than 20 MB.','hal');input.value='';return;}
+function openCurrentPolicyModal(){
+  // Reset the three inputs each time the modal opens so a cancelled attempt
+  // doesn't leak into the next one.
+  ['cpBenefits','cpWording','cpBrochure','cpInvoice'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('currentPolicyModal').classList.add('open');
+}
+
+function _checkCurrentPolicyFileSize(file,label){
+  if(file && file.size>20*1024*1024){
+    addMsg(lang()==='el'
+      ? `Το αρχείο "${label}" είναι μεγαλύτερο από 20 MB.`
+      : `The ${label} file is larger than 20 MB.`,'hal');
+    return false;
+  }
+  return true;
+}
+
+async function submitCurrentPolicyModal(){
+  const benefits=document.getElementById('cpBenefits').files[0]||null;
+  const wording=document.getElementById('cpWording').files[0]||null;
+  const brochure=document.getElementById('cpBrochure').files[0]||null;
+  const invoice=document.getElementById('cpInvoice').files[0]||null;
+  if(!benefits){
+    addMsg(lang()==='el'
+      ? 'Παρακαλώ επισυνάψτε τον Πίνακα Παροχών / πιστοποιητικό στο πεδίο «Benefits».'
+      : 'Please attach your Table of Benefits / schedule in the Benefits field.','hal');
+    return;
+  }
+  if(!wording && !brochure){
+    addMsg(lang()==='el'
+      ? 'Παρακαλώ επισυνάψτε είτε το policy wording είτε το brochure.'
+      : 'Please attach either the policy wording or the brochure.','hal');
+    return;
+  }
+  if(![[benefits,'Benefits'],[wording,'Policy wording'],[brochure,'Brochure'],[invoice,'Invoice']]
+      .every(([f,label])=>_checkCurrentPolicyFileSize(f,label))) return;
+
+  closeModal('currentPolicyModal');
+  await _postCurrentPolicy({benefits,wording,brochure,invoice});
+}
+
+async function _postCurrentPolicy({benefits,wording,brochure,invoice}){
   stopSpeech();
   showThinking(t('policyUploading'));
-  const form=new FormData();form.append('file',file,file.name);
+  const form=new FormData();
+  form.append('benefits_file',benefits,benefits.name);
+  // Keep 'file' as a mirror so a Proposal Studio instance that still expects
+  // the single-field contract keeps working.
+  form.append('file',benefits,benefits.name);
+  if(wording) form.append('wording_file',wording,wording.name);
+  if(brochure) form.append('brochure_file',brochure,brochure.name);
+  if(invoice) form.append('invoice_file',invoice,invoice.name);
   try{
     const r=await fetch(API+'/quotes/current-policy',{method:'POST',body:form});
     const d=await r.json();removeThinking();
@@ -956,12 +1059,30 @@ async function uploadCurrentPolicy(file){
     currentPolicy=d.current_policy||null;
     currentPolicyToken=d.current_policy_token||null;
     const wordingNote=currentPolicy?.policy_wording_status==='attached' ? '' : ' '+t('policyWordingMissing');
-    addMsg(`${t('policyReady')}: ${currentPolicy?.plan_name||file.name}.${wordingNote}`,'hal');
+    const displayName=currentPolicy?.plan_name||benefits.name;
+    const extras=[wording?'wording':null,brochure?'brochure':null,invoice?'invoice':null].filter(Boolean);
+    const extraText=extras.length ? ` (+${extras.join(', ')})` : '';
+    addMsg(`${t('policyReady')}: ${displayName}${extraText}.${wordingNote}`,'hal');
     renderState();
   }catch(e){
     removeThinking();addMsg(lang()==='el'?t('policyFailed'):(e.message||t('policyFailed')),'hal');
-  }finally{input.value='';}
+  }
 }
+
+// Backwards-compat path for any code still triggering the hidden single
+// file input directly (headless automation, old tests). Routes the one
+// uploaded file through the benefits slot of the new 3-document endpoint.
+async function uploadCurrentPolicySingle(file){
+  const input=document.getElementById('currentPolicyFile');
+  if(!file) return;
+  if(!_checkCurrentPolicyFileSize(file,'Benefits')){input.value='';return;}
+  await _postCurrentPolicy({benefits:file,wording:null,brochure:null,invoice:null});
+  input.value='';
+}
+
+// Legacy name retained so any inline onclick handlers HAL may have inlined
+// earlier keep resolving. Routes to the single-file compat path.
+const uploadCurrentPolicy=uploadCurrentPolicySingle;
 
 async function openCompare(){
   const content=document.getElementById('compareContent');
