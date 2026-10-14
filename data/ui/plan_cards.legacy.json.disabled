@@ -1,0 +1,97 @@
+{
+  "_note": "Legacy card metadata for APRIL International and IMG Global, parked here on 13 Oct 2026 when both carriers were withdrawn from online quoting (see backend/app/rates/registry.py). This file is intentionally named *.disabled so load_card_meta() never picks it up. To restore: rename to plan_cards.img_april.json, merge its keys back into plan_cards.json alongside morgan_price, re-enable the legacy loader block in registry.py, and update frontend/index.html + plan_cards references accordingly. Last known 'why/badge/coverage' values live in Git history (branch main at HEAD~1 as of 13 Oct 2026) — pull them from there when you restore, so the restored copy matches what the client-facing comparison cards had been showing. The static entries below are a safe skeleton for when the Git copy is unavailable.",
+
+  "april": {
+    "international": {
+      "badge": "APR",
+      "coverage": "International inpatient hospitalisation and emergency outpatient",
+      "annual_limit": "€1,500,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Entry-level international inpatient cover."
+    },
+    "intl_plus": {
+      "badge": "APR",
+      "coverage": "Full inpatient and outpatient cover",
+      "annual_limit": "€1,500,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Adds outpatient treatment and diagnostics."
+    },
+    "intl_plus_nxs": {
+      "badge": "APR",
+      "coverage": "Full inpatient and outpatient + reduced excess",
+      "annual_limit": "€1,500,000",
+      "deductible": "Reduced",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Outpatient tier with a smaller excess at claim time."
+    },
+    "executive": {
+      "badge": "APR",
+      "coverage": "Comprehensive inpatient + outpatient + dental",
+      "annual_limit": "€2,000,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Broader everyday cover with dental included."
+    },
+    "exec_nxs": {
+      "badge": "APR",
+      "coverage": "Comprehensive + reduced excess",
+      "annual_limit": "€2,000,000",
+      "deductible": "Reduced",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Executive-tier benefits with a smaller excess."
+    },
+    "exec_plus": {
+      "badge": "APR",
+      "coverage": "Comprehensive + maternity + wellness",
+      "annual_limit": "€2,500,000",
+      "deductible": "Varies by option",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Adds routine maternity and wellness cover."
+    },
+    "exec_plus_nxs": {
+      "badge": "APR",
+      "coverage": "Comprehensive + maternity + wellness + reduced excess",
+      "annual_limit": "€2,500,000",
+      "deductible": "Reduced",
+      "evacuation": "Evacuation & repatriation",
+      "why": "Top APRIL tier with the smallest excess."
+    }
+  },
+
+  "img": {
+    "bronze": {
+      "badge": "IMG",
+      "coverage": "International inpatient-focused medical cover",
+      "annual_limit": "US$1,000,000",
+      "deductible": "US$1,000 and up",
+      "evacuation": "Emergency evacuation included",
+      "why": "Lowest-priced IMG tier; inpatient-only."
+    },
+    "silver": {
+      "badge": "IMG",
+      "coverage": "Inpatient + limited outpatient",
+      "annual_limit": "US$5,000,000",
+      "deductible": "US$500 and up",
+      "evacuation": "Emergency evacuation included",
+      "why": "Adds outpatient within an annual sub-limit."
+    },
+    "gold": {
+      "badge": "IMG",
+      "coverage": "Inpatient + full outpatient + dental",
+      "annual_limit": "US$8,000,000",
+      "deductible": "US$250 and up",
+      "evacuation": "Emergency evacuation included",
+      "why": "Broader daily-use benefits including dental."
+    },
+    "platinum": {
+      "badge": "IMG",
+      "coverage": "Inpatient + full outpatient + maternity + wellness",
+      "annual_limit": "No fixed limit",
+      "deductible": "US$0 and up",
+      "evacuation": "Emergency evacuation included",
+      "why": "IMG's top tier with routine maternity."
+    }
+  }
+}

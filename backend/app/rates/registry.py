@@ -13,8 +13,10 @@ OFFICIAL_FILE = RATE_DIR / "morgan_price_2026_official.csv"
 # them. When any carrier sends an official 2026+ workbook, add a new
 # <carrier>_<year>_official.csv file here and extend load_rates() with its
 # loader block. The legacy file is kept at data/rates/legacy_april_img_2025.csv
-# for historical reference only — do not reintroduce it until new official
-# tables arrive.
+# and the card metadata at data/ui/plan_cards.legacy.json.disabled for
+# historical reference only — do not reintroduce either until new official
+# tables arrive. The full restoration procedure is documented in
+# data/rates/README-legacy.md.
 CARD_META_FILE = Path(__file__).resolve().parents[3] / "data" / "ui" / "plan_cards.json"
 
 
