@@ -13,7 +13,35 @@ from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.rates.quote_engine import residence_gate
+from backend.app.rates.registry import load_rates
 from backend.app.rates.residence import is_greek_resident
+
+PERSONAL_HEALTH_FALLBACK_URL = "https://ashlarassurance.com/request-a-personal-health-quote/"
+
+
+def _age_outside_loaded_bands(applicant: Applicant) -> dict | None:
+    """Report whether the applicant (or any dependant) has an age that falls
+    outside every loaded rate band for the applicant's coverage area.
+    Returns the member label and age, or None if every household member fits.
+
+    The 2026 Morgan Price workbook caps at age 74. HAL must not say
+    'change your needs' to someone who is simply over that ceiling —
+    they need to be routed to a broker, not pushed back into the form."""
+    try:
+        rows = [r for r in load_rates() if r.area == applicant.coverage_area]
+    except Exception:
+        return None
+    if not rows:
+        return None
+    min_band = min(r.age_min for r in rows)
+    max_band = max(r.age_max for r in rows)
+    household = [("applicant", applicant.age)]
+    for d in applicant.dependents:
+        household.append((d.relationship or "dependant", d.age))
+    for who, age in household:
+        if age < min_band or age > max_band:
+            return {"who": who, "age": age, "min": min_band, "max": max_band}
+    return None
 from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
 from backend.app.travel.europesure import recommend_tier, public_catalog
@@ -189,6 +217,40 @@ def _no_verified_price_reply(state: dict, excluded: list[dict], greek: bool) -> 
                 "Change the area of cover to worldwide in your needs.")
         return f"{thanks} {body}"
     else:
+        # Age-outside-loaded-bands case: HAL's loaded workbook (currently
+        # Morgan Price 2026) has rate rows only for a specific age window
+        # (0–74 at time of writing). An applicant above or below those
+        # bands is not a "needs mismatch" — their age simply isn't priced
+        # online, which is a broker case. Route them to the fallback form
+        # instead of asking them to change their requirements.
+        band_issue = _age_outside_loaded_bands(applicant) if applicant else None
+        if band_issue:
+            who, age, lo, hi = band_issue["who"], band_issue["age"], band_issue["min"], band_issue["max"]
+            is_applicant = who == "applicant"
+            if greek:
+                if age > hi:
+                    who_text = f"η ηλικία σας ({age})" if is_applicant else f"η ηλικία ενός μέλους της οικογένειας ({age})"
+                    body = (f"{who_text} είναι πάνω από το ανώτατο όριο που τιμολογεί διαδικτυακά ο HAL για αυτό το πρόγραμμα (έως {hi}). "
+                            "Αυτές οι περιπτώσεις αξιολογούνται από ασφαλιστικό διαμεσολαβητή με το χέρι — "
+                            f"συμπληρώστε τη φόρμα εδώ και ένας σύμβουλος της Ashlar θα επανέλθει εντός μίας εργάσιμης ημέρας: {PERSONAL_HEALTH_FALLBACK_URL}")
+                else:
+                    who_text = f"η ηλικία σας ({age})" if is_applicant else f"η ηλικία ενός μέλους της οικογένειας ({age})"
+                    body = (f"{who_text} είναι κάτω από το ελάχιστο όριο που τιμολογεί διαδικτυακά ο HAL (από {lo} ετών). "
+                            "Αυτές οι περιπτώσεις αξιολογούνται από ασφαλιστικό διαμεσολαβητή με το χέρι — "
+                            f"συμπληρώστε τη φόρμα εδώ και ένας σύμβουλος της Ashlar θα επανέλθει εντός μίας εργάσιμης ημέρας: {PERSONAL_HEALTH_FALLBACK_URL}")
+            else:
+                who_text = f"your age ({age})" if is_applicant else f"a family member's age ({age})"
+                if age > hi:
+                    body = (f"{who_text} is above the upper age limit HAL prices online for this plan (up to {hi}). "
+                            "These cases are reviewed by a licensed broker by hand — "
+                            f"fill in the form here and an Ashlar adviser will come back within one business day: {PERSONAL_HEALTH_FALLBACK_URL}")
+                else:
+                    body = (f"{who_text} is below the youngest age band HAL prices online (from {lo}). "
+                            "These cases are reviewed by a licensed broker by hand — "
+                            f"fill in the form here and an Ashlar adviser will come back within one business day: {PERSONAL_HEALTH_FALLBACK_URL}")
+            # Age-ceiling cases don't need the generic "Request a proposal"
+            # tap — the fallback form is the specific right next step.
+            return f"{thanks} {body}"
         body = ("Κανένα από τα επαληθευμένα προγράμματα δεν καλύπτει όλα όσα ζητήσατε. Μπορείτε να αλλάξετε κάποια ανάγκη."
                 if greek else
                 "None of the verified plans covers everything you asked for. You can change one of your needs.")

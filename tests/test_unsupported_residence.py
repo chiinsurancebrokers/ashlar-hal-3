@@ -48,3 +48,50 @@ def test_europe_answer_from_outside_europe_is_asked_again():
                                     "nationality_answered": True, **state, **out})
     assert "doesn't include the country where you live" in q["reply"]
     assert lf.apply_discovery_answer("skip", state)["coverage_area"] == "area3"
+
+
+# ---------- Age ceiling: routed to the broker fallback form, not told to
+# "change your needs". The Morgan Price 2026 workbook caps at 74 and HAL
+# must not pretend the problem is a benefits mismatch. ----------
+
+def test_over_74_applicant_gets_fallback_form_url_not_a_needs_blame():
+    from backend.app.services.orchestrator import _no_verified_price_reply, PERSONAL_HEALTH_FALLBACK_URL
+    state = {"applicant_name": "Giorgos", "age": 78, "residence_country": "Greece",
+             "coverage_area": "area1", "currency": "EUR"}
+    msg = _no_verified_price_reply(state, [], greek=False)
+    assert PERSONAL_HEALTH_FALLBACK_URL in msg
+    assert "above the upper age limit" in msg
+    assert "You can change one of your needs" not in msg
+    assert "age (78)" in msg
+
+    msg_el = _no_verified_price_reply({**state, "language": "el"}, [], greek=True)
+    assert PERSONAL_HEALTH_FALLBACK_URL in msg_el
+    assert "με το χέρι" in msg_el   # broker reviews it by hand
+    assert "ηλικία σας (78)" in msg_el
+
+
+def test_helper_detects_dependent_outside_bands():
+    """The orchestrator's single-applicant path doesn't carry dependents on
+    state (family discovery routes through family_live_orchestrator), but
+    the helper itself must handle dependents correctly for callers that do
+    pass a full household Applicant — otherwise a future caller silently
+    reverts to blaming the applicant's needs."""
+    from backend.app.services.orchestrator import _age_outside_loaded_bands
+    from backend.app.schemas.applicant import Applicant, Dependent
+    ap = Applicant(age=42, residence_country="Greece", coverage_area="area1",
+                   dependents=[Dependent(relationship="spouse", age=80)])
+    issue = _age_outside_loaded_bands(ap)
+    assert issue is not None
+    assert issue["age"] == 80 and issue["who"] == "spouse"
+
+
+def test_inside_bands_without_quotes_keeps_the_generic_needs_message():
+    """If the applicant IS within the loaded age bands but still gets zero
+    quotes (every plan hard-excluded by a must-have for example), the
+    original 'change one of your needs' guidance is still correct."""
+    from backend.app.services.orchestrator import _no_verified_price_reply, PERSONAL_HEALTH_FALLBACK_URL
+    state = {"applicant_name": "Elena", "age": 40, "residence_country": "Greece",
+             "coverage_area": "area1", "currency": "EUR"}
+    msg = _no_verified_price_reply(state, [], greek=False)
+    assert PERSONAL_HEALTH_FALLBACK_URL not in msg
+    assert "change one of your needs" in msg

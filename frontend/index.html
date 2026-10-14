@@ -229,6 +229,8 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
   .right-panel{padding:16px}
   .chat-card{max-height:none}
 }
+.hal-link{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;word-break:break-word}
+.hal-link:hover{text-decoration-thickness:2px}
 </style>
 </head>
 <body>
@@ -708,7 +710,14 @@ function areaLabel(a){ return t(a)||a; }
 function addMsg(text,who='hal',quotes=[],excluded=[],leadCta=null,quickReplies=[],travelRec=null){
   const chat=document.getElementById('chat'),box=document.createElement('div');
   box.className='msg '+who;
-  let html=esc(text).replace(/\n/g,'<br>');
+  // esc first (so < > & are safe), then linkify any https://ashlarassurance.com
+  // or https://hal.ashlarassurance.com URL so the broker-fallback and other
+  // official links HAL emits in reply text render as clickable anchors.
+  // Only Ashlar's own domains are linkified; everything else stays as text.
+  let html=esc(text).replace(/\n/g,'<br>').replace(
+    /(https:\/\/(?:(?:[\w-]+\.)*ashlarassurance\.com)[^\s<]*)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="hal-link">$1</a>'
+  );
   if(quotes&&quotes.length){
     html+='<div class="quotes-row">'+quotes.map((q,i)=>renderQuoteCard(q,i)).join('')+'</div>';
     html+=`<div class="comparison-actions">`;

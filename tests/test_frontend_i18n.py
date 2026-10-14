@@ -60,7 +60,17 @@ def test_plan_documents_render_inside_embedded_ashlar_viewer():
     assert "openSourceViewer(" in html
     assert 'id="sourceViewerModal"' in html
     assert 'id="sourceViewerFrame"' in html
-    assert "target=\"_blank\"" not in html
+    # Plan documents must open in the embedded Ashlar viewer, never in a
+    # new tab. The ONE exception is the hal-link anchor used to route the
+    # user to broker-fallback pages on ashlarassurance.com from HAL's own
+    # chat replies (age-ceiling, non-standard-residence cases): those
+    # legitimately open in a new tab because they live on a different site.
+    for line in html.split("\n"):
+        if 'target="_blank"' in line:
+            assert 'class="hal-link"' in line, (
+                "target=_blank is only allowed on the hal-link anchor for "
+                "external Ashlar routing; plan documents must use the embedded viewer"
+            )
     assert "Table of Benefits" in html
     assert "Πίνακας Παροχών" in html
 
