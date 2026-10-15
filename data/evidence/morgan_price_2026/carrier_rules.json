@@ -18,7 +18,13 @@
     "min_adults": 2,
     "adult_from_age": 19,
     "max_verified_lives": 5,
-    "ladder": { "1": 0.0, "2": 0.05, "3": 0.10, "4": 0.15, "5": 0.15 },
+    "ladder": {
+      "1": 0.0,
+      "2": 0.05,
+      "3": 0.1,
+      "4": 0.15,
+      "5": 0.15
+    },
     "published_in_policy_wording": {
       "document_code": "EU/EVO/SI/PW/04/26",
       "page": 10,
@@ -41,7 +47,10 @@
     "verified_against": [
       {
         "lives": 2,
-        "ages": [36, 33],
+        "ages": [
+          36,
+          33
+        ],
         "level": "standard_plus",
         "area": "area1",
         "excess": 0,
@@ -51,17 +60,26 @@
       },
       {
         "lives": 3,
-        "ages": [36, 33, 3],
+        "ages": [
+          36,
+          33,
+          3
+        ],
         "level": "standard_plus",
         "area": "area1",
         "excess": 0,
         "annual_total_eur": 3608.04,
-        "implied_discount": 0.10,
+        "implied_discount": 0.1,
         "reference": "bcf5cc74-0ea4-4008-a0b9-04da3e0b0ea4"
       },
       {
         "lives": 4,
-        "ages": [36, 33, 10, 3],
+        "ages": [
+          36,
+          33,
+          10,
+          3
+        ],
         "level": "standard_plus",
         "area": "area1",
         "excess": 0,
@@ -71,7 +89,13 @@
       },
       {
         "lives": 5,
-        "ages": [36, 33, 10, 3, 15],
+        "ages": [
+          36,
+          33,
+          10,
+          3,
+          15
+        ],
         "level": "standard_plus",
         "area": "area1",
         "excess": 0,
@@ -82,7 +106,13 @@
       },
       {
         "lives": 5,
-        "ages": [36, 5, 10, 8, 33],
+        "ages": [
+          36,
+          5,
+          10,
+          8,
+          33
+        ],
         "level": "standard_plus",
         "area": "area1",
         "excess": 0,
@@ -108,7 +138,11 @@
     ],
     "child_only_min_age": 10,
     "child_only_max_age": 17,
-    "child_only_compulsory_excess_per_claim": { "GBP": 100, "EUR": 100, "USD": 100 },
+    "child_only_compulsory_excess_per_claim": {
+      "GBP": 100,
+      "EUR": 100,
+      "USD": 100
+    },
     "under_min_age_requires_an_adult_on_the_policy": true,
     "max_entry_age_fmu": 74,
     "max_entry_age_moratorium": 55,
@@ -117,14 +151,13 @@
     "source_document": "EU/EVO/SI/PW/04/26",
     "source_page": 5,
     "verified_on": "2026-10-15",
-    "not_addressed_by_the_wording": [
-      "A standalone policy for an 18 or 19 year old. They price on the Child",
-      "rate band (0-19) but fall outside the 10-17 child-only range, and the",
-      "wording does not say whether they may hold a policy in their own name.",
-      "HAL keeps quoting them (an 18-year-old is a legal adult and blocking",
-      "would lose legitimate business) but this is unconfirmed — ask Morgan",
-      "Price before treating it as settled."
-    ]
+    "standalone_policy_allowed_from_age": 18,
+    "standalone_18_19_confirmed": {
+      "allowed": true,
+      "confirmed_on": "2026-10-15",
+      "confirmed_by": "Chris Iatropoulos",
+      "note": "An 18 or 19 year old may hold a policy in their own name. They still price on the Child rate band (0-19) but are NOT a child-only policy, so the compulsory per-claim excess does not apply to them."
+    }
   },
   "instalment_loading": {
     "_comment": "Morgan Price administration fee for premium instalment facilities, quoted on every Evolution Health EU quick-quote PDF.",
@@ -132,7 +165,11 @@
     "quarterly_pct": 0.05,
     "semi_annual_pct": 0.04,
     "annual_pct": 0.0,
-    "annual_bank_transfer_fee": { "GBP": 10, "EUR": 15, "USD": 30 },
+    "annual_bank_transfer_fee": {
+      "GBP": 10,
+      "EUR": 15,
+      "USD": 30
+    },
     "applies_to_payment_methods": "credit card and SEPA Direct Debit",
     "verified_on": "2026-10-15",
     "source": "Morgan Price Evolution Health EU and EEA quick-quote PDF, 'Administration Fee' note"

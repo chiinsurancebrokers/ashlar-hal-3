@@ -43,7 +43,9 @@
       "pre_authorisation_required": false,
       "note": "Maximum amount paid to or on behalf of each insured person in each period of insurance.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 0,
+      "benefit_letter": null
     },
     {
       "benefit_code": "hospital_accommodation",
@@ -64,7 +66,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "surgeons_fees",
@@ -85,7 +89,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "inpatient_physiotherapy",
@@ -106,7 +112,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "internal_prostheses",
@@ -127,7 +135,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "inpatient_prescribed_drugs",
@@ -148,7 +158,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "inpatient_diagnostics",
@@ -169,7 +181,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "day_patient",
@@ -190,7 +204,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "parental_hospital_stay",
@@ -211,7 +227,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "inpatient_psychiatric",
@@ -232,7 +250,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "accident_emergency_inpatient",
@@ -253,7 +273,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "E"
     },
     {
       "benefit_code": "external_prostheses",
@@ -274,7 +296,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "F"
     },
     {
       "benefit_code": "inpatient_rehabilitation",
@@ -295,7 +319,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "G"
     },
     {
       "benefit_code": "kidney_dialysis",
@@ -316,7 +342,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "H"
     },
     {
       "benefit_code": "organ_implantation",
@@ -337,7 +365,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "I"
     },
     {
       "benefit_code": "day_patient_psychiatric",
@@ -358,7 +388,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "J"
     },
     {
       "benefit_code": "local_ambulance",
@@ -379,7 +411,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "K"
     },
     {
       "benefit_code": "inpatient_chronic_conditions",
@@ -400,7 +434,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 1,
+      "benefit_letter": "L"
     },
     {
       "benefit_code": "cancer_treatment",
@@ -421,7 +457,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 2,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "outpatient_minor_surgery",
@@ -437,12 +475,14 @@
         "premium": "Full refund",
         "elite": "Full refund"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "outpatient_services_combined",
@@ -458,12 +498,14 @@
         "premium": "Combined limit 10,000",
         "elite": "Full refund"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": "Standard Plus/Comprehensive/Premium figures are displayed as combined limits in the source table.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "outpatient_diagnostics",
@@ -479,12 +521,14 @@
         "premium": "Within combined out-patient limit",
         "elite": "Full refund"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": "For Standard Plus, Comprehensive and Premium this row is displayed under the combined out-patient limit in the source table.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "outpatient_chronic_conditions",
@@ -500,12 +544,14 @@
         "premium": "Within combined out-patient limit",
         "elite": "Full refund"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": "For Standard Plus, Comprehensive and Premium this row is displayed under the combined out-patient limit in the source table.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "outpatient_mri_ct_pet",
@@ -521,12 +567,14 @@
         "premium": "Full refund",
         "elite": "Full refund"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "E"
     },
     {
       "benefit_code": "outpatient_physiotherapy",
@@ -542,12 +590,14 @@
         "premium": "1,500",
         "elite": "2,000"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "F"
     },
     {
       "benefit_code": "medical_aids_devices",
@@ -563,12 +613,14 @@
         "premium": "1,500",
         "elite": "2,000"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "G"
     },
     {
       "benefit_code": "complementary_therapies",
@@ -584,12 +636,14 @@
         "premium": "1,500",
         "elite": "2,000"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "H"
     },
     {
       "benefit_code": "hrt",
@@ -605,12 +659,14 @@
         "premium": "250",
         "elite": "350"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "I"
     },
     {
       "benefit_code": "outpatient_psychiatric",
@@ -631,7 +687,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "J"
     },
     {
       "benefit_code": "home_nursing",
@@ -647,12 +705,14 @@
         "premium": "Full refund – max 26 weeks",
         "elite": "Full refund – max 26 weeks"
       },
-      "waiting_period": "12 months",
+      "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": true,
+      "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 3,
+      "benefit_letter": "K"
     },
     {
       "benefit_code": "hospice_care",
@@ -670,10 +730,12 @@
       },
       "waiting_period": null,
       "coinsurance": null,
-      "pre_authorisation_required": false,
+      "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 4,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "hiv_aids_transfusion",
@@ -694,7 +756,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 4,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "wellness_screening",
@@ -715,7 +779,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "cancer_screening",
@@ -736,7 +802,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "travel_vaccinations",
@@ -757,7 +825,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "child_vaccinations",
@@ -778,7 +848,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "optical_eye_test",
@@ -799,7 +871,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "E"
     },
     {
       "benefit_code": "vision_spectacles_contacts",
@@ -820,7 +894,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "F"
     },
     {
       "benefit_code": "laser_eye",
@@ -841,7 +917,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "G"
     },
     {
       "benefit_code": "hearing_test",
@@ -862,7 +940,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "H"
     },
     {
       "benefit_code": "hearing_aid",
@@ -883,7 +963,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 5,
+      "benefit_letter": "I"
     },
     {
       "benefit_code": "emergency_dental",
@@ -904,7 +986,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 6,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "routine_dental",
@@ -925,7 +1009,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 6,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "major_dental",
@@ -946,7 +1032,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 6,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "wisdom_teeth",
@@ -967,7 +1055,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 6,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "orthodontic_children",
@@ -988,7 +1078,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 6,
+      "benefit_letter": "E"
     },
     {
       "benefit_code": "maternity_complications",
@@ -1009,7 +1101,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 7,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "normal_maternity",
@@ -1030,7 +1124,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 7,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "newborn_check",
@@ -1051,7 +1147,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 7,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "premature_baby",
@@ -1072,7 +1170,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 7,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "congenital_correctable",
@@ -1093,7 +1193,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 8,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "congenital_birth_defects",
@@ -1114,7 +1216,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 8,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "infertility_investigations",
@@ -1135,7 +1239,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 8,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "hospital_cash",
@@ -1156,7 +1262,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 9,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "maternity_cash",
@@ -1177,7 +1285,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 9,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "convalescence_cash",
@@ -1198,7 +1308,9 @@
       "pre_authorisation_required": false,
       "note": "Limited to 4 weeks in each period of insurance.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 9,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "medical_evacuation_transport",
@@ -1219,7 +1331,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "companion_travel",
@@ -1240,7 +1354,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "B"
     },
     {
       "benefit_code": "medical_assistance",
@@ -1261,7 +1377,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "D"
     },
     {
       "benefit_code": "repatriation_deceased",
@@ -1282,7 +1400,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "F"
     },
     {
       "benefit_code": "companion_accommodation",
@@ -1303,7 +1423,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "C"
     },
     {
       "benefit_code": "dependent_child_travel",
@@ -1324,7 +1446,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "E"
     },
     {
       "benefit_code": "local_burial_cremation",
@@ -1345,7 +1469,9 @@
       "pre_authorisation_required": true,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 10,
+      "benefit_letter": "G"
     },
     {
       "benefit_code": "out_of_area_emergency",
@@ -1366,7 +1492,9 @@
       "pre_authorisation_required": false,
       "note": null,
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 11,
+      "benefit_letter": "A"
     },
     {
       "benefit_code": "home_country_evacuation",
@@ -1387,7 +1515,149 @@
       "pre_authorisation_required": true,
       "note": "Optional benefit only applicable if selected.",
       "status": "verified",
-      "allow_generation": true
+      "allow_generation": true,
+      "tob_section": 12,
+      "benefit_letter": "A"
     }
-  ]
+  ],
+  "footnotes": {
+    "_comment": [
+      "The waiting-period, pre-authorisation and co-insurance footnotes exactly",
+      "as printed under each section of EU/EVO/SI/TOB/04/26, with the benefit",
+      "letters each one scopes to. Most of these name specific letters; an",
+      "earlier ingestion applied them to every row in the section, which told",
+      "clients that routine out-patient consultations, diagnostic tests and",
+      "MRI/CT/PET scans carried a 12-month wait when only out-patient",
+      "psychiatric treatment (Benefit J) does.",
+      "Every row now carries its benefit_letter so these can be re-checked."
+    ],
+    "by_section": {
+      "1": {
+        "text": "Pre-authorisation is required for benefits A, B, D, G, H and I",
+        "pre_authorisation": [
+          "A",
+          "B",
+          "D",
+          "G",
+          "H",
+          "I"
+        ],
+        "waiting_period": null,
+        "waiting_period_benefits": [],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "2": {
+        "text": "Pre-authorisation is required",
+        "pre_authorisation": "all benefits in this section",
+        "waiting_period": null,
+        "waiting_period_benefits": [],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "3": {
+        "text": "Benefit J is subject to a 12 month waiting period and pre-authorisation is required",
+        "pre_authorisation": [
+          "J"
+        ],
+        "waiting_period": "12 months",
+        "waiting_period_benefits": [
+          "J"
+        ],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "4": {
+        "text": "Pre-authorisation is required. Benefit B is subject to a 2 year waiting period.",
+        "pre_authorisation": "all benefits in this section",
+        "waiting_period": "2 years",
+        "waiting_period_benefits": [
+          "B"
+        ],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "5": {
+        "text": "All benefits under this item are subject to a 12 month waiting period",
+        "pre_authorisation": [],
+        "waiting_period": "12 months",
+        "waiting_period_benefits": "all benefits in this section",
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "6": {
+        "text": "A 10% co-insurance and a 6 month waiting period applies to benefits B, C, D and E of this item",
+        "pre_authorisation": [],
+        "waiting_period": "6 months",
+        "waiting_period_benefits": [
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "coinsurance": "10%",
+        "coinsurance_benefits": [
+          "B",
+          "C",
+          "D",
+          "E"
+        ]
+      },
+      "7": {
+        "text": "A 10 month waiting period applies and pre-authorisation is required",
+        "pre_authorisation": "all benefits in this section",
+        "waiting_period": "10 months",
+        "waiting_period_benefits": "all benefits in this section",
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "8": {
+        "text": "A 12 month waiting period applies to Benefit A and C",
+        "pre_authorisation": [],
+        "waiting_period": "12 months",
+        "waiting_period_benefits": [
+          "A",
+          "C"
+        ],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "9": {
+        "text": "Benefit B is subject to a 10 month waiting period",
+        "pre_authorisation": [],
+        "waiting_period": "10 months",
+        "waiting_period_benefits": [
+          "B"
+        ],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "10": {
+        "text": "Pre-authorisation is required",
+        "pre_authorisation": "all benefits in this section",
+        "waiting_period": null,
+        "waiting_period_benefits": [],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "11": {
+        "text": "(no footnote)",
+        "pre_authorisation": [],
+        "waiting_period": null,
+        "waiting_period_benefits": [],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      },
+      "12": {
+        "text": "Pre-authorisation is required. Optional benefit only applicable if you have selected this benefit",
+        "pre_authorisation": "all benefits in this section",
+        "waiting_period": null,
+        "waiting_period_benefits": [],
+        "coinsurance": null,
+        "coinsurance_benefits": []
+      }
+    },
+    "verified_on": "2026-10-15",
+    "source_document": "EU/EVO/SI/TOB/04/26"
+  }
 }
