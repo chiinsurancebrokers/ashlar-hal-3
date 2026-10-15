@@ -96,8 +96,8 @@ class Settings(BaseSettings):
 
     # Family discounts are a CARRIER's commercial policy, not a HAL setting:
     # each insurer sets its own ladder and some give none. They therefore
-    # live per carrier in data/evidence/<carrier>/pricing_rules.json and are
-    # read through rates/carrier_pricing.py. A carrier with no rules file
+    # live in one module per carrier under rates/carriers/, where a rule can
+    # carry logic and not just numbers. A carrier with no module of its own
     # gets no discount. This flag is only a kill switch — turning it off
     # makes HAL quote every household at the plain sum of its members,
     # which is always safe (too high, never too low).

@@ -14,7 +14,7 @@ from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.rates.quote_engine import residence_gate, _distinct_products
 from backend.app.rates.registry import load_rates
-from backend.app.rates.carrier_pricing import household_exceeds_verified_size, policy_issuance_rule
+from backend.app.rates.carriers import household_exceeds_verified_size, policy_issuance_rule
 from backend.app.rates.residence import is_greek_resident
 
 PERSONAL_HEALTH_FALLBACK_URL = "https://ashlarassurance.com/request-a-personal-health-quote/"

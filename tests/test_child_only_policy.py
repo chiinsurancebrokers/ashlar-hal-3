@@ -20,7 +20,7 @@ import pytest
 from backend.app.core.config import Settings
 from backend.app.schemas.applicant import Applicant
 from backend.app.rates.quote_engine import quote_current
-from backend.app.rates.carrier_pricing import policy_issuance_rule, carrier_will_not_issue
+from backend.app.rates.carriers import policy_issuance_rule, carrier_will_not_issue
 from backend.app.services.orchestrator import _no_verified_price_reply
 
 
@@ -101,18 +101,25 @@ def test_the_issuance_rule_is_scoped_to_the_carrier_that_published_it():
         assert carrier_will_not_issue(other, [3]) is False
 
 
-def test_entry_age_and_dependant_limits_are_recorded_from_the_wording():
-    """Kept as evidence so the next person does not have to re-read p.5."""
-    import json
-    from pathlib import Path
-    rules = json.loads(
-        (Path("data/evidence/morgan_price_2026/carrier_rules.json")).read_text(encoding="utf-8")
-    )["policy_issuance"]
-    assert rules["max_entry_age_fmu"] == 74
-    assert rules["max_entry_age_moratorium"] == 55
-    assert rules["dependent_child_max_age"] == 19
-    assert rules["dependent_child_max_age_in_full_time_education"] == 25
-    assert rules["source_document"] == "EU/EVO/SI/PW/04/26"
+def test_entry_age_limits_are_recorded_from_the_wording():
+    """Kept on the carrier's own module so the next person does not have to
+    re-read EU/EVO/SI/PW/04/26 page 5 to check them."""
+    rule = policy_issuance_rule("morgan_price")
+    assert rule.max_entry_age_fmu == 74
+    assert rule.max_entry_age_moratorium == 55
+    assert rule.child_only_min_age == 10
+    assert rule.child_only_max_age == 17
+    assert rule.compulsory_excess("EUR") == 100
+    assert rule.compulsory_excess("GBP") == 100
+
+
+def test_an_eighteen_year_old_may_hold_a_policy_alone():
+    """Confirmed by Chris on 15 Oct 2026. They price on the 0-19 Child band
+    but are not a child-only policy, so no compulsory excess applies."""
+    quote = _solo(18)
+    assert quote is not None
+    assert quote.child_only_policy is False
+    assert quote.compulsory_excess_per_claim is None
 
 
 def test_household_members_are_not_mistaken_for_standalone_child_policies():

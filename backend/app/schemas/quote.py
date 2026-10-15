@@ -29,6 +29,15 @@ class QuoteResult(BaseModel):
     # imposes a per-claim excess on these, which the client did not choose.
     child_only_policy: bool = False
     compulsory_excess_per_claim: float | None = None
+
+    # Every way this carrier lets the client pay, with the carrier's own
+    # instalment administration fee already in the figures. HAL used to
+    # show "monthly" as the annual premium divided by twelve, which is a
+    # number no client is ever charged.
+    payment_options: list[dict] = []
+    # Stated when the carrier's quoted premium excludes insurance premium
+    # tax. HAL discloses; it never computes a rate.
+    premium_tax_note: str | None = None
     # How many lives the carrier's ladder actually discounted. Can be fewer
     # than family_size: Morgan Price discounts at most four lives, so a
     # fifth is charged the full rate.

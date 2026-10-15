@@ -15,7 +15,7 @@ bundle them under one policy. This module mirrors that:
 
 The ladder itself is deliberately NOT defined here. It is one insurer's
 commercial policy, so it lives beside that insurer's evidence and is read
-through `rates/carrier_pricing.py`; a carrier with no recorded rule gets
+through `rates/carriers/`; a carrier with no module of its own gets
 no discount. See that module's docstring for why.
 
 This module only knows how to *apply* a rule: a headline percentage that
@@ -26,7 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from backend.app.rates.registry import RateRecord
-from backend.app.rates.carrier_pricing import FamilyDiscountRule, NO_FAMILY_DISCOUNT
+from backend.app.rates.carriers import FamilyDiscountRule, NO_FAMILY_DISCOUNT
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,7 @@ def price_family(
 ) -> FamilyQuote:
     """Apply one carrier's family discount rule to a priced household.
 
-    `rule` comes from carrier_pricing.family_discount_rule(carrier). The
+    `rule` comes from carriers.family_discount_rule(carrier). The
     default is no discount, so a carrier HAL holds no rules for is quoted
     at the plain sum of its members.
     """
@@ -84,7 +84,7 @@ def price_family(
     # The carrier computes the household total from the undiscounted figures
     # and rounds ONCE at the end; rounding each member first and then adding
     # them up drifts by a cent on some compositions. Verified against the
-    # five Morgan Price quick-quotes recorded in pricing_rules.json.
+    # five Morgan Price quick-quotes recorded in carriers/morgan_price.py.
     exact = [premium * (1 - pct) if i in discounted_idx else premium
              for i, premium in enumerate(member_premiums)]
     total = round(sum(exact), 2)

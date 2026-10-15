@@ -95,6 +95,7 @@ header .brand small{display:block;font-weight:400;letter-spacing:0;color:#9aa7bd
 .q-price{font-size:26px;font-weight:800;margin-top:14px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .q-price span{font-size:12px;font-weight:400;color:var(--muted)}
 .q-month{font-size:12px;color:var(--muted);margin-bottom:12px}
+.q-tax-note{font-size:11px;color:var(--muted);line-height:1.45;margin:-6px 0 12px;padding-left:8px;border-left:2px solid var(--line)}
 .q-divider{border-top:1px solid var(--border);margin:4px 0 14px}
 .q-spec{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:12px;line-height:1.45;margin-bottom:14px}
 .q-spec b{display:block;color:var(--muted);font-weight:600;margin-bottom:1px}
@@ -508,6 +509,7 @@ const I18N = {
     cpInvoiceHelp:"If you have the latest premium invoice, attach it so the broker can compare the figure you're paying today against the shortlist.",
     cpModalPrivacy:'Files are read only by a licensed Ashlar broker and the HAL comparator. Kept 90 days from submission, then deleted. Max 20 MB per file.',
     cpSubmitBtn:'Analyse policy',
+    instalmentFeeIncluded:'(incl. the insurer\u2019s monthly instalment fee)',
     confidence:'Confidence', limitations:'Key limitations',
     healthcareCountry:'Main healthcare country', healthcareContext:'Healthcare context', source:'Source', policyWordings:'Supporting policy documents',
     policyWordingMissing:'No supporting policy wording is attached in Proposal Studio yet.', oecdAverage:'OECD avg', viewInsideAshlar:'View inside Ashlar'
@@ -577,7 +579,8 @@ const I18N = {
     cpInvoiceLabel:'Απόδειξη πληρωμής ασφαλίστρου <span style="color:var(--muted);font-weight:400">(προαιρετικό)</span>',
     cpInvoiceHelp:'Αν έχετε την πιο πρόσφατη απόδειξη πληρωμής ασφαλίστρου, επισυνάψτε την ώστε ο διαμεσολαβητής να συγκρίνει το τρέχον ποσό με τη shortlist.',
     cpModalPrivacy:'Τα αρχεία διαβάζονται μόνο από αδειοδοτημένο διαμεσολαβητή της Ashlar και τον συγκριτή του HAL. Διατηρούνται 90 ημέρες από την αποστολή και στη συνέχεια διαγράφονται. Μέγιστο μέγεθος 20 MB ανά αρχείο.',
-    cpSubmitBtn:'Ανάλυση συμβολαίου'
+    cpSubmitBtn:'Ανάλυση συμβολαίου',
+    instalmentFeeIncluded:'(περιλαμβάνει το τέλος μηνιαίας καταβολής του ασφαλιστή)'
   }
 };
 
@@ -623,7 +626,11 @@ const DYNAMIC_EL = {
   // alongside their rate workbooks when the carriers come back.
   'Executive-level international protection.':'Διεθνής προστασία επιπέδου Executive.',
   'Executive cover with alternative excess structure.':'Κάλυψη Executive με εναλλακτική δομή απαλλαγής.',
-  'A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.':'Δηλώθηκε προϋπάρχουσα πάθηση — η προσφορά δεν αντικατοπτρίζει απόφαση ανάληψης κινδύνου και απαιτεί έλεγχο από ασφαλιστικό διαμεσολαβητή πριν την υποβολή.'
+  'A pre-existing condition was disclosed — this quote does not reflect any underwriting decision and must be reviewed by a broker before proceeding.':'Δηλώθηκε προϋπάρχουσα πάθηση — η προσφορά δεν αντικατοπτρίζει απόφαση ανάληψης κινδύνου και απαιτεί έλεγχο από ασφαλιστικό διαμεσολαβητή πριν την υποβολή.',
+  // Premium tax disclosure. The carrier's quoted premium excludes insurance
+  // premium tax; HAL says so and leaves the figure to the broker rather than
+  // guessing a rate that varies by country of residence and contract type.
+  'Premiums are shown before insurance premium tax. Whether tax applies, and at what rate, depends on your country of residence — your broker confirms the final figure with the insurer before anything is placed.':'Τα ασφάλιστρα εμφανίζονται προ φόρου ασφαλίστρων. Το αν επιβάλλεται φόρος, και με ποιον συντελεστή, εξαρτάται από τη χώρα κατοικίας σας — ο διαμεσολαβητής επιβεβαιώνει το τελικό ποσό με τον ασφαλιστή πριν την τοποθέτηση.'
 };
 
 const MUST_FIELDS = {
@@ -840,7 +847,13 @@ function renderHouseholdMembers(q){
 }
 
 function renderQuoteCard(q,i){
-  const annual=Number(q.premium||0),monthly=annual/12,key=qkey(q),selected=compareSelected.has(key);
+  const annual=Number(q.premium||0),key=qkey(q),selected=compareSelected.has(key);
+  // The monthly figure is what the insurer actually charges to pay monthly,
+  // including its instalment administration fee — not the annual price cut
+  // into twelve, which is a number no client is ever billed.
+  const monthlyOption=(q.payment_options||[]).find(o=>o.frequency==='monthly');
+  const monthly=monthlyOption?Number(monthlyOption.instalment_amount):annual/12;
+  const monthlyLoaded=!!(monthlyOption&&Number(monthlyOption.loading_pct)>0);
   return `<div class="quote-card ${q.recommended?'recommended':''}">
     ${q.recommended?`<div class="rec-ribbon">${esc(t('recommended'))}</div>`:''}
     <button class="compare-pick ${selected?'selected':''}" onclick="toggleCompare('${esc(key)}', this)">${esc(selected?t('selected'):t('compareAdd'))}</button>
@@ -849,7 +862,8 @@ function renderQuoteCard(q,i){
     <div class="q-stats">${[q.card_annual_limit?`${esc(t('annualMax'))}: <b>${esc(trText(q.card_annual_limit))}</b>`:'',q.coverage_area_label?esc(trText(q.coverage_area_label)):''].filter(Boolean).join(' · ')}</div>
     <div class="q-badges">${(q.fit_badges||[]).map(b=>`<span class="q-badge">${esc(trText(b))}</span>`).join('')}</div>
     <div class="q-price">${money(annual,q.currency)}<span>${t('perYear')}</span></div>
-    <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
+    <div class="q-month">${money(monthly,q.currency)}${t('perMonth')}${monthlyLoaded?` ${esc(t('instalmentFeeIncluded'))}`:''}${q.family_size>1?` · ${q.family_size} ${t('people')}`:''}</div>
+    ${q.premium_tax_note?`<div class="q-tax-note">${esc(trText(q.premium_tax_note))}</div>`:''}
     ${renderHouseholdMembers(q)}
     <div class="q-divider"></div>
     <div class="q-spec">
@@ -1125,7 +1139,7 @@ function renderDetailedCompare(d){
   const cpPremium=currentPolicy?.premium||{};
   const rows=[
     [t('annualPremium'),p=>money(p.premium,p.currency),()=>cpPremium.amount?money(cpPremium.amount,cpPremium.currency||'EUR'):t('notConfirmed')],
-    [t('monthly'),p=>money(p.premium/12,p.currency),()=>cpPremium.amount?money(Number(cpPremium.amount)/12,cpPremium.currency||'EUR'):t('notConfirmed')],
+    [t('monthly'),p=>{const o=(p.payment_options||[]).find(x=>x.frequency==='monthly');return money(o?Number(o.instalment_amount):p.premium/12,p.currency);},()=>cpPremium.amount?money(Number(cpPremium.amount)/12,cpPremium.currency||'EUR'):t('notConfirmed')],
     [t('coverageArea'),p=>trText(p.coverage_area_label),()=>currentPolicyDisplayValue(currentPolicy?.area_of_cover)],
     [t('annualLimit'),p=>trText(p.card_annual_limit),()=>currentPolicyDisplayValue(currentPolicy?.annual_limit)],
     [t('deductible'),p=>trText(p.card_deductible),()=>currentPolicyDisplayValue(currentPolicy?.deductible_or_excess)],

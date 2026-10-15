@@ -7,9 +7,9 @@ from backend.app.schemas.quote import QuoteResult
 from backend.app.rates.registry import load_rates, load_card_meta, RateRecord
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
-from backend.app.rates.carrier_pricing import (
+from backend.app.rates.carriers import (
     family_discount_rule, household_exceeds_verified_size, carrier_will_not_issue,
-    policy_issuance_rule, NO_FAMILY_DISCOUNT,
+    policy_issuance_rule, policy_for as carrier_policy, NO_FAMILY_DISCOUNT,
 )
 from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
@@ -222,6 +222,16 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             valid_until=QuoteResult.validity_window(today, settings.quote_validity_days),
         ))
         _enrich_card_meta(quotes[-1])
+
+        # What the client actually pays on each payment frequency, with the
+        # carrier's instalment administration fee included. Paying monthly
+        # is not the annual price in twelve pieces.
+        policy = carrier_policy(carrier)
+        quotes[-1].payment_options = policy.instalment.schedule(
+            quotes[-1].premium, applicant.currency
+        )
+        if policy.tax.needs_disclosure:
+            quotes[-1].premium_tax_note = policy.tax.note_en
 
         # A child insured without a parent or guardian on the policy carries a
         # compulsory per-claim excess. It is a term of the cover, not an

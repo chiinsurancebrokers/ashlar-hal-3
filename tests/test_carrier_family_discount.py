@@ -5,7 +5,7 @@ Each case below was produced by running the real Morgan Price "Evolution
 Health EU and EEA" quick-quote on 15 Oct 2026 — Standard Plus, Area 1
 Europe, EUR 0 excess, 0% co-insurance, country of residence France — and
 recording what it returned. If someone edits the ladder in
-data/evidence/morgan_price_2026/pricing_rules.json, these fail.
+backend/app/rates/carriers/morgan_price.py, these fail.
 
 Before this ladder was verified, HAL applied a flat 5% to every household.
 That was right for a couple and wrong for everyone else: a three-life
@@ -20,7 +20,7 @@ import pytest
 from backend.app.core.config import Settings
 from backend.app.schemas.applicant import Applicant, Dependent
 from backend.app.rates.quote_engine import quote_current
-from backend.app.rates.carrier_pricing import (
+from backend.app.rates.carriers import (
     family_discount_rule, instalment_loading, household_exceeds_verified_size,
 )
 from backend.app.rates.registry import rates_for

@@ -1,6 +1,6 @@
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
-from backend.app.rates.carrier_pricing import family_discount_rule
+from backend.app.rates.carriers import family_discount_rule
 from backend.app.rates.registry import rates_for
 
 
@@ -75,7 +75,7 @@ def test_morgan_price_ladder_steps_and_caps():
 def test_morgan_price_discounts_at_most_four_lives():
     """On a five-life household Morgan Price charges one member the full
     rate. Verified against two quick-quotes of the same five lives entered
-    in different orders (refs in pricing_rules.json) — both left the
+    in different orders (refs in carriers/morgan_price.py) — both left the
     youngest child undiscounted, so this is a rule, not an input artefact."""
     rule = family_discount_rule("morgan_price")
     adult, child = 1628.496248580948, 952.9913222904327
