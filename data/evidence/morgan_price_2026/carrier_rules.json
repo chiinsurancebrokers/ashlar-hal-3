@@ -96,6 +96,36 @@
     "unverified_above_lives": 5,
     "unverified_behaviour": "HAL declines to price online and routes to a broker rather than extrapolating the ladder."
   },
+  "policy_issuance": {
+    "_comment": [
+      "Who this carrier will issue a policy to, independent of price.",
+      "EU/EVO/SI/PW/04/26 page 5, section 2a 'Who can apply?':",
+      "'We offer cover exclusively for children between the age of 10 and 17",
+      "without any parent or guardian being covered under the policy. A",
+      "compulsory excess applies to these policies of $/EUR/GBP 100 per claim",
+      "... Any children under the age of 10 have to have an adult covered on",
+      "the policy.'"
+    ],
+    "child_only_min_age": 10,
+    "child_only_max_age": 17,
+    "child_only_compulsory_excess_per_claim": { "GBP": 100, "EUR": 100, "USD": 100 },
+    "under_min_age_requires_an_adult_on_the_policy": true,
+    "max_entry_age_fmu": 74,
+    "max_entry_age_moratorium": 55,
+    "dependent_child_max_age": 19,
+    "dependent_child_max_age_in_full_time_education": 25,
+    "source_document": "EU/EVO/SI/PW/04/26",
+    "source_page": 5,
+    "verified_on": "2026-10-15",
+    "not_addressed_by_the_wording": [
+      "A standalone policy for an 18 or 19 year old. They price on the Child",
+      "rate band (0-19) but fall outside the 10-17 child-only range, and the",
+      "wording does not say whether they may hold a policy in their own name.",
+      "HAL keeps quoting them (an 18-year-old is a legal adult and blocking",
+      "would lose legitimate business) but this is unconfirmed — ask Morgan",
+      "Price before treating it as settled."
+    ]
+  },
   "instalment_loading": {
     "_comment": "Morgan Price administration fee for premium instalment facilities, quoted on every Evolution Health EU quick-quote PDF.",
     "monthly_pct": 0.08,

@@ -8,7 +8,8 @@ from backend.app.rates.registry import load_rates, load_card_meta, RateRecord
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
 from backend.app.rates.carrier_pricing import (
-    family_discount_rule, household_exceeds_verified_size, NO_FAMILY_DISCOUNT,
+    family_discount_rule, household_exceeds_verified_size, carrier_will_not_issue,
+    policy_issuance_rule, NO_FAMILY_DISCOUNT,
 )
 from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
@@ -81,9 +82,17 @@ def _enrich_card_meta(q: QuoteResult) -> None:
         q.card_why = meta.get("why") or "International health insurance option."
 
 
-def quote_current(applicant: Applicant, settings: Settings, *, today: date | None = None) -> list[QuoteResult]:
+def quote_current(applicant: Applicant, settings: Settings, *, today: date | None = None,
+                  standalone_policy: bool = True) -> list[QuoteResult]:
     """Every eligible product for this applicant (family-aware), hard-filtered
-    on any selected MUST-HAVE, never merely down-scored."""
+    on any selected MUST-HAVE, never merely down-scored.
+
+    `standalone_policy` says whether this applicant would be the only life on
+    the policy. The household flows price each member on their own to build a
+    per-member breakdown, which is an internal step and NOT a standalone
+    policy — a three-year-old priced that way still ends up on a policy with
+    a parent. Those callers pass False so the child-only issuance rule does
+    not reject a member who is in fact accompanied by an adult."""
     if residence_gate(applicant):
         return []
 
@@ -118,6 +127,13 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
         # discount ladder past its evidence would invent a premium, and a
         # large family is exactly the case where the error compounds.
         if household_exceeds_verified_size(carrier, len(ages)):
+            continue
+
+        # A policy the insurer would refuse to issue is worth nothing to the
+        # client. Morgan Price requires an adult on the policy for any child
+        # under 10 (EU/EVO/SI/PW/04/26 p.5), so a lone young child is not
+        # quotable however well the rate table matches their age.
+        if standalone_policy and carrier_will_not_issue(carrier, ages):
             continue
 
         eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
@@ -207,6 +223,19 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
         ))
         _enrich_card_meta(quotes[-1])
 
+        # A child insured without a parent or guardian on the policy carries a
+        # compulsory per-claim excess. It is a term of the cover, not an
+        # option the client chose, so it belongs on the card rather than
+        # surfacing for the first time on the certificate.
+        issuance = policy_issuance_rule(carrier)
+        if standalone_policy and issuance.is_child_only_policy(ages):
+            excess = issuance.compulsory_excess(applicant.currency)
+            if excess:
+                q = quotes[-1]
+                q.child_only_policy = True
+                q.compulsory_excess_per_claim = excess
+                q.card_deductible = f"{applicant.currency} {excess:,.0f} per claim (compulsory)"
+
     def rank(q: QuoteResult):
         over_budget = bool(applicant.budget_annual and q.premium > applicant.budget_annual)
         # evidence_confidence is 1.0 whenever there's nothing to verify (no
@@ -223,8 +252,9 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
     return quotes
 
 
-def quote_shortlist(applicant: Applicant, settings: Settings, *, limit: int = 5, today: date | None = None) -> list[QuoteResult]:
-    candidates = quote_current(applicant, settings, today=today)
+def quote_shortlist(applicant: Applicant, settings: Settings, *, limit: int = 5, today: date | None = None,
+                    standalone_policy: bool = True) -> list[QuoteResult]:
+    candidates = quote_current(applicant, settings, today=today, standalone_policy=standalone_policy)
     shortlist: list[QuoteResult] = []
     seen_carriers: set[str] = set()
 

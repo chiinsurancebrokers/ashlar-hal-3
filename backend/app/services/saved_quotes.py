@@ -133,7 +133,9 @@ def build_snapshot(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
             applicant = _applicant(member_state)
             if applicant is None:
                 raise SavedQuoteError("This quote is incomplete and cannot be saved yet.")
-            quotes_by_member[member_id] = [q.model_dump(mode="json") for q in quote_shortlist(applicant, settings)]
+            # One member of a household, not a policy of their own — see quote_current.
+            quotes_by_member[member_id] = [q.model_dump(mode="json")
+                                          for q in quote_shortlist(applicant, settings, standalone_policy=False)]
         household = compose_verified_household(quotes_by_member, commercial_rules=[])
         if household["status"] != "verified_household_options":
             raise SavedQuoteError("A verified family price is not available, so this quote cannot be saved.")

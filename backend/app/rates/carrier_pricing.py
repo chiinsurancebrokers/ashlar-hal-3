@@ -76,6 +76,44 @@ class FamilyDiscountRule:
 
 
 @dataclass(frozen=True)
+class PolicyIssuanceRule:
+    """Who a carrier will issue a policy to, independent of price.
+
+    Morgan Price covers children 10-17 on a policy of their own, with a
+    compulsory per-claim excess; a child under 10 must have an adult on the
+    policy. HAL must not quote a policy the insurer would refuse to issue:
+    the client applies, is declined, and the quote was worthless.
+    """
+    child_only_min_age: int | None = None
+    child_only_max_age: int | None = None
+    child_only_excess_per_claim: dict | None = None
+    under_min_age_requires_an_adult: bool = False
+
+    @property
+    def has_child_rules(self) -> bool:
+        return self.child_only_min_age is not None
+
+    def blocks_single_life(self, age: int) -> bool:
+        """True when this carrier will not issue a policy covering this one
+        life on its own."""
+        if not self.has_child_rules or not self.under_min_age_requires_an_adult:
+            return False
+        return age < self.child_only_min_age
+
+    def is_child_only_policy(self, ages: list[int]) -> bool:
+        if not self.has_child_rules or len(ages) != 1:
+            return False
+        return self.child_only_min_age <= ages[0] <= (self.child_only_max_age or 17)
+
+    def compulsory_excess(self, currency: str) -> float:
+        fees = self.child_only_excess_per_claim or {}
+        return float(fees.get((currency or "EUR").upper(), 0) or 0)
+
+
+NO_ISSUANCE_RULES = PolicyIssuanceRule()
+
+
+@dataclass(frozen=True)
 class InstalmentLoading:
     """Administration fee the carrier adds for paying in instalments."""
     monthly_pct: float = 0.0
@@ -113,7 +151,7 @@ def _rules_for(carrier: str) -> dict:
     folder = _CARRIER_EVIDENCE_DIRS.get((carrier or "").strip().lower())
     if not folder:
         return {}
-    path = EVIDENCE_DIR / folder / "pricing_rules.json"
+    path = EVIDENCE_DIR / folder / "carrier_rules.json"
     if not path.exists():
         return {}
     try:
@@ -152,6 +190,34 @@ def instalment_loading(carrier: str) -> InstalmentLoading:
         annual_pct=float(block.get("annual_pct", 0.0) or 0.0),
         annual_bank_transfer_fee=block.get("annual_bank_transfer_fee") or {},
     )
+
+
+@lru_cache
+def policy_issuance_rule(carrier: str) -> PolicyIssuanceRule:
+    block = (_rules_for(carrier) or {}).get("policy_issuance") or {}
+    if not block:
+        return NO_ISSUANCE_RULES
+    return PolicyIssuanceRule(
+        child_only_min_age=(int(block["child_only_min_age"])
+                            if block.get("child_only_min_age") is not None else None),
+        child_only_max_age=(int(block["child_only_max_age"])
+                            if block.get("child_only_max_age") is not None else None),
+        child_only_excess_per_claim=block.get("child_only_compulsory_excess_per_claim") or {},
+        under_min_age_requires_an_adult=bool(
+            block.get("under_min_age_requires_an_adult_on_the_policy", False)
+        ),
+    )
+
+
+def carrier_will_not_issue(carrier: str, ages: list[int]) -> bool:
+    """True when this household cannot be issued as a policy by this carrier.
+
+    Today that means a lone child below the carrier's child-only minimum
+    age: the wording requires an adult on the policy, so a quote for that
+    child alone would be declined at application."""
+    if len(ages) != 1:
+        return False
+    return policy_issuance_rule(carrier).blocks_single_life(ages[0])
 
 
 def household_exceeds_verified_size(carrier: str, lives: int) -> bool:

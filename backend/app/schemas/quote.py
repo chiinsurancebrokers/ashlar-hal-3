@@ -25,6 +25,10 @@ class QuoteResult(BaseModel):
     per_member_premiums: list[float] = []
     family_discount_applied: bool = False
     family_discount_pct: float = 0.0
+    # A child insured with no parent or guardian on the policy. The carrier
+    # imposes a per-claim excess on these, which the client did not choose.
+    child_only_policy: bool = False
+    compulsory_excess_per_claim: float | None = None
     # How many lives the carrier's ladder actually discounted. Can be fewer
     # than family_size: Morgan Price discounts at most four lives, so a
     # fifth is charged the full rate.

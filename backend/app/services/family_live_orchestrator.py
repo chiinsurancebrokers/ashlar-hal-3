@@ -89,7 +89,9 @@ async def chat_turn(message: str, state: dict, history: list[dict] | None = None
             continue
 
         quotes_by_member[member_id] = [
-            quote.model_dump(mode="json") for quote in quote_shortlist(applicant, settings)
+            quote.model_dump(mode="json")
+            # One member of a household, not a policy of their own.
+            for quote in quote_shortlist(applicant, settings, standalone_policy=False)
         ]
 
     household = compose_verified_household(quotes_by_member, commercial_rules=[])

@@ -194,7 +194,8 @@ def _household_plan_quote(req: ExplainPlanRequest, settings, greek: bool):
             member_applicant = Applicant(**fields)
         except Exception:
             return None, None
-        member_quote = next((q for q in quote_current(member_applicant, settings) if q.plan_key == req.plan_key), None)
+        member_quote = next((q for q in quote_current(member_applicant, settings, standalone_policy=False)
+                             if q.plan_key == req.plan_key), None)
         if member_quote is None:
             return None, None
         base = base or member_quote

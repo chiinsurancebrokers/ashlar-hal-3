@@ -42,7 +42,7 @@ def test_personal_family_quote_has_no_plan_followup(monkeypatch):
 
     monkeypatch.setattr(live, "base_chat_turn", fake_base)
     monkeypatch.setattr(live, "assess_eligibility", elig)
-    monkeypatch.setattr(live, "quote_shortlist", lambda applicant, settings: [])
+    monkeypatch.setattr(live, "quote_shortlist", lambda applicant, settings, **kwargs: [])
     result = asyncio.run(live.chat_turn("No fixed budget", state, []))
     assert result["ai_status"] == "personal_family_quotation_required"
     assert result["followup_message"] == ""

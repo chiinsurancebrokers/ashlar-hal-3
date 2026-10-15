@@ -59,7 +59,9 @@ def _household_total(state: dict[str, Any], settings: Settings, blocked: set[str
         applicant = _applicant(member_state)
         if applicant is None:
             return None
-        quotes_by_member[member_id] = [q.model_dump(mode="json") for q in quote_shortlist(applicant, settings)]
+        # One member of a household, not a policy of their own — see quote_current.
+        quotes_by_member[member_id] = [q.model_dump(mode="json")
+                                       for q in quote_shortlist(applicant, settings, standalone_policy=False)]
     household = compose_verified_household(quotes_by_member, commercial_rules=[])
     if household["status"] != "verified_household_options":
         return None

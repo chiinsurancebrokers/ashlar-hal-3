@@ -14,7 +14,7 @@ from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
 from backend.app.rates.quote_engine import residence_gate, _distinct_products
 from backend.app.rates.registry import load_rates
-from backend.app.rates.carrier_pricing import household_exceeds_verified_size
+from backend.app.rates.carrier_pricing import household_exceeds_verified_size, policy_issuance_rule
 from backend.app.rates.residence import is_greek_resident
 
 PERSONAL_HEALTH_FALLBACK_URL = "https://ashlarassurance.com/request-a-personal-health-quote/"
@@ -55,6 +55,29 @@ def _household_size(state: dict) -> int:
     members = state.get("household_members") or []
     valid = [m for m in members if isinstance(m, dict) and m.get("age") is not None]
     return 1 + len(valid)
+
+
+def _lone_child_needs_an_adult(state: dict, applicant: Applicant) -> dict | None:
+    """Return the age and the carrier minimum when the enquiry is a single
+    child too young to hold a policy in their own name, else None.
+
+    Morgan Price issues cover to a child without a parent or guardian on the
+    policy only from age 10 (EU/EVO/SI/PW/04/26 p.5). Below that an adult
+    must be on the policy, so HAL has no quotable carrier — but the client
+    can fix this themselves by adding a parent."""
+    if _household_size(state) != 1:
+        return None
+    try:
+        carriers = {c for c, _ in _distinct_products(applicant.coverage_area)}
+    except Exception:
+        return None
+    if not carriers:
+        return None
+    blocking = [policy_issuance_rule(c) for c in carriers]
+    if not all(rule.blocks_single_life(applicant.age) for rule in blocking):
+        return None
+    minimums = [r.child_only_min_age for r in blocking if r.child_only_min_age is not None]
+    return {"age": applicant.age, "min_age": min(minimums)} if minimums else None
 
 
 def _household_too_large_to_price(state: dict, applicant: Applicant) -> int | None:
@@ -274,6 +297,25 @@ def _no_verified_price_reply(state: dict, excluded: list[dict], greek: bool) -> 
                         "and I won't guess a percentage — "
                         f"fill in the form here and an Ashlar adviser will send you an exact price "
                         f"within one business day: {PERSONAL_HEALTH_FALLBACK_URL}")
+            return f"{thanks} {body}"
+
+        # A lone child below the carrier's child-only minimum age. The rate
+        # table matches them perfectly, so this never looks like an age-band
+        # problem — but the insurer will not issue the policy without an
+        # adult on it. The fix is in the client's hands, so say it plainly
+        # rather than sending them to a form.
+        lone_child = _lone_child_needs_an_adult(state, applicant) if applicant else None
+        if lone_child:
+            age, min_age = lone_child["age"], lone_child["min_age"]
+            if greek:
+                body = (f"Για παιδί {age} ετών, ο ασφαλιστής απαιτεί να καλύπτεται και ένας ενήλικας στο ίδιο "
+                        f"συμβόλαιο — αυτοτελές συμβόλαιο εκδίδεται μόνο για παιδιά από {min_age} ετών και άνω. "
+                        "Προσθέστε έναν γονέα ή κηδεμόνα στις ανάγκες σας και θα υπολογίσω αμέσως τιμή για "
+                        "ολόκληρη την οικογένεια.")
+            else:
+                body = (f"For a child aged {age}, the insurer requires an adult to be covered on the same policy — "
+                        f"a policy in a child's own name is only issued from age {min_age}. "
+                        "Add a parent or guardian to your needs and I'll price the whole family straight away.")
             return f"{thanks} {body}"
 
         band_issue = _age_outside_loaded_bands(applicant) if applicant else None
