@@ -175,19 +175,34 @@ class PolicyIssuanceRule:
 class PremiumTaxTreatment:
     """How insurance premium tax sits against the carrier's quoted price.
 
-    HAL does NOT compute tax. Rates depend on the country of residence and
-    the contract type, they are not in any rate workbook, and a table of
-    guesses for forty countries would be wrong somewhere — which is exactly
-    the invented number HAL exists not to produce. HAL says the premium is
-    before tax and leaves the figure to the broker and the insurer.
+    HAL never DERIVES a tax rate. Rates depend on the country of residence
+    and the contract type, they are in no rate workbook, and a table of
+    guesses for forty countries would be wrong somewhere — exactly the
+    invented number HAL exists not to produce.
+
+    It does carry rates the carrier has confirmed in writing, country by
+    country, with the source recorded. That is not a guess, it is the same
+    class of fact as a rate table. For a country with no confirmed rate HAL
+    says the premium is before tax and leaves the figure to the broker,
+    rather than reasoning by analogy from a neighbour.
     """
     included_in_quoted_premium: bool = False
     note_en: str = ""
     note_el: str = ""
+    # country (lower-case) -> rate, e.g. {"france": 0.14}
+    confirmed_rates: dict = field(default_factory=dict)
+    confirmed_rates_source: str = ""
 
     @property
     def needs_disclosure(self) -> bool:
         return not self.included_in_quoted_premium and bool(self.note_en)
+
+    def rate_for(self, country: str | None) -> float | None:
+        """The confirmed rate for this country of residence, or None when
+        the carrier has not told us — never an inferred one."""
+        if self.included_in_quoted_premium or not country:
+            return None
+        return self.confirmed_rates.get(" ".join(str(country).strip().lower().split()))
 
 
 @dataclass(frozen=True)

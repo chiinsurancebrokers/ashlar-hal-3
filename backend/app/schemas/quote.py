@@ -36,8 +36,14 @@ class QuoteResult(BaseModel):
     # number no client is ever charged.
     payment_options: list[dict] = []
     # Stated when the carrier's quoted premium excludes insurance premium
-    # tax. HAL discloses; it never computes a rate.
+    # tax. HAL discloses; it never derives a rate. The figures below appear
+    # only where the carrier has confirmed the rate for this country of
+    # residence in writing — otherwise they stay None and the note stands
+    # on its own.
     premium_tax_note: str | None = None
+    premium_tax_rate: float | None = None
+    premium_tax_amount: float | None = None
+    premium_including_tax: float | None = None
     # How many lives the carrier's ladder actually discounted. Can be fewer
     # than family_size: Morgan Price discounts at most four lives, so a
     # fifth is charged the full rate.

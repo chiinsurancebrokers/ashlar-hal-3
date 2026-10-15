@@ -121,6 +121,11 @@ ISSUANCE = PolicyIssuanceRule(
 # the contract type, it is in no rate workbook, and for France alone the
 # plausible range runs from nothing to over 20% — a spread far too wide to
 # guess at in front of a client.
+#
+# CONFIRMED RATES. Only what Morgan Price has told us in writing, country by
+# country. Do not add a country by reasoning from a neighbour: rates differ
+# by contract type as well as by state, and a wrong one here becomes a
+# number on a client's quote.
 TAX = PremiumTaxTreatment(
     included_in_quoted_premium=False,
     note_en=("Premiums are shown before insurance premium tax. Whether tax applies, "
@@ -130,7 +135,71 @@ TAX = PremiumTaxTreatment(
              "και με ποιον συντελεστή, εξαρτάται από τη χώρα κατοικίας σας — ο "
              "διαμεσολαβητής επιβεβαιώνει το τελικό ποσό με τον ασφαλιστή πριν την "
              "τοποθέτηση."),
+    confirmed_rates={
+        "france": 0.14,
+    },
+    confirmed_rates_source=("Dawn Sheldrake, General Manager, Morgan Price, "
+                            "email to Chris Iatropoulos, 15 Oct 2026: "
+                            "\"The tax applied for France is 14%.\""),
 )
+
+# ---------------------------------------------------------------------------
+# Underwriting and sanctions conditions the broker must carry
+# ---------------------------------------------------------------------------
+# HAL does not collect nationality today, so it cannot apply these itself —
+# they are recorded here so the broker sees them before binding and so the
+# gap is visible. Source: Dawn Sheldrake, Morgan Price, 15 Oct 2026.
+#
+#   Russian nationality: a PEP check is run. Assuming it is clear, cover is
+#   available, PROVIDED the premium is not paid from a Russian bank account
+#   and claims are not paid into a Russian bank account.
+#
+# See also EU/EVO/SI/PW/04/26 section 8p (sanctions) and the claims section:
+# "we cannot make payments to banks in countries where UK/US Sanctions are
+# in place."
+BROKER_CONDITIONS = (
+    {
+        "trigger": "nationality_sanctions_review",
+        "applies_to": ("russia", "belarus", "iran", "north korea", "syria", "cuba"),
+        "condition": ("A PEP check is run before acceptance. Where it is clear, cover is "
+                      "available provided the premium is not paid from, and claims are not "
+                      "paid into, a bank account in the sanctioned country."),
+        "source": "Morgan Price, 15 Oct 2026",
+        "hal_can_apply": False,
+        "why_not": "HAL does not collect nationality; the broker checks this at proposal stage.",
+    },
+)
+
+# ---------------------------------------------------------------------------
+# What the carrier issues for a visa application
+# ---------------------------------------------------------------------------
+# Morgan Price, 15 Oct 2026: certificates of insurance are issued in ENGLISH
+# and show each member insured and the dates of coverage. A 12-month
+# certificate can be provided. The carrier confirms its policies exceed the
+# EUR 30,000 medical-and-repatriation minimum that Schengen long-stay visa
+# applications require.
+VISA_CERTIFICATE = {
+    "languages": ("English",),          # English only — not French
+    "shows_each_insured_member": True,
+    "shows_coverage_dates": True,
+    "twelve_month_certificate_available": True,
+    "exceeds_schengen_minimum_cover": True,   # the EUR 30,000 medical + repatriation floor
+    "source": "Dawn Sheldrake, General Manager, Morgan Price, 15 Oct 2026",
+    # Still unconfirmed: how long the certificate takes to issue after
+    # acceptance and payment. Ask before promising a date to a client with
+    # a consular appointment.
+    "issuance_time_after_payment": None,
+}
+
+# The policy may be bought while the applicant is already temporarily in the
+# destination country — they do not have to be in their current country of
+# residence to apply. Confirmed by Morgan Price, 15 Oct 2026.
+# Note the wording's own definition of country of residence
+# (EU/EVO/SI/PW/04/26): "the country where the insured person has their
+# primary residence, and in which they normally live or spend most of their
+# time each policy year" — so someone moving to France for a year is quoted
+# on France from the start date, not on the country they are leaving.
+PURCHASE_WHILE_ABROAD_ALLOWED = True
 
 # ---------------------------------------------------------------------------
 # Reconciliation evidence

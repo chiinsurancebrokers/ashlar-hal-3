@@ -232,6 +232,13 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
         )
         if policy.tax.needs_disclosure:
             quotes[-1].premium_tax_note = policy.tax.note_en
+            # Only where the carrier has confirmed the rate for this country.
+            rate = policy.tax.rate_for(applicant.residence_country)
+            if rate is not None:
+                amount = round(quotes[-1].premium * rate, 2)
+                quotes[-1].premium_tax_rate = rate
+                quotes[-1].premium_tax_amount = amount
+                quotes[-1].premium_including_tax = round(quotes[-1].premium + amount, 2)
 
         # A child insured without a parent or guardian on the policy carries a
         # compulsory per-claim excess. It is a term of the cover, not an

@@ -138,3 +138,50 @@ def test_the_card_shows_the_real_monthly_instalment():
     html = Path(__file__).resolve().parents[1].joinpath("frontend/index.html").read_text(encoding="utf-8")
     assert "payment_options||[]).find(o=>o.frequency==='monthly')" in html
     assert "const annual=Number(q.premium||0),monthly=annual/12" not in html
+
+
+# ---------------------------------------------------------------------------
+# Confirmed tax rates
+# ---------------------------------------------------------------------------
+
+def test_a_carrier_confirmed_rate_is_applied():
+    """Morgan Price confirmed 14% for France in writing on 15 Oct 2026. That
+    is a recorded fact with a source, not a derived one, so HAL shows the
+    total the client will actually pay."""
+    quote = _polat()
+    assert quote.premium_tax_rate == pytest.approx(0.14)
+    assert quote.premium_tax_amount == pytest.approx(505.13, abs=0.01)
+    assert quote.premium_including_tax == pytest.approx(4113.17, abs=0.01)
+    assert quote.premium_including_tax == pytest.approx(
+        round(quote.premium + quote.premium_tax_amount, 2), abs=0.01)
+
+
+@pytest.mark.parametrize("country", ["Greece", "Germany", "Spain", "Portugal"])
+def test_countries_without_a_confirmed_rate_show_no_figure(country):
+    """HAL must not reason by analogy from France. A country the carrier has
+    not given us a rate for keeps the disclosure and no number."""
+    applicant = Applicant(
+        age=36, residence_country=country, coverage_area="area1",
+        dependents=[Dependent(relationship="spouse", age=33)],
+    )
+    quote = next(q for q in quote_current(applicant, Settings())
+                 if q.product_code == "standard_plus")
+    assert quote.premium_tax_rate is None
+    assert quote.premium_tax_amount is None
+    assert quote.premium_including_tax is None
+    assert quote.premium_tax_note, "the before-tax disclosure must still stand"
+
+
+def test_confirmed_rates_carry_their_source():
+    """A rate with no provenance is indistinguishable from a guess."""
+    tax = premium_tax_treatment("morgan_price")
+    assert tax.rate_for("France") == pytest.approx(0.14)
+    assert tax.rate_for("france") == pytest.approx(0.14)
+    assert tax.rate_for("Greece") is None
+    assert tax.rate_for(None) is None
+    assert "Morgan Price" in tax.confirmed_rates_source
+    assert "15 Oct 2026" in tax.confirmed_rates_source
+
+
+def test_a_carrier_without_a_module_has_no_rates():
+    assert premium_tax_treatment("april").rate_for("France") is None
