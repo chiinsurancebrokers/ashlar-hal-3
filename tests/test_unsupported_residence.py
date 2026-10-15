@@ -95,3 +95,38 @@ def test_inside_bands_without_quotes_keeps_the_generic_needs_message():
     msg = _no_verified_price_reply(state, [], greek=False)
     assert PERSONAL_HEALTH_FALLBACK_URL not in msg
     assert "change one of your needs" in msg
+
+
+def test_area_1_matches_the_official_country_list_in_the_policy_wording():
+    """Area 1 is an explicit country list in EU/EVO/SI/PW/04/26 page 10.
+    HAL's set must be that list — no additions, no omissions.
+
+    An earlier review suspected the Balkan states, Turkey and Ukraine were
+    not really in Area 1. The wording says they are. Kosovo and San Marino,
+    which HAL used to carry, are NOT in it."""
+    from backend.app.rates.residence import area_includes
+
+    official_area_1 = [
+        "Albania", "Andorra", "Austria", "Belarus", "Belgium", "Bosnia Herzegovina",
+        "Bulgaria", "Channel Islands", "Croatia", "Cyprus", "Czech Republic",
+        "Denmark", "Estonia", "Finland", "France", "Germany", "Gibraltar", "Greece",
+        "Greenland", "Hungary", "Iceland", "Ireland", "Isle of Man", "Italy",
+        "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Macedonia", "Madeira",
+        "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland",
+        "Portugal", "Romania", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden",
+        "Switzerland", "Turkey", "Ukraine", "United Kingdom", "Vatican",
+    ]
+    for country in official_area_1:
+        assert area_includes("area1", country), f"{country} is in the wording's Area 1"
+
+
+def test_countries_absent_from_area_1_are_not_quoted_on_a_europe_plan():
+    """Kosovo and San Marino do not appear in the Area 1 list. They remain
+    quotable on wider areas — HAL just will not put them on a Europe-only
+    plan the wording does not say covers them."""
+    from backend.app.rates.residence import area_includes, residence_status
+
+    for country in ("Kosovo", "San Marino"):
+        assert area_includes("area1", country) is False
+        assert area_includes("area2", country) is True
+        assert residence_status(country) == "priced"

@@ -40,11 +40,17 @@ class FamilyDiscountRule:
     """One carrier's family discount ladder.
 
     discount_pct = step_pct * min(lives - 1, max_steps), applied to the
-    `max_discounted_members` highest-premium lives only.
+    `max_discounted_members` highest-premium lives only, and only when the
+    policy carries at least `min_adults` adults.
     """
     step_pct: float = 0.0
     max_steps: int = 0
     max_discounted_members: int = 0
+    # Morgan Price: "Eligibility - minimum of 2 adults per policy"
+    # (EU/EVO/SI/PW/04/26 page 10). A single adult with children gets no
+    # family discount at all, whatever the household size.
+    min_adults: int = 0
+    adult_from_age: int = 19
     # Largest household actually checked against the carrier's own quote
     # engine. Above this HAL has no evidence and must not extrapolate.
     max_verified_lives: int | None = None
@@ -53,8 +59,18 @@ class FamilyDiscountRule:
     def gives_discount(self) -> bool:
         return self.step_pct > 0 and self.max_steps > 0
 
-    def pct_for(self, lives: int) -> float:
+    def adults_in(self, ages: list[int] | None) -> int:
+        """How many lives count as adults. With no ages supplied we cannot
+        tell, so we assume the eligibility condition is met rather than
+        silently stripping a discount the client is entitled to."""
+        if ages is None:
+            return self.min_adults
+        return sum(1 for age in ages if age >= self.adult_from_age)
+
+    def pct_for(self, lives: int, ages: list[int] | None = None) -> float:
         if lives < 2 or not self.gives_discount:
+            return 0.0
+        if self.min_adults and self.adults_in(ages) < self.min_adults:
             return 0.0
         return self.step_pct * min(lives - 1, self.max_steps)
 
@@ -117,6 +133,8 @@ def family_discount_rule(carrier: str) -> FamilyDiscountRule:
         step_pct=float(block.get("step_pct", 0.0) or 0.0),
         max_steps=int(block.get("max_steps", 0) or 0),
         max_discounted_members=int(block.get("max_discounted_members", 0) or 0),
+        min_adults=int(block.get("min_adults", 0) or 0),
+        adult_from_age=int(block.get("adult_from_age", 19) or 19),
         max_verified_lives=(int(block["max_verified_lives"])
                             if block.get("max_verified_lives") is not None else None),
     )

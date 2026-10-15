@@ -67,7 +67,7 @@ def price_family(
     if n == 0:
         return FamilyQuote([], 0.0, False, 0.0, 0, 0.0)
 
-    pct = rule.pct_for(n)
+    pct = rule.pct_for(n, member_ages)
     if pct <= 0:
         return FamilyQuote([round(p, 2) for p in member_premiums], subtotal, False, 0.0, 0, subtotal)
 

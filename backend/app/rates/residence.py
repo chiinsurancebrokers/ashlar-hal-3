@@ -5,9 +5,26 @@ Source: Morgan Price "Evolution Health Policy EU" policy wording (04/26):
   nationals "with the exception of the United States of America"; not
   available "where it would breach any sanction, or where it is prohibited
   by law or local legislation" (sanctions clause 8p).
-* Section 5 "Geographical area": Area 1 = the European countries listed
-  below; Area 2 = worldwide excluding China, Hong Kong, Singapore and USA;
-  Area 3 = worldwide excluding USA; Area 4 = worldwide.
+* "Geographical area means:" (EU/EVO/SI/PW/04/26, page 10): Area 1 is the
+  explicit country list reproduced below; Area 2 = worldwide excluding
+  China, Hong Kong, Singapore and USA; Area 3 = worldwide excluding USA;
+  Area 4 = worldwide.
+
+  The Area 1 list was verified against the official wording on 15 Oct 2026.
+  It DOES include Albania, Belarus, Bosnia Herzegovina, Moldova,
+  Montenegro, Macedonia, Serbia, Turkey and Ukraine — an earlier review
+  had suspected these were not in Area 1 and that was wrong. Two entries
+  HAL used to carry are NOT in the wording and have been removed: Kosovo
+  and San Marino. Residents of those two are still quotable, just on
+  Area 2 or wider, which is the safe direction: HAL declines to put them
+  on a Europe-only plan the wording does not say covers them.
+
+  Two Area 1 entries HAL cannot model as plain country names:
+    - "all islands of the Mediterranean" — in practice these belong to
+      countries already on the list (Greece, Italy, Spain, Malta, Cyprus).
+    - "Russia (West of the Urals)" — Russia is caught by the sanctions
+      gate below before area matching, which is the correct commercial
+      behaviour regardless of the geographic carve-out.
 
 HAL rule (not an insurer rule): the area of cover must include the country
 where the client lives, otherwise the plan would not cover them at home.
@@ -28,7 +45,11 @@ _EUROPE = {
     "italy", "latvia", "liechtenstein", "lithuania", "luxembourg", "north macedonia", "macedonia", "madeira", "malta",
     "moldova", "monaco", "montenegro", "netherlands", "norway", "poland", "portugal", "romania", "russia", "serbia",
     "slovakia", "slovenia", "spain", "sweden", "switzerland", "turkiye", "turkey", "ukraine", "united kingdom",
-    "vatican", "vatican city", "san marino", "kosovo",
+    "vatican", "vatican city",
+    # NOT in Area 1: Kosovo and San Marino do not appear in the Area 1 list
+    # in EU/EVO/SI/PW/04/26 p.10. They were removed on 15 Oct 2026. Do not
+    # re-add without checking the wording — residents there are quotable on
+    # Area 2 and wider.
 }
 _USA = {"united states", "united states of america", "usa", "us", "america"}
 _AREA2_EXCLUDED = _USA | {"china", "hong kong", "singapore"}

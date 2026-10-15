@@ -212,3 +212,52 @@ def test_household_within_verified_size_keeps_the_normal_flow():
 
     reply = _no_verified_price_reply(_state([33, 15, 10, 3]), [], greek=False)
     assert "larger than the compositions" not in reply
+
+
+# ---------------------------------------------------------------------------
+# Eligibility: "minimum of 2 adults per policy" (EU/EVO/SI/PW/04/26 p.10)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("ages,expected_pct", [
+    ([36, 33],          0.05),   # Couple
+    ([36, 33, 3],       0.10),   # Family of 3
+    ([36, 33, 10, 3],   0.15),   # Family of 4
+])
+def test_two_adults_earn_the_published_ladder(ages, expected_pct):
+    assert _standard_plus_for(ages).family_discount_pct == pytest.approx(expected_pct)
+
+
+@pytest.mark.parametrize("ages", [[36, 3], [36, 10, 3], [36, 10, 8, 3]])
+def test_single_adult_households_get_no_family_discount(ages):
+    """The wording makes the discount conditional: 'Eligibility - minimum of
+    2 adults per policy'. A lone parent with children does not qualify,
+    however many children are on the policy. Quoting them the ladder would
+    under-price the risk and the client would meet the real number at
+    proposal stage."""
+    quote = _standard_plus_for(ages)
+    assert quote is not None, "a single parent must still receive a quote"
+    assert quote.family_discount_applied is False
+    assert quote.family_discount_pct == 0.0
+    assert quote.premium == round(sum(quote.per_member_premiums), 2)
+
+
+def test_adulthood_is_taken_from_the_policy_definition_of_a_child():
+    """Children are under 19 on this policy, so a 19-year-old counts toward
+    the two-adult minimum and an 18-year-old does not."""
+    rule = family_discount_rule("morgan_price")
+    assert rule.adult_from_age == 19
+    assert rule.pct_for(2, [36, 18]) == 0.0
+    assert rule.pct_for(2, [36, 19]) == pytest.approx(0.05)
+
+
+def test_ladder_matches_the_text_printed_in_the_policy_wording():
+    """Guards the published figures themselves. EU/EVO/SI/PW/04/26 p.10:
+    'Couple 5% / Family of 3 10% / Family of 4 15%'."""
+    rule = family_discount_rule("morgan_price")
+    adults = [40, 38]
+    assert rule.pct_for(2, adults) == pytest.approx(0.05)
+    assert rule.pct_for(3, adults + [10]) == pytest.approx(0.10)
+    assert rule.pct_for(4, adults + [10, 8]) == pytest.approx(0.15)
+    assert rule.pct_for(5, adults + [10, 8, 6]) == pytest.approx(0.15)
+    assert rule.max_discounted_members == 4
+    assert rule.min_adults == 2

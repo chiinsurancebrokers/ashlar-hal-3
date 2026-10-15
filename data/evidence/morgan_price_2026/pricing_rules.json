@@ -15,14 +15,26 @@
     "step_pct": 0.05,
     "max_steps": 3,
     "max_discounted_members": 4,
+    "min_adults": 2,
+    "adult_from_age": 19,
     "max_verified_lives": 5,
     "ladder": { "1": 0.0, "2": 0.05, "3": 0.10, "4": 0.15, "5": 0.15 },
+    "published_in_policy_wording": {
+      "document_code": "EU/EVO/SI/PW/04/26",
+      "page": 10,
+      "heading": "Family discount means:",
+      "quoted": "Couple 5% / Family of 3 10% / Family of 4 15%. Eligibility - minimum of 2 adults per policy. Family of 5 will still receive the 15% discount on 4 members (2 parents/2 children) but the 5th child will be normal premium."
+    },
     "description": [
       "discount_pct = step_pct * min(lives - 1, max_steps).",
       "The discount is applied to the max_discounted_members highest-premium",
       "lives only; any further life is charged the undiscounted rate.",
       "In this rate table premium rises monotonically with age, so 'the four",
-      "oldest' and 'the four most expensive' are always the same set."
+      "oldest' and 'the four most expensive' are always the same set, which is",
+      "the wording's '2 parents/2 children'.",
+      "ELIGIBILITY: the policy wording requires a minimum of 2 adults on the",
+      "policy. A single adult with children gets NO family discount at all,",
+      "whatever the household size."
     ],
     "verified_on": "2026-10-15",
     "verified_by": "Chris Iatropoulos, against the Morgan Price quick-quote engine",
