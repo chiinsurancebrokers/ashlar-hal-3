@@ -5,6 +5,7 @@ import pytest
 from backend.app.core.config import Settings
 from backend.app.schemas.applicant import Applicant, Dependent
 from backend.app.rates.quote_engine import quote_current, quote_shortlist, quote_exclusions
+from backend.app.rates.registry import rates_for
 
 # As of 13 Oct 2026 only Morgan Price has a loaded 2026 workbook, so tests
 # that assert the existence of an IMG quote in the current output are skipped
@@ -50,7 +51,18 @@ def test_family_quote_sums_and_requires_every_member_to_qualify():
     standard = next(q for q in quotes if q.insurer.startswith("Morgan Price") and q.product_code == "standard")
     assert standard.family_size == 3
     assert len(standard.per_member_premiums) == 3
-    assert standard.premium == round(sum(standard.per_member_premiums) * 0.95, 2)  # default 5% family discount
+    # per_member_premiums are the amounts actually CHARGED per life — already
+    # net of the family discount, exactly as the carrier's quote document
+    # lists them — so they reconcile to the headline premium.
+    assert standard.premium == round(sum(standard.per_member_premiums), 2)
+    # Three lives is the second rung of Morgan Price's ladder: 10%.
+    assert round(standard.family_discount_pct, 2) == 0.10
+    assert standard.premium == round(sum(
+        r.annual_premium for r in [
+            next(x for x in rates_for("area1", a) if x.carrier == "morgan_price" and x.product_code == "standard")
+            for a in (42, 40, 8)
+        ]
+    ) * 0.90, 2)
 
 
 def test_deductible_model_off_by_default_matches_base_price():

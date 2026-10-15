@@ -12,8 +12,9 @@ from backend.app.services.anthropic_client import claude_response as adviser_res
 from backend.app.services.verifier_agent import verify_shortlist
 from backend.app.services.eligibility_agent import assess_eligibility
 from backend.app.knowledge.service import detect_hnwi, greece_profile
-from backend.app.rates.quote_engine import residence_gate
+from backend.app.rates.quote_engine import residence_gate, _distinct_products
 from backend.app.rates.registry import load_rates
+from backend.app.rates.carrier_pricing import household_exceeds_verified_size
 from backend.app.rates.residence import is_greek_resident
 
 PERSONAL_HEALTH_FALLBACK_URL = "https://ashlarassurance.com/request-a-personal-health-quote/"
@@ -41,6 +42,40 @@ def _age_outside_loaded_bands(applicant: Applicant) -> dict | None:
     for who, age in household:
         if age < min_band or age > max_band:
             return {"who": who, "age": age, "min": min_band, "max": max_band}
+    return None
+
+
+def _household_size(state: dict) -> int:
+    """How many lives this enquiry would put on one policy.
+
+    The primary applicant plus any household members the family flow has
+    collected. Note this is read from `state`, not from an Applicant:
+    APPLICANT_STATE_KEYS deliberately does not carry dependants, so an
+    Applicant built from state is always a single life."""
+    members = state.get("household_members") or []
+    valid = [m for m in members if isinstance(m, dict) and m.get("age") is not None]
+    return 1 + len(valid)
+
+
+def _household_too_large_to_price(state: dict, applicant: Applicant) -> int | None:
+    """Return the household size when it is larger than anything HAL has
+    verified against a carrier's own quote engine, else None.
+
+    Family discount ladders are verified by comparing HAL against the
+    carrier's quick-quote for real household compositions. Beyond the
+    largest one checked, HAL has no evidence — and a big family is exactly
+    where an extrapolated discount would be most wrong. Those cases go to
+    a broker, with the reason said out loud rather than returning an empty
+    shortlist and blaming the client's requirements."""
+    lives = _household_size(state)
+    if lives < 2:
+        return None
+    try:
+        carriers = {c for c, _ in _distinct_products(applicant.coverage_area)}
+    except Exception:
+        return None
+    if carriers and all(household_exceeds_verified_size(c, lives) for c in carriers):
+        return lives
     return None
 from backend.app.services.country_health_agent import country_health_note, deterministic_note
 from backend.app.travel.discovery import deterministic_travel_updates, next_travel_question
@@ -223,6 +258,24 @@ def _no_verified_price_reply(state: dict, excluded: list[dict], greek: bool) -> 
         # bands is not a "needs mismatch" — their age simply isn't priced
         # online, which is a broker case. Route them to the fallback form
         # instead of asking them to change their requirements.
+        # Household larger than any composition HAL has verified against the
+        # carrier's own quote engine. Not a needs mismatch — a broker case.
+        big_household = _household_too_large_to_price(state, applicant) if applicant else None
+        if big_household:
+            if greek:
+                body = (f"Το νοικοκυριό σας ({big_household} άτομα) είναι μεγαλύτερο από τις συνθέσεις που ο HAL "
+                        "έχει επαληθεύσει έναντι του επίσημου τιμολογίου του ασφαλιστή. Οι εκπτώσεις πολυμελούς "
+                        "οικογένειας διαφέρουν ανά ασφαλιστική και δεν θα μαντέψω ποσοστό — "
+                        f"συμπληρώστε τη φόρμα εδώ και ένας σύμβουλος της Ashlar θα σας στείλει ακριβή τιμή "
+                        f"εντός μίας εργάσιμης ημέρας: {PERSONAL_HEALTH_FALLBACK_URL}")
+            else:
+                body = (f"Your household ({big_household} people) is larger than the compositions HAL has verified "
+                        "against the insurer's official rate table. Large-family discounts differ between insurers "
+                        "and I won't guess a percentage — "
+                        f"fill in the form here and an Ashlar adviser will send you an exact price "
+                        f"within one business day: {PERSONAL_HEALTH_FALLBACK_URL}")
+            return f"{thanks} {body}"
+
         band_issue = _age_outside_loaded_bands(applicant) if applicant else None
         if band_issue:
             who, age, lo, hi = band_issue["who"], band_issue["age"], band_issue["min"], band_issue["max"]

@@ -7,6 +7,9 @@ from backend.app.schemas.quote import QuoteResult
 from backend.app.rates.registry import load_rates, load_card_meta, RateRecord
 from backend.app.rates.deductible_model import apply_deductible
 from backend.app.rates.family_pricing import price_family
+from backend.app.rates.carrier_pricing import (
+    family_discount_rule, household_exceeds_verified_size, NO_FAMILY_DISCOUNT,
+)
 from backend.app.matching.engine import evaluate_requirements, benefit_checklist
 from backend.app.evidence.eligibility_rules import evaluate_plan_eligibility
 from backend.app.evidence.morgan_price_2026 import verified_fact_texts, load_manifest, plan_documents
@@ -110,6 +113,13 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
         if any(m is None for m in member_rows):
             continue
 
+        # Households larger than anything we have checked against this
+        # carrier's own quote engine are not priced online. Extrapolating a
+        # discount ladder past its evidence would invent a premium, and a
+        # large family is exactly the case where the error compounds.
+        if household_exceeds_verified_size(carrier, len(ages)):
+            continue
+
         eligibility = evaluate_plan_eligibility(applicant, carrier, product_code)
         if eligibility.status != "eligible":
             # An active rule that is unresolved is not safe to display as an
@@ -135,7 +145,11 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             adjusted_each.append(adj)
             deductible_note = note
 
-        family_quote = price_family(adjusted_each, family_discount_pct=settings.family_discount_pct)
+        # The family discount is THIS carrier's commercial policy, read from
+        # its own evidence folder. A carrier with no recorded rule gets none.
+        discount_rule = (family_discount_rule(carrier)
+                         if settings.apply_carrier_family_discounts else NO_FAMILY_DISCOUNT)
+        family_quote = price_family(adjusted_each, rule=discount_rule, member_ages=ages)
 
         # Every quote in flight today is Morgan Price official (the only loaded
         # workbook). The old "legacy" branch is unreachable and was removed on
@@ -174,6 +188,8 @@ def quote_current(applicant: Applicant, settings: Settings, *, today: date | Non
             family_size=applicant.family_size(),
             per_member_premiums=family_quote.per_member_premiums,
             family_discount_applied=family_quote.discount_applied,
+            family_discount_pct=family_quote.discount_pct,
+            family_discounted_member_count=family_quote.discounted_member_count,
             coverage_area_label=area_label,
             official_rate=official,
             evidence_status=evidence_status,

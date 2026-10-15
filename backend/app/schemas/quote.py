@@ -17,10 +17,18 @@ class QuoteResult(BaseModel):
     deductible: float | None = None
     deductible_note: str | None = None   # explains whether/how the deductible affected price
 
-    # Family pricing
+    # Family pricing.
+    # per_member_premiums are the amounts actually CHARGED per life, net of
+    # any family discount that life received — i.e. what the carrier's own
+    # quote document shows line by line. They reconcile to `premium`.
     family_size: int = 1
     per_member_premiums: list[float] = []
     family_discount_applied: bool = False
+    family_discount_pct: float = 0.0
+    # How many lives the carrier's ladder actually discounted. Can be fewer
+    # than family_size: Morgan Price discounts at most four lives, so a
+    # fifth is charged the full rate.
+    family_discounted_member_count: int = 0
 
     coverage_area_label: str
     official_rate: bool

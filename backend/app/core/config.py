@@ -94,9 +94,14 @@ class Settings(BaseSettings):
     # the discount percentages in rates/deductible_model.py and flip this on.
     deductible_model_enabled: bool = False
 
-    # Family/administration discount applied when >=2 lives are quoted on the
-    # same policy. Illustrative until a carrier confirms its own figure.
-    family_discount_pct: float = 0.05
+    # Family discounts are a CARRIER's commercial policy, not a HAL setting:
+    # each insurer sets its own ladder and some give none. They therefore
+    # live per carrier in data/evidence/<carrier>/pricing_rules.json and are
+    # read through rates/carrier_pricing.py. A carrier with no rules file
+    # gets no discount. This flag is only a kill switch — turning it off
+    # makes HAL quote every household at the plain sum of its members,
+    # which is always safe (too high, never too low).
+    apply_carrier_family_discounts: bool = True
 
     # How many days a displayed quote is treated as current before HAL should
     # tell the client to re-check pricing.

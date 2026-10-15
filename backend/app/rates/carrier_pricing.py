@@ -1,0 +1,147 @@
+"""Per-carrier commercial pricing rules (family discounts, instalment
+loading, tax treatment).
+
+WHY THIS IS PER CARRIER AND NOT A GLOBAL SETTING
+------------------------------------------------
+A family discount is an insurer's own commercial policy, not a property of
+international health insurance. Morgan Price gives 5% for two lives rising
+to 15% for four; APRIL, IMG, Bupa Global, Allianz Care, Cigna and Now
+Health each set their own, and some give none at all. Before 15 Oct 2026
+HAL carried a single global `family_discount_pct` in Settings, which meant
+that the moment a second carrier's workbook was loaded, that carrier's
+families would silently be quoted on Morgan Price's commercial terms.
+
+So: rules live beside the carrier's own evidence, in
+`data/evidence/<carrier>_<year>/pricing_rules.json`, and a carrier with no
+file gets NO discount and NO instalment loading. Quoting a discount an
+insurer has not confirmed is inventing a price, which HAL does not do.
+Over-quoting is recoverable — a broker corrects it downward and the client
+is pleasantly surprised. Under-quoting means the client meets a higher
+number at proposal stage, which is the exact failure HAL exists to prevent.
+"""
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+
+EVIDENCE_DIR = Path(__file__).resolve().parents[3] / "data" / "evidence"
+
+# Which evidence folder holds each carrier's rules. Add a row when a new
+# carrier's workbook and pricing rules are loaded.
+_CARRIER_EVIDENCE_DIRS = {
+    "morgan_price": "morgan_price_2026",
+}
+
+
+@dataclass(frozen=True)
+class FamilyDiscountRule:
+    """One carrier's family discount ladder.
+
+    discount_pct = step_pct * min(lives - 1, max_steps), applied to the
+    `max_discounted_members` highest-premium lives only.
+    """
+    step_pct: float = 0.0
+    max_steps: int = 0
+    max_discounted_members: int = 0
+    # Largest household actually checked against the carrier's own quote
+    # engine. Above this HAL has no evidence and must not extrapolate.
+    max_verified_lives: int | None = None
+
+    @property
+    def gives_discount(self) -> bool:
+        return self.step_pct > 0 and self.max_steps > 0
+
+    def pct_for(self, lives: int) -> float:
+        if lives < 2 or not self.gives_discount:
+            return 0.0
+        return self.step_pct * min(lives - 1, self.max_steps)
+
+
+@dataclass(frozen=True)
+class InstalmentLoading:
+    """Administration fee the carrier adds for paying in instalments."""
+    monthly_pct: float = 0.0
+    quarterly_pct: float = 0.0
+    semi_annual_pct: float = 0.0
+    annual_pct: float = 0.0
+    annual_bank_transfer_fee: dict | None = None
+
+    @property
+    def has_loading(self) -> bool:
+        return any(p > 0 for p in (self.monthly_pct, self.quarterly_pct,
+                                   self.semi_annual_pct, self.annual_pct))
+
+    def pct_for(self, frequency: str) -> float:
+        return {
+            "monthly": self.monthly_pct,
+            "quarterly": self.quarterly_pct,
+            "semi_annual": self.semi_annual_pct,
+            "annual": self.annual_pct,
+        }.get(frequency, 0.0)
+
+    def bank_fee(self, currency: str) -> float:
+        fees = self.annual_bank_transfer_fee or {}
+        return float(fees.get((currency or "EUR").upper(), 0) or 0)
+
+
+# A carrier we hold no pricing rules for: no discount, no loading. This is
+# the deliberate conservative default — see the module docstring.
+NO_FAMILY_DISCOUNT = FamilyDiscountRule()
+NO_INSTALMENT_LOADING = InstalmentLoading()
+
+
+@lru_cache
+def _rules_for(carrier: str) -> dict:
+    folder = _CARRIER_EVIDENCE_DIRS.get((carrier or "").strip().lower())
+    if not folder:
+        return {}
+    path = EVIDENCE_DIR / folder / "pricing_rules.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        # A malformed rules file must not silently become "some other
+        # carrier's discount" — it becomes no discount.
+        return {}
+
+
+@lru_cache
+def family_discount_rule(carrier: str) -> FamilyDiscountRule:
+    block = (_rules_for(carrier) or {}).get("family_discount") or {}
+    if not block:
+        return NO_FAMILY_DISCOUNT
+    return FamilyDiscountRule(
+        step_pct=float(block.get("step_pct", 0.0) or 0.0),
+        max_steps=int(block.get("max_steps", 0) or 0),
+        max_discounted_members=int(block.get("max_discounted_members", 0) or 0),
+        max_verified_lives=(int(block["max_verified_lives"])
+                            if block.get("max_verified_lives") is not None else None),
+    )
+
+
+@lru_cache
+def instalment_loading(carrier: str) -> InstalmentLoading:
+    block = (_rules_for(carrier) or {}).get("instalment_loading") or {}
+    if not block:
+        return NO_INSTALMENT_LOADING
+    return InstalmentLoading(
+        monthly_pct=float(block.get("monthly_pct", 0.0) or 0.0),
+        quarterly_pct=float(block.get("quarterly_pct", 0.0) or 0.0),
+        semi_annual_pct=float(block.get("semi_annual_pct", 0.0) or 0.0),
+        annual_pct=float(block.get("annual_pct", 0.0) or 0.0),
+        annual_bank_transfer_fee=block.get("annual_bank_transfer_fee") or {},
+    )
+
+
+def household_exceeds_verified_size(carrier: str, lives: int) -> bool:
+    """True when this household is larger than anything we have actually
+    checked against the carrier's own quote engine. The quote engine must
+    not price these online — extrapolating a discount ladder past its
+    evidence is exactly the kind of invented number HAL forbids."""
+    rule = family_discount_rule(carrier)
+    if rule.max_verified_lives is None:
+        return False
+    return lives > rule.max_verified_lives
